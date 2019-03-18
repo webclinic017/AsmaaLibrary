@@ -544,8 +544,9 @@ class Searcher(Gtk.Dialog):
         self.store_fields.clear()
         self.store_fields.append([None, u"المفضلة"])
         for a in os.listdir(join(asm_path.LIBRARY_DIR_rw, u'fields-search')):
-            a = a.replace(u'.pkl', u'')
-            self.store_fields.append([None, a])
+            if a[-4:] == u'.pkl':
+                a = a.replace(u'.pkl', u'')
+                self.store_fields.append([None, a])
     
     def del_history(self, *a):
         self.list_terms = []

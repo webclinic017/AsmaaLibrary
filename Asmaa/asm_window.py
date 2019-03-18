@@ -288,9 +288,9 @@ class AsmaaApp(Gtk.Window):
     def build(self,*a):
         self.set_title("مكتبة أسماء")
         self.set_icon_name('asmaa')
-        #self.maximize()
-        self.set_opacity(1.0)
-        self.set_default_size(800, 600)
+        self.maximize()
+        #self.set_opacity(1.0)
+        #self.set_default_size(800, 600)
         self.connect("delete_event", self.delete_event_cb)
         self.connect("destroy", self.delete_event_cb)
         self.agr = Gtk.AccelGroup()

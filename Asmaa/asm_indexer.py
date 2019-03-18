@@ -4,7 +4,7 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  ########
 ##############################################################################
 
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, Pango
 import asm_customs, asm_araby, asm_path, asm_stemming
 from asm_contacts import listDB, bookDB
 from whoosh import index
@@ -14,6 +14,7 @@ from whoosh.lang.porter import stem
 from whoosh.qparser import QueryParser, OperatorsPlugin
 from os.path import exists, join
 import os, re
+import indexer
 
 
 
@@ -81,6 +82,7 @@ class WinIndexer(Gtk.Dialog):
         for id_book in self.selected_books:
             s += 1
             writer = self.creat_writer_index(id_book)
+            print writer
             self.progress.set_fraction(float(s)/float(len(self.selected_books)))
             filebook = self.db.file_book(id_book)
             db = bookDB(filebook, id_book)
@@ -88,10 +90,10 @@ class WinIndexer(Gtk.Dialog):
                 title = u"-".join(db.titles_page(a[0]))
                 if title == "": title = u"-"
                 content = db.get_text_body(a[0])[2]
-                page = str(a[1]).decode('utf8')  
+                page = str(a[0]).decode('utf8')  
+                #indexer.indexing(id_book, title, content, page)
                 writer.add_document(title=title, content=content, page=page)
-
-            writer.commit(optimize = True)
+            writer.commit()
             self.db.add_indexed(id_book)
         asm_customs.info(self, u"تمت عملية الفهرسة")
         self.destroy()
@@ -211,6 +213,7 @@ class WinIndexer(Gtk.Dialog):
         scroll.add(self.tree_books)
         scroll.set_size_request(200, -1)
         celltext = Gtk.CellRendererText()
+        celltext.set_property("ellipsize", Pango.EllipsizeMode.END)
         celltoggle = Gtk.CellRendererToggle()
         celltoggle.set_property('activatable', True)
         columntoggle = Gtk.TreeViewColumn("اختر", celltoggle)

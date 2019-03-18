@@ -29,11 +29,13 @@ class load_list_books_from_shamela(object):
             contents0 = re.sub(r'"', '', list_contents[a])
             contents0 = contents0.strip()
             #contents0 = contents0.lower()
-            motif0 = contents0.split('new_col')
             if a == 0: 
+                motif = contents0.split('\n')
+                motif0 = motif[0].split('new_col')
                 motif0 = list(map(lambda i: i.lower(), motif0))
                 cols = self.get_cols("0bok", motif0)
             else:
+                motif0 = contents0.split('new_col')
                 if len(motif0) == 1: continue
                 else:
                     if motif0[cols['cat']] == id_part:
@@ -56,6 +58,7 @@ class load_list_books_from_shamela(object):
                 cols_dict[a] = motif.index(a)
         elif table == 'shorts':
             for a in [u'bk', u'ramz', u'nass']:
+                print motif
                 cols_dict[a] = motif.index(a)
         return cols_dict
     
@@ -68,12 +71,14 @@ class load_list_books_from_shamela(object):
             list_contents_main = contents_main.split('new_row')
             for p in range(len(list_contents_main)):
                 contents0_main = re.sub(r'"', '', list_contents_main[p])
-                contents0_main = contents0_main.strip()
-                motif0 = contents0_main.split('new_col')
+                #contents0_main = contents0_main.strip()
                 if p == 0: 
+                    motif = contents0_main.split('\n')
+                    motif0 = motif[0].split('new_col')
                     motif0 = list(map(lambda i: i.lower(), motif0))
                     cols = self.get_cols(a, motif0)
                 else:
+                    motif0 = contents0_main.split('new_col')
                     if len(motif0) == 1: continue
                     else:
                         if a == '0cat':
@@ -133,10 +138,14 @@ class DB_from_MDB(object):
         list_contents = contents.split('new_row')
         for a in range(len(list_contents)-1):
             contents0 = re.sub(r'"', '', list_contents[a])
-            contents0 = contents0.strip()
-            motif0 = contents0.split('new_col')
-            if a == 0: cols = self.get_cols(table, motif0, id_book)
+            #contents0 = contents0.strip()
+            if a == 0:
+                motif = contents0.split('\n')
+                motif0 = motif[0].split('new_col') 
+                motif0 = list(map(lambda i: i.lower(), motif0))
+                cols = self.get_cols(table, motif0, id_book)
             else:
+                motif0 = contents0.split('new_col')
                 if len(motif0) == 1: continue
                 else:
                     ids_titles.append(motif0[cols['id']])
@@ -174,11 +183,14 @@ class DB_from_MDB(object):
             list_contents = contents.split('new_row')
             for b in range(len(list_contents)-1):
                 contents0 = re.sub(r'"', '', list_contents[b])
-                contents0 = contents0.strip()
-                motif0 = contents0.split('new_col')
+                #contents0 = contents0.strip()
                 if b == 0: 
+                    motif = contents0.split('\n')
+                    motif0 = motif[0].split('new_col')
+                    motif0 = list(map(lambda i: i.lower(), motif0))
                     cols = self.get_cols(table, motif0, id_book)
                 else:
+                    motif0 = contents0.split('new_col')
                     if len(motif0) == 1: continue
                     else:
                         if table == 'b'+str(id_book) or table == 'book':
@@ -249,12 +261,14 @@ class DB_from_BOK(object):
         list_contents = contents.split('new_row')
         for a in range(len(list_contents)-1):
             contents0 = re.sub(r'"', '', list_contents[a])
-            contents0 = contents0.strip()
-            motif0 = contents0.split('new_col')
+            #contents0 = contents0.strip()
             if a == 0: 
+                motif = contents0.split('\n')
+                motif0 = motif[0].split('new_col')
                 motif0 = list(map(lambda i: i.lower(), motif0))
                 cols = self.get_cols("t"+str(id_book), motif0, id_book)
             else:
+                motif0 = contents0.split('new_col')
                 if len(motif0) == 1: continue
                 else:
                     ids_titles.append(motif0[cols['id']])
@@ -272,12 +286,14 @@ class DB_from_BOK(object):
         list_contents_main = contents_main.split('new_row')
         for a in range(len(list_contents_main)):
             contents0_main = re.sub(r'"', '', list_contents_main[a])
-            contents0_main = contents0_main.strip()
-            motif_main = contents0_main.split('new_col')
+            #contents0_main = contents0_main.strip()
             if a == 0: 
+                motif = contents0_main.split('\n')
+                motif_main = motif[0].split('new_col')
                 motif_main = list(map(lambda i: i.lower(), motif_main))
                 cols_main = self.get_cols('Main', motif_main)
             else:
+                motif_main = contents0_main.split('new_col')
                 if len(motif_main) == 1: continue
                 else:
                     id_book = motif_main[cols_main['bkid']]
@@ -303,12 +319,14 @@ class DB_from_BOK(object):
                         list_contents = contents.split('new_row')
                         for b in range(len(list_contents)-1):
                             contents0 = re.sub(r'"', '', list_contents[b])
-                            contents0 = contents0.strip()
-                            motif0 = contents0.split('new_col')
+                            #contents0 = contents0.strip()
                             if b == 0: 
+                                motif = contents0.split('\n')
+                                motif0 = motif[0].split('new_col')
                                 motif0 = list(map(lambda i: i.lower(), motif0))
                                 cols = self.get_cols(table, motif0, id_book)
                             else:
+                                motif0 = contents0.split('new_col')
                                 if len(motif0) == 1: continue
                                 else:
                                     if table == 'Shorts':

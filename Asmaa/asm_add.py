@@ -451,7 +451,6 @@ class AddBooks(Gtk.Dialog):
         area = self.get_content_area()
         area.set_spacing(6)
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.set_icon_from_file(join(asm_path.ICON_DIR, 'Chamila-32.png'))
         self.set_title('نافذة الاستيراد') 
         self.notebook = Gtk.Notebook()
         

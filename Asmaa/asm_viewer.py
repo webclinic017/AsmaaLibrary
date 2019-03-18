@@ -681,6 +681,7 @@ class OpenBook(Gtk.VBox):
         self.scroll_index = Gtk.ScrolledWindow()
         self.scroll_index.set_shadow_type(Gtk.ShadowType.IN)
         self.scroll_index.add(self.tree_index)
+        #self.scroll_index.set_policy(Gtk.PolicyType.ALWAYS, Gtk.PolicyType.AUTOMATIC)
         self.scroll_index.get_hadjustment().set_value(0.0) 
         vbox.pack_start(self.scroll_index, True, True, 0)
         #----------------------------------------------
