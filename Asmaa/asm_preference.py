@@ -4,11 +4,12 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  #########
 #a############################################################################
 
-from os.path import join
+from os.path import join, exists
 import os
+from shutil import copyfile
 from asm_contacts import listDB
 from gi.repository import Gtk
-import asm_config, asm_customs
+import asm_config, asm_customs, asm_path
 
 
 # class نافذة التفضيلات----------------------------------------------------------       
@@ -121,6 +122,21 @@ class Preference(Gtk.Dialog):
             asm_config.setv('saved_session', '1')
         else:
             asm_config.setv('saved_session', '0')
+    
+    def copy_to_home_cb(self, *a):
+        groups = self.db.all_parts()
+        for g in groups:
+            if not exists(join(asm_path.BOOK_DIR_rw, g[1])):
+                os.mkdir(join(asm_path.BOOK_DIR_rw, g[1]))
+            books = self.db.books_part(g[0])
+            for b in books:
+                book_old = self.db.file_book(b[0])
+                self.db.mode_write(b[0])
+                book_new = self.db.file_book(b[0])
+                if not exists(book_new):
+                    copyfile(book_old, book_new)
+        asm_customs.info(self.parent, 'تمت عملية النسخ بنجاح')
+        self.copy_to_home.set_sensitive(False)
              
     def build(self,*a):
         Gtk.Dialog.__init__(self, parent=self.parent)
@@ -210,8 +226,17 @@ class Preference(Gtk.Dialog):
         hbox.pack_start(self.e_dest, True, True, 0)
         vb.pack_start(hbox, False, False, 0)
         
+        hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
+        self.copy_to_home = asm_customs.ButtonClass('نسخ المكتبة  إلى المنزل')
+        self.copy_to_home.set_tooltip_text('هذا الخيار إذا كانت كتب المكتبة في الدليل :\n"/usr/share/asmaa/"')
+        if self.db.check_books_library() == False:
+            self.copy_to_home.set_sensitive(False) 
+        self.copy_to_home.connect('clicked', self.copy_to_home_cb)
+        hbox.pack_start(self.copy_to_home, False, False, 0)
+        vb.pack_start(hbox, False, False, 0)
+        
         hbox = Gtk.Box(spacing=11,orientation=Gtk.Orientation.HORIZONTAL)
-        db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaa/files/",
+        db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/",
                                                 'صفحة البرنامج على النت')
         hbox.pack_start(db_void, False, False, 0)
         

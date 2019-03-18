@@ -5,7 +5,7 @@
 #a############################################################################
 
 from gi.repository import Gtk, Pango
-import asm_customs, asm_araby
+import asm_customs
 from asm_contacts import TarajimDB
 import re
 

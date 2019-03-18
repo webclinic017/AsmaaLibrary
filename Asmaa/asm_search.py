@@ -7,7 +7,7 @@
 from os.path import join
 import os
 from gi.repository import Gtk, GObject
-import asm_araby, asm_customs, asm_popup
+import asm_araby, asm_customs, asm_popup, asm_path
 from asm_viewer import OpenBook
 from asm_tablabel import TabLabel
 from asm_contacts import bookDB, Othman, listDB
@@ -76,7 +76,7 @@ class ShowResult(Gtk.VPaned):
         for a in selected_books:
             if self.stop_n == 0: break
             s += 1
-            book = join(asm_customs.MY_DIR, u'books', a[1], a[0]+u'.asm')
+            book = join(asm_path.BOOK_DIR_rw, a[1], a[0]+u'.asm')
             con = sqlite3.connect(book)
             con.create_function('fuzzy', 1, asm_araby.fuzzy_plus)
             cur = con.cursor()
@@ -126,7 +126,7 @@ class ShowResult(Gtk.VPaned):
         if len(self.store_results)>0:
             for a in self.store_results:
                 self.results_books.append([a[0], a[1], a[2], a[3], a[4], a[5], a[6]])
-            output = open(join(asm_customs.HOME_DIR, u'آخر بحث.pkl'), 'wb')
+            output = open(join(asm_path.HOME_DIR, u'آخر بحث.pkl'), 'wb')
             cPickle.dump(self.results_books, output)
             output.close()
    
@@ -134,10 +134,10 @@ class ShowResult(Gtk.VPaned):
         nm = self.sav_result_entry.get_text().decode('utf8')
         if nm == u"":
             asm_customs.erro(self.parent, "أدخل الاسم أولا.")
-        elif nm in os.listdir(asm_customs.HOME_DIR): 
+        elif nm in os.listdir(asm_path.HOME_DIR): 
             asm_customs.erro(self.parent, "يوجد بحث محفوظ بنفس الاسم !!")
         else:
-            output = open(join(asm_customs.HOME_DIR, nm+u'.pkl'), 'wb')
+            output = open(join(asm_path.HOME_DIR, nm+u'.pkl'), 'wb')
             cPickle.dump(self.results_books, output)
             output.close()
         self.sav_result_entry.set_text("")
@@ -203,7 +203,7 @@ class ShowResult(Gtk.VPaned):
         if len(sr.store_results)>0:
             for a in sr.store_results:
                 sr.results_books.append([a[0], a[1], a[2], a[3], a[4], a[5], a[6]])
-            output = open(join(asm_customs.HOME_DIR, u'آخر بحث.pkl'), 'wb')
+            output = open(join(asm_path.HOME_DIR, u'آخر بحث.pkl'), 'wb')
             cPickle.dump(sr.results_books, output)
             output.close()
 
@@ -253,6 +253,7 @@ class ShowResult(Gtk.VPaned):
         open_in_tab.connect('clicked', self.open_new_tab)
         hb.pack_start(open_in_tab, False, False, 0)
         sav_result_btn = Gtk.ToolButton(stock_id=Gtk.STOCK_SAVE)
+        sav_result_btn.set_tooltip_text('حفظ نتائج البحث الحالي باسم')
         hb.pack_start(sav_result_btn, False, False, 0)
         sav_result_btn.connect('clicked', self.sav_result_cb)
         self.sav_result_entry = Gtk.Entry()
@@ -264,7 +265,7 @@ class ShowResult(Gtk.VPaned):
         self.lab_n_result = Gtk.Label('عدد النتائج : 0')
         hb.pack_start(self.lab_n_result, False, False, 0)
         self.hb_stop = Gtk.HBox(False, 7)
-        btn_stop = asm_customs.tool_button(join(asm_customs.ICON_DIR, u'stp.png'), 'أوقف عملية البحث', self.stop_search)
+        btn_stop = asm_customs.tool_button(join(asm_path.ICON_DIR, u'stp.png'), 'أوقف عملية البحث', self.stop_search)
         self.hb_stop.pack_start(btn_stop, False, False, 0)
         self.progress = Gtk.ProgressBar()
         self.hb_stop.pack_start(self.progress, True, True, 0)
@@ -375,7 +376,7 @@ class Searcher(Gtk.Dialog):
         for w in range(len(self.store_fields)):
             if self.store_fields[w][0] == True:
                 nm_field = self.store_fields[w][1].decode('utf8')
-                store = cPickle.load(file(join(asm_customs.MY_DIR, u'fields-search', nm_field+u'.pkl')))
+                store = cPickle.load(file(join(asm_path.LIBRARY_DIR_rw, u'fields-search', nm_field+u'.pkl')))
                 for a in store:
                     if a not in self.selected_books:
                         nm_book = a[0]
@@ -416,7 +417,7 @@ class Searcher(Gtk.Dialog):
                 if len(self.list_terms) == 50: self.list_terms.pop(0)
                 if text in self.list_terms: self.list_terms.remove(text)
                 self.list_terms.append(text)
-                output = open(join(asm_customs.MY_DIR, u'data', u'last-terms.pkl'), 'wb')
+                output = open(join(asm_path.DATA_DIR_rw, u'last-terms.pkl'), 'wb')
                 cPickle.dump(self.list_terms, output)
                 output.close()
             except: pass
@@ -460,7 +461,7 @@ class Searcher(Gtk.Dialog):
     
     def save_fields(self, *a):
         nm = self.ent_field.get_text().decode('utf8')
-        output = open(join(asm_customs.MY_DIR, u'fields-search', nm+u'.pkl'), 'wb')
+        output = open(join(asm_path.LIBRARY_DIR_rw, u'fields-search', nm+u'.pkl'), 'wb')
         cPickle.dump(self. selected_books, output)
         output.close()
         self.ent_field.set_text('')
@@ -468,7 +469,7 @@ class Searcher(Gtk.Dialog):
     
     def load_fields(self, *a):
         self.store_fields.clear()
-        for a in os.listdir(join(asm_customs.MY_DIR, u'fields-search')):
+        for a in os.listdir(join(asm_path.LIBRARY_DIR_rw, u'fields-search')):
             a = a.replace(u'.pkl', u'')
             self.store_fields.append([None, a])
         
@@ -579,7 +580,7 @@ class Searcher(Gtk.Dialog):
             model, i = self.tree_fields.get_selection().get_selected()
             if i:
                 nm = model.get_value(i, 1).decode('utf8')
-                os.remove(join(asm_customs.MY_DIR, u'fields-search', nm+'.pkl')) 
+                os.remove(join(asm_path.LIBRARY_DIR_rw, u'fields-search', nm+'.pkl')) 
                 model.remove(i)
         rm_field.connect('clicked', rm_field_cb)
         vbox.pack_start(hbox, False, False, 0)
@@ -616,7 +617,7 @@ class Searcher(Gtk.Dialog):
         hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
         try: self.entry_search = Gtk.SearchEntry()
         except: self.entry_search = Gtk.Entry()
-        try: self.list_terms = cPickle.load(file(join(asm_customs.MY_DIR, u'data', u'last-terms.pkl')))
+        try: self.list_terms = cPickle.load(file(join(asm_path.DATA_DIR_rw, u'last-terms.pkl')))
         except: self.list_terms = []
         completion = Gtk.EntryCompletion()
         list_ts = Gtk.ListStore(str)
@@ -625,6 +626,7 @@ class Searcher(Gtk.Dialog):
         completion.set_model(list_ts)
         completion.set_text_column(0)
         self.entry_search.set_completion(completion)
+        self.entry_search.connect('activate', self.search)
         self.entry_search.set_placeholder_text('أدخل النص المراد البحث عنه')
         self.btn_search = asm_customs.ButtonClass('بحث')
         self.btn_search.connect('clicked', self.search)

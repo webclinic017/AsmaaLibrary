@@ -5,12 +5,11 @@
 #a############################################################################
 
 from os.path import join, exists
-from subprocess import call
 from os import mkdir, rename, listdir, unlink
 from shutil import rmtree, copyfile
 from asm_contacts import listDB
 from gi.repository import Gtk
-import asm_araby, asm_customs, asm_config
+import asm_araby, asm_customs, asm_config, asm_path
 from asm_edit_bitaka import EditBitaka
 from asm_edit_tafsir import EditTafsir
 from asm_count import Count
@@ -53,9 +52,12 @@ class Organize(Gtk.Box):
     
     def remove_group(self,*a):
         model, i = self.sel_group.get_selected()
+        id_group = model.get_value(i, 0)
+        nm_group = model.get_value(i, 1).decode('utf8')
+        if self.db.check_books_part(id_group) == True:
+            asm_customs.erro(self.parent, 'لا يمكن حذف هذا القسم\nلأن بعض كتبه للقراءة فقط')
+            return
         if i:
-            id_group = model.get_value(i, 0)
-            nm_group = model.get_value(i, 1).decode('utf8')
             msg = asm_customs.sure(self.parent, u'''
             سيتم حذف قسم "{}"
             مع جميع كتبه، هل تريد الاستمرار ؟
@@ -63,7 +65,7 @@ class Organize(Gtk.Box):
             if msg == Gtk.ResponseType.YES:
                 check = self.db.remove_group(id_group)
                 if check == None:
-                    rmtree(join(asm_customs.MY_DIR, u'books', nm_group))
+                    rmtree(join(asm_path.BOOK_DIR_rw, nm_group))
                     self.refresh_groups()
        
     def remove_book(self,*a):
@@ -80,7 +82,7 @@ class Organize(Gtk.Box):
             if msg == Gtk.ResponseType.YES:
                 check = self.db.remove_book(id_book)
                 if check == None:
-                    unlink(join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm'))
+                    unlink(join(asm_path.BOOK_DIR_rw, nm_group, nm_book+u'.asm'))
                     self.ok_group()
     
     def ok_book(self, *a):
@@ -90,6 +92,23 @@ class Organize(Gtk.Box):
             self.entry_book.set_text(nm_book)
             self.id_book = model.get_value(i, 0)
             self.notebk.set_current_page(1)
+            # a-----------------------------------
+            if self.db.book_dir(self.id_book) == asm_path.BOOK_DIR_r: 
+                self.btn_rn_book.set_sensitive(False)
+                self.btn_rm_book.set_sensitive(False)
+                self.btn_move_book.set_sensitive(False)
+                self.btn_info_book.set_sensitive(False)
+                self.btn_edit_book.set_sensitive(False)
+                self.btn_tafsir.set_sensitive(False)
+                self.btn_mode_write.set_sensitive(True)
+            else:
+                self.btn_rn_book.set_sensitive(True)
+                self.btn_rm_book.set_sensitive(True)
+                self.btn_move_book.set_sensitive(True)
+                self.btn_info_book.set_sensitive(True)
+                self.btn_edit_book.set_sensitive(True)
+                self.btn_tafsir.set_sensitive(True)
+                self.btn_mode_write.set_sensitive(False)
     
     def ok_group(self, *a):
         model, i = self.sel_group.get_selected()
@@ -107,37 +126,63 @@ class Organize(Gtk.Box):
             self.tree_books.set_model(self.modelfilter)
             self.notebk.set_current_page(0)
     
+    def choose_part(self, parent, msg):
+        dlg = Gtk.MessageDialog(parent, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING,
+                             Gtk.ButtonsType.YES_NO)
+        dlg.set_markup(msg)
+        ls = []
+        for a in self.db.all_parts():
+            ls.append([a[0], a[1]])
+        hb, parts_g = asm_customs.combo(ls, u'', 0)
+        parts_g.set_active(0)
+        self.received_part_name = asm_customs.value_active(parts_g, 1).decode('utf8')
+        self.received_part_id = asm_customs.value_active(parts_g)
+        def sel_part(w):
+            self.received_part_name = asm_customs.value_active(parts_g, 1).decode('utf8')
+            self.received_part_id = asm_customs.value_active(parts_g)
+        parts_g.connect('changed', sel_part)
+        area = dlg.get_content_area()
+        area.set_spacing(7)
+        hbox = Gtk.HBox(False, 7)
+        hbox.pack_end(hb, False, False, 0)
+        area.pack_start(hbox, False, False, 0)
+        area.show_all()
+        r = dlg.run()
+        dlg.destroy()
+        return r
+    
     def merge_group_cb(self, *a):
-        new_group = asm_customs.value_active(self.parts_g, 1)
-        id_new = asm_customs.value_active(self.parts_g)
-        if new_group == None: return
-        new_group = new_group.decode('utf8')
         model, i = self.sel_group.get_selected()
+        id_old = model.get_value(i, 0)
+        old_group = model.get_value(i, 1).decode('utf8')
+        if self.db.check_books_part(id_old) == True:
+            asm_customs.erro(self.parent, 'لا يمكن دمج هذا القسم في غيره\nلأن بعض كتبه للقراءة فقط')
+            return
         if i:
-            id_old = model.get_value(i, 0)
-            old_group = model.get_value(i, 1).decode('utf8')
-            self.db.merge_group(id_old, id_new)
-            for v in listdir(join(asm_customs.MY_DIR, u'books', old_group)):
-                copyfile(join(asm_customs.MY_DIR, u'books', old_group, v), join(asm_customs.MY_DIR, u'books', new_group, v))
-            rmtree(join(asm_customs.MY_DIR, u'books', old_group))
-            self.refresh_groups()
+            msg = self.choose_part(self.parent, 'هل تريد دمج القسم المحدد مع هذا القسم ؟')
+            if msg == Gtk.ResponseType.YES:
+                for v in listdir(join(asm_path.BOOK_DIR_rw, old_group)):
+                    copyfile(join(asm_path.BOOK_DIR_rw, old_group, v),
+                              join(asm_path.BOOK_DIR_rw, self.received_part_name, v))
+                self.db.merge_group(id_old, self.received_part_id)
+                rmtree(join(asm_path.BOOK_DIR_rw, old_group))
+                self.refresh_groups()
     
     def move_book_cb(self, *a):
-        new_group = asm_customs.value_active(self.parts_b, 1).decode('utf8')
-        id_group = asm_customs.value_active(self.parts_b)
         model0, i0 = self.sel_group.get_selected()
         old_group = model0.get_value(i0, 1).decode('utf8')
-        if new_group == None: return
         model, i = self.sel_book.get_selected()
         if i:
-            id_book = model.get_value(i, 0)
-            nm_book = model.get_value(i, 1).decode('utf8')
-            self.db.change_group(id_book, id_group)
-            copyfile(join(asm_customs.MY_DIR, u'books', old_group, nm_book+u'.asm'), 
-                     join(asm_customs.MY_DIR, u'books', new_group, nm_book+u'.asm'))
-            unlink(join(asm_customs.MY_DIR, u'books', old_group, nm_book+u'.asm'))
-            asm_customs.info(self.parent, u'تم نقل الكتاب "{}" إلى قسم "{}"'.format(nm_book, new_group))
-            self.ok_group()
+            msg = self.choose_part(self.parent, 'هل تريد نقل الكتاب المحدد إلى هذا القسم ؟')
+            if msg == Gtk.ResponseType.YES:
+                id_book = model.get_value(i, 0)
+                nm_book = model.get_value(i, 1).decode('utf8')
+                self.db.change_group(id_book, self.received_part_id)
+                copyfile(join(asm_path.BOOK_DIR_rw, old_group, nm_book+u'.asm'), 
+                         join(asm_path.BOOK_DIR_rw, self.received_part_name, nm_book+u'.asm'))
+                unlink(join(asm_path.BOOK_DIR_rw, old_group, nm_book+u'.asm'))
+                asm_customs.info(self.parent, u'تم نقل الكتاب "{}" إلى قسم "{}"'.format(nm_book, self.received_part_name))
+                self.ok_group()
       
     def refresh_groups(self, *a):
         self.store_group.clear()
@@ -147,10 +192,10 @@ class Organize(Gtk.Box):
     def new_group(self, *a):
         new_grp = self.entry_group.get_text().decode('utf8')
         if new_grp == '': return
-        if exists(join(asm_customs.MY_DIR, u'books', new_grp)): return
+        if exists(join(asm_path.BOOK_DIR_rw, new_grp)): return
         check = self.db.add_part(new_grp)
         if check == None:
-            mkdir(join(asm_customs.MY_DIR, u'books', new_grp))
+            mkdir(join(asm_path.BOOK_DIR_rw, new_grp))
             self.refresh_groups()
         self.entry_group.set_text('')
             
@@ -158,11 +203,15 @@ class Organize(Gtk.Box):
         new_grp = self.entry_group.get_text().decode('utf8')
         if new_grp == '': return
         model, i = self.sel_group.get_selected()
+        id_group = model.get_value(i, 0)
+        if self.db.check_books_part(id_group) == True:
+            asm_customs.erro(self.parent, 'لا يمكن تغيير اسم هذا القسم\nلأن بعض كتبه للقراءة فقط')
+            return
         if i:
             nm_group = model.get_value(i, 1).decode('utf8')
         check = self.db.rename_part(new_grp, nm_group)
         if check == None:
-            rename(join(asm_customs.MY_DIR, u'books', nm_group), join(asm_customs.MY_DIR, u'books', new_grp))
+            rename(join(asm_path.BOOK_DIR_rw, nm_group), join(asm_path.BOOK_DIR_rw, new_grp))
             self.refresh_groups()
     
     def move_group(self, btn, v):
@@ -190,10 +239,10 @@ class Organize(Gtk.Box):
             new_bk = self.entry_book.get_text().decode('utf8')
             if new_bk == '' or new_bk == nm_book: return
             check = self.db.rename_book(new_bk, nm_book)
-            self.db.rename_book_in_main(join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm'), new_bk)
+            self.db.rename_book_in_main(join(asm_path.BOOK_DIR_rw, nm_group, nm_book+u'.asm'), new_bk)
             if check == None:
-                rename(join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm'), 
-                       join(asm_customs.MY_DIR, u'books', nm_group, new_bk+u'.asm'))
+                rename(join(asm_path.BOOK_DIR_rw, nm_group, nm_book+u'.asm'), 
+                       join(asm_path.BOOK_DIR_rw, nm_group, new_bk+u'.asm'))
     
     def edit_tafsir_cb(self, *a):
         book = self.db.file_book(self.id_book)
@@ -212,6 +261,16 @@ class Organize(Gtk.Box):
         book = self.db.file_book(self.id_book)
         self.parent.editbook.add_book(book, self.id_book, 1)
     
+    def mode_write_cb(self, *a):
+        book_old = self.db.file_book(self.id_book)
+        self.db.mode_write(self.id_book)
+        book_new = self.db.file_book(self.id_book)
+        nm_group = self.db.group_book(self.id_book)
+        if not exists(join(asm_path.BOOK_DIR_rw, nm_group)):
+            mkdir(join(asm_path.BOOK_DIR_rw, nm_group))
+        copyfile(book_old, book_new)
+        self.ok_book()
+    
     def empty_book_cb(self, *a):
         model, i = self.sel_group.get_selected()
         if i:
@@ -221,7 +280,7 @@ class Organize(Gtk.Box):
             if new_bk == '' :
                 asm_customs.erro(self.parent, 'أدخل اسم الكتاب أولا')
                 return
-            db = join(asm_customs.MY_DIR, u'books', nm_group, new_bk+u'.asm')
+            db = join(asm_path.BOOK_DIR_rw, nm_group, new_bk+u'.asm')
             if exists(db):
                 asm_customs.erro(self.parent, 'يوجد كتاب بنفس الاسم')
                 return
@@ -308,10 +367,6 @@ class Organize(Gtk.Box):
         self.search_book.connect('changed', self.search_cb)
         vb.pack_start(self.search_book, False, False, 0)
         hp2.pack1(vb, False, False)
-        
-        ls = []
-        for a in self.db.all_parts():
-            ls.append([a[0], a[1]])
             
         self.notebk = Gtk.Notebook()
         self.notebk.set_show_tabs(False)
@@ -319,38 +374,43 @@ class Organize(Gtk.Box):
         self.entry_group = Gtk.Entry()
         self.entry_group.set_placeholder_text('أدخل اسما!')
         vb.pack_start(self.entry_group, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
         btn_new_g = asm_customs.ButtonClass('قسم جديد')
         btn_new_g.connect('clicked', self.new_group)
         hb.pack_start(btn_new_g, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
         btn_rn_g = asm_customs.ButtonClass('تغيير اسم')
         btn_rn_g.connect('clicked', self.rename_group)
         hb.pack_start(btn_rn_g, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
         btn_rm_g = asm_customs.ButtonClass('حذف قسم')
         btn_rm_g.connect('clicked', self.remove_group)
         hb.pack_start(btn_rm_g, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
         btn_up_g = asm_customs.ButtonClass('حرك لأعلى')
         btn_up_g.connect('clicked', self.move_group, -1)
         hb.pack_start(btn_up_g, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
         btn_down_g = asm_customs.ButtonClass('حرك لأسفل')
         btn_down_g.connect('clicked', self.move_group, 1)
         hb.pack_start(btn_down_g, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 7)
         btn_merge_g = asm_customs.ButtonClass('دمج قسم')
         btn_merge_g.connect('clicked', self.merge_group_cb)
         hb.pack_start(btn_merge_g, False, False, 0)
-        hb0, self.parts_g = asm_customs.combo(ls, u' إلى :', 0)
-        hb.pack_start(hb0, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
         btn_empty_book = asm_customs.ButtonClass('كتاب فارغ')
         btn_empty_book.connect('clicked', self.empty_book_cb)
@@ -362,43 +422,56 @@ class Organize(Gtk.Box):
         self.entry_book = Gtk.Entry()
         self.entry_book.set_placeholder_text('أدخل اسما!')
         vb.pack_start(self.entry_book, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
-        btn_rn_b = asm_customs.ButtonClass('تغيير اسم')
-        btn_rn_b.connect('clicked', self.rename_book)
-        hb.pack_start(btn_rn_b, False, False, 0)
+        self.btn_rn_book = asm_customs.ButtonClass('تغيير اسم')
+        self.btn_rn_book.connect('clicked', self.rename_book)
+        hb.pack_start(self.btn_rn_book, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
-        btn_rm_b = asm_customs.ButtonClass('حذف كتاب')
-        btn_rm_b.connect('clicked', self.remove_book)
-        hb.pack_start(btn_rm_b, False, False, 0)
+        self.btn_rm_book = asm_customs.ButtonClass('حذف كتاب')
+        self.btn_rm_book.connect('clicked', self.remove_book)
+        hb.pack_start(self.btn_rm_book, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 0)
         btn_fav_b = asm_customs.ButtonClass('تفضيل كتاب')
         btn_fav_b.connect('clicked', self.add_to_favory)
         hb.pack_start(btn_fav_b, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 7)
-        btn_mov = asm_customs.ButtonClass('نقل كتاب')
-        btn_mov.connect('clicked', self.move_book_cb)
-        hb.pack_start(btn_mov, False, False, 0)
-        hb0, self.parts_b = asm_customs.combo(ls, u' إلى :', 0)
-        hb.pack_start(hb0, False, False, 0)
+        self.btn_move_book = asm_customs.ButtonClass('نقل كتاب')
+        self.btn_move_book.connect('clicked', self.move_book_cb)
+        hb.pack_start(self.btn_move_book, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 7)
-        btn_info = asm_customs.ButtonClass('بطاقة كتاب')
-        btn_info.connect('clicked', lambda *a: EditBitaka(self.parent, self.id_book))
-        hb.pack_start(btn_info, False, False, 0)
+        self.btn_info_book = asm_customs.ButtonClass('بطاقة كتاب')
+        self.btn_info_book.connect('clicked', lambda *a: EditBitaka(self.parent, self.id_book))
+        hb.pack_start(self.btn_info_book, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 7)
-        btn_edit = asm_customs.ButtonClass('تحرير كتاب')
-        btn_edit.connect('clicked', self.editbk_cb)
-        hb.pack_start(btn_edit, False, False, 0)
+        self.btn_edit_book = asm_customs.ButtonClass('تحرير كتاب')
+        self.btn_edit_book.connect('clicked', self.editbk_cb)
+        hb.pack_start(self.btn_edit_book, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
         hb = Gtk.Box(False, 7)
-        btn_tafsir = asm_customs.ButtonClass('تحرير تفسير')
-        btn_tafsir.connect('clicked', self.edit_tafsir_cb)
-        hb.pack_start(btn_tafsir, False, False, 0)
+        self.btn_tafsir = asm_customs.ButtonClass('تحرير تفسير')
+        self.btn_tafsir.connect('clicked', self.edit_tafsir_cb)
+        hb.pack_start(self.btn_tafsir, False, False, 0)
         vb.pack_start(hb, False, False, 0)
+        
+        hb = Gtk.Box(False, 7)
+        self.btn_mode_write = asm_customs.ButtonClass('وضع الكتابة')
+        self.btn_mode_write.set_tooltip_text('نسخ الكتاب إلى دليل المكتبة الموجود في المنزل\nللتمكن من تحريره')
+        self.btn_mode_write.connect('clicked', self.mode_write_cb)
+        hb.pack_start(self.btn_mode_write, False, False, 0)
+        vb.pack_start(hb, False, False, 0)
+        
         self.notebk.append_page(vb, Gtk.Label('الكتاب'))
         hp2.pack2(self.notebk, True, True)
         

@@ -7,7 +7,7 @@
 
 from gi.repository import Gtk, WebKit
 import re
-import asm_customs
+import asm_customs, asm_path
 from os.path import join
 
 head_html = '''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -123,7 +123,7 @@ class EditHTML(Gtk.VBox):
         save = Gtk.ToolButton(stock_id=Gtk.STOCK_SAVE)
         save.connect('clicked', self.on_save)
         self.toolbar.insert(save, 0)
-        export = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'html-24.png'), "", self.on_export)
+        export = asm_customs.tool_button(join(asm_path.ICON_DIR, 'html-24.png'), "", self.on_export)
         self.toolbar.insert(export, 1)
         source = Gtk.ToggleToolButton(stock_id=Gtk.STOCK_FILE)
         source.connect('toggled', self.on_source)
@@ -179,9 +179,9 @@ class EditHTML(Gtk.VBox):
         justifyfull.connect('clicked', self.on_action, 'Justifyfull')
         self.toolbar.insert(justifyfull, 19)
         self.toolbar.insert(Gtk.SeparatorToolItem(), 20)
-        orderedlist = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'OrderedList.png'), "", self.on_orderedlist)
+        orderedlist = asm_customs.tool_button(join(asm_path.ICON_DIR, 'OrderedList.png'), "", self.on_orderedlist)
         self.toolbar.insert(orderedlist, 21)
-        unorderedlist = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'UnorderedList.png'), "", self.on_unorderedlist)
+        unorderedlist = asm_customs.tool_button(join(asm_path.ICON_DIR, 'UnorderedList.png'), "", self.on_unorderedlist)
         self.toolbar.insert(unorderedlist, 22)
         self.toolbar.insert(Gtk.SeparatorToolItem(), 23)
         removeFormat = Gtk.ToolButton(stock_id=Gtk.STOCK_REMOVE)

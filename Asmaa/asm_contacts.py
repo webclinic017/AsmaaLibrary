@@ -6,7 +6,7 @@
 
 import sqlite3
 from gi.repository import Gtk
-import asm_araby, asm_customs
+import asm_araby, asm_customs, asm_path
 import bisect
 from os.path import join, exists, getsize, basename
 from os import unlink, listdir, mkdir
@@ -22,6 +22,12 @@ class listDB(object):
         cur.execute("SELECT * FROM main")
         return cur.fetchone()
     
+    def save_info(self, book, name, short_name, txt_bitaka, txt_info):
+        con = sqlite3.connect(book)
+        cur = con.cursor()
+        cur.execute('UPDATE main SET bk=?, shortname=?, betaka=?, inf=?', (name, short_name, txt_bitaka, txt_info))
+        con.commit()
+    
     def rename_book_in_main(self, book, name):
         con = sqlite3.connect(book)
         cur = con.cursor()
@@ -36,7 +42,7 @@ class listDB(object):
         con.commit()
     
     def __init__(self, *a):
-        self.con = sqlite3.connect(asm_customs.PATH_DIR)
+        self.con = sqlite3.connect(asm_path.LISTBOOK_FILE_rw)
         self.con.create_function('fuzzy', 1, asm_araby.fuzzy_plus)
         self.cur = self.con.cursor()
      
@@ -52,7 +58,8 @@ class listDB(object):
         list1 = [] 
         a  = 0
         while a < (n_books):
-            while (Gtk.events_pending()): Gtk.main_iteration()
+            if a%500 == 499: 
+                while (Gtk.events_pending()): Gtk.main_iteration()
             nm_book = books[a][1]
             id_book = books[a][0]
             nm_group = self.group_book(id_book)
@@ -61,9 +68,11 @@ class listDB(object):
                 store.append([nm_book+u" :  اسم فقط لا ينتمي لقسم (تم حذفه)"])
                 continue
             list1.append(nm_book)
-            book = join(asm_customs.MY_DIR, u'books',nm_group ,nm_book+u'.asm')
+            book = self.file_book(id_book)
             if not exists(book) or getsize(book) == 0:
                 self.remove_book(id_book)
+                try: unlink(book)
+                except: pass
                 store.append([nm_book+u" :  يوجد الاسم فقط (تم حذفه)"])
             j = (float(a)/float(n_books+1))/2.0
             progress.set_fraction(j)
@@ -71,11 +80,11 @@ class listDB(object):
         #a الأقسام الموجودة في قاعدة البيانات-------------------------
         groups = self.all_parts()
         for g in groups:
-            if not exists(join(asm_customs.MY_DIR, u'books', g[1])):
-                mkdir(join(asm_customs.MY_DIR, u'books', g[1]))
+            if not exists(join(asm_path.BOOK_DIR_rw, g[1])):
+                mkdir(join(asm_path.BOOK_DIR_rw, g[1]))
                 store.append([g[1]+u" : قسم فارغ موجود في قاعدة البيانات (تم إضافته إلى الدليل)"])
         #a الكتب والأقسام الموجودة في دليل المكتبة--------------------
-        path = join(asm_customs.MY_DIR, 'books')
+        path = asm_path.BOOK_DIR_rw
         list_g = listdir(path)
         b = 0
         for a in list_g:
@@ -86,7 +95,8 @@ class listDB(object):
                 store.append([a+u" : قسم موجود في الدليل فقط (تم إضافته إلى قاعدة البيانات)"])
             ls_b = listdir(join(path, a))
             for a1 in ls_b:
-                while (Gtk.events_pending()): Gtk.main_iteration()
+                if b%500 == 499: 
+                    while (Gtk.events_pending()): Gtk.main_iteration()
                 if a1[-4:] == '.asm' and getsize(join(path, a, a1)) > 0:
                     a2 = a1.replace('.asm', '')
                     self.cur.execute("SELECT * FROM books WHERE tit=?", (a2,))
@@ -101,11 +111,40 @@ class listDB(object):
                             unlink(join(path, a, a1))
                             store.append([a1+u" : كتاب تالف (تم حذفه)"])
                 else:
-                    unlink(join(path, a, a1))
-                    store.append([a1+u" : كتاب فارغ (تم حذفه)"])
+                    try:
+                        unlink(join(path, a, a1))
+                        store.append([a1+u" : كتاب فارغ (تم حذفه)"])
+                    except: pass
                 b += 1
                 j1 = ((float(b)/float(n_books))/2.0) + j
                 progress.set_fraction(j1)
+        #a الكتب والأقسام الموجودة في دليل المكتبة المقروءة--------------------        
+        path = asm_path.BOOK_DIR_r
+        if asm_path.HOME_DIR in asm_path.BOOK_DIR_rw and asm_path.LIBRARY_DIR_r != u'':
+            list_g = listdir(path)
+            b = 0
+            for a in list_g:
+                self.cur.execute("SELECT * FROM groups WHERE tit=?", (a,))
+                group = self.cur.fetchone()
+                if group == None or len(group) == 0:
+                    self.add_part(a)
+                    store.append([a+u" : قسم موجود في الدليل فقط (تم إضافته إلى قاعدة البيانات)"])
+                ls_b = listdir(join(path, a))
+                for a1 in ls_b:
+                    if b%500 == 499: 
+                        while (Gtk.events_pending()): Gtk.main_iteration()
+                    if a1[-4:] == '.asm' and getsize(join(path, a, a1)) > 0:
+                        a2 = a1.replace('.asm', '')
+                        self.cur.execute("SELECT * FROM books WHERE tit=?", (a2,))
+                        book = self.cur.fetchone()
+                        if book == [] or book == None :
+                            id_group = self.group_id(a)
+                            try:
+                                is_tafsir = self.info_book(join(path, a, a1))[8]
+                                self.add_book(a2, id_group, is_tafsir, -1)
+                                store.append([a1+u" : كتاب موجود في الدليل فقط تم إضافته إلى قسم "+a])
+                            except: pass   
+                    b += 1
         if len(store) == 0:
                 store.append([u"جميع البيانات سليمة"])
         store.append([u"انتهى."])
@@ -142,8 +181,8 @@ class listDB(object):
     
     # a كتب قسم محدد---------------------------------------
     
-    def books_part(self, part):
-        self.cur.execute('SELECT id_book, tit FROM books WHERE parent=?', (part, ))
+    def books_part(self, id_part):
+        self.cur.execute('SELECT id_book, tit FROM books WHERE parent=?', (id_part, ))
         books = self.cur.fetchall()
         return books
     
@@ -200,6 +239,22 @@ class listDB(object):
         books = self.cur.fetchall()
         return len(books)
     
+    # a هل في كتب القسم كتب للقراءة فقط؟------------------
+    
+    def check_books_part(self, id_part):
+        self.cur.execute('SELECT id_book FROM books WHERE parent=? AND cat=-1 LIMIT 1', (id_part, ))
+        books = self.cur.fetchone()
+        if books == None or len(books) == 0: return False
+        else: return True
+        
+    # a هل في كتب المكتبة كتب للقراءة فقط؟------------------
+    
+    def check_books_library(self, *a):
+        self.cur.execute('SELECT id_book FROM books WHERE cat=-1 LIMIT 1')
+        books = self.cur.fetchone()
+        if books == None or len(books) == 0: return False
+        else: return True
+    
     # a كتاب فارغ-----------------------------------------
     
     def empty_book(self, db):
@@ -227,13 +282,13 @@ class listDB(object):
     
     # a إضافة كتاب--------------------------------------
     
-    def add_book(self, nm_book, id_part, is_tafsir=0):
+    def add_book(self, nm_book, id_part, is_tafsir=0, cat=0):
         self.cur.execute('SELECT id_book FROM books ORDER BY id_book')
         books = self.cur.fetchall()
         if len(books) == 0: id_book = 1
         else: id_book = books[-1][0]+1
         self.cur.execute('INSERT INTO books VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-                         (id_book, nm_book, id_part, 0, 0, 0, is_tafsir, 0))
+                         (id_book, nm_book, id_part, 0, 0, cat, is_tafsir, 0))
         check = self.con.commit()
         return check
     
@@ -314,11 +369,26 @@ class listDB(object):
         self.cur.execute('SELECT last FROM books WHERE id_book=?', (id_book, ))
         id_page = self.cur.fetchone()
         return id_page
-
+    
+    # a موقع الكتب-------------------------------------------
+    
+    def book_dir(self, id_book):
+        self.cur.execute('SELECT cat FROM books WHERE id_book=?', (id_book, ))
+        cat = self.cur.fetchone()
+        if cat[0] == -1: return asm_path.BOOK_DIR_r
+        else: return asm_path.BOOK_DIR_rw
+    
+    # a استخراج كتاب لوضع الكتابة-----------------------------
+    
+    def mode_write(self, id_book):
+        self.cur.execute('UPDATE books SET cat=0 WHERE id_book=?', (id_book, ))
+        self.con.commit()
+    
     # a إعادة ملف كتاب----------------------------------------
     
     def file_book(self, id_book):
-        return join(asm_customs.MY_DIR, u'books', self.group_book(id_book),
+        book_dir = self.book_dir(id_book)
+        return join(book_dir, self.group_book(id_book),
                      self.tit_book(id_book)[1]+u'.asm')
 
 # class قاعدة بيانات كتاب محدد----------------------------------
@@ -426,10 +496,6 @@ class bookDB(object):
         return self.cur.fetchone()[0]
     
     # a بطاقة الكتاب----------------------------------------------
-    
-    def save_info(self, name, short_name, txt_bitaka, txt_info):
-        self.cur.execute('UPDATE main SET bk=?, shortname=?, betaka=?, inf=?', (name, short_name, txt_bitaka, txt_info))
-        self.con.commit()
     
     def info_book(self):
         self.cur.execute("SELECT * FROM main")
@@ -550,7 +616,7 @@ class bookDB(object):
 class Othman(object):
 
     def __init__(self, *a):
-        self.con=sqlite3.connect(join(asm_customs.MY_DATA, 'Quran.db'))
+        self.con=sqlite3.connect(asm_path.QURAN_DB)
         self.con.create_function('fuzzy', 1, asm_araby.fuzzy) 
         self.cur=self.con.cursor()
         try:
@@ -631,7 +697,7 @@ class DictDB(object):
         return term[0]
     
     def __init__(self, *a):
-        self.con = sqlite3.connect(join(asm_customs.MY_DATA, 'Moejam.db'))
+        self.con = sqlite3.connect(asm_path.MOEJAM_DB)
         self.con.create_function('firstletter', 1, self.firstletter)
         self.cur = self.con.cursor()
     
@@ -650,7 +716,7 @@ class DictDB(object):
 class AuthorDB(object):
     
     def __init__(self, *a):
-        self.con = sqlite3.connect(join(asm_customs.MY_DATA, 'Author.db'))
+        self.con = sqlite3.connect(asm_path.AUTHOR_DB)
         self.con.create_function('fuzzy', 1, asm_araby.fuzzy_plus) 
         self.cur = self.con.cursor()
     
@@ -680,7 +746,7 @@ class AuthorDB(object):
 class TarajimDB(object):
     
     def __init__(self, *a):
-        self.con = sqlite3.connect(join(asm_customs.MY_DATA, 'Tarajim.db'))
+        self.con = sqlite3.connect(asm_path.TARAJIM_DB)
         self.con.create_function('fuzzy', 1, asm_araby.fuzzy_plus) 
         self.cur = self.con.cursor()
     

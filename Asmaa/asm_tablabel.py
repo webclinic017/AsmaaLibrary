@@ -6,7 +6,7 @@
 
 from os.path import join
 from gi.repository import Gtk, Pango
-import asm_customs
+import asm_path
 
 
 # class عنوان الصفحة-------------------------------------------------------------------    
@@ -19,7 +19,7 @@ class TabLabel(Gtk.Box):
         self.child=child
         if not self.close_img:
             self.close_img=Gtk.Image()
-            self.close_img.set_from_file(join(asm_customs.ICON_DIR, 'tab.png'))
+            self.close_img.set_from_file(join(asm_path.ICON_DIR, 'tab.png'))
         Gtk.Box.__init__(self,orientation=Gtk.Orientation.HORIZONTAL)
         self.close=Gtk.Button()
         self.close.set_tooltip_text('اغلق هذه الصفحة')

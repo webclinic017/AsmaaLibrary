@@ -5,10 +5,8 @@
 #a############################################################################
 
 from gi.repository import Gtk, Pango
-import asm_customs, asm_popup
+import asm_customs, asm_popup, asm_path
 from asm_contacts import Othman, listDB, bookDB
-from os.path import join, exists
-import cPickle
 
 # class نافذة التفسير---------------------------------------------------------    
 
@@ -18,7 +16,7 @@ class Tafsir(Gtk.HBox):
         if self.db != None:
             self.db.close_db()
             del self.db
-        if tafsir == -1: book = join(asm_customs.DATA_DIR, 'data', 'Tafsir.db')
+        if tafsir == -1: book = asm_path.TAFSIR_DB
         else: book = self.listbook.file_book(tafsir)
         self.db = bookDB(book, tafsir)
         id_page = self.db.page_ayat(sura, aya)

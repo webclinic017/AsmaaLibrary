@@ -6,7 +6,7 @@
 
 from gi.repository import Gtk, Gdk
 from asm_contacts import Othman, TarajimDB
-import asm_customs, asm_stemming
+import asm_customs, asm_stemming, asm_path
 from os.path import join
 import re, os
 import asm_config
@@ -25,7 +25,7 @@ def copy_to(widget, buff, waraka, parent):
         page = parent.tafsirpage.page_now
         nm_book = parent.tafsirpage.nm_book
         hamich = u'{} (ج{} - ص{})'.format(nm_book, part, page)
-    myfile = open(join(asm_customs.MY_DIR, 'waraka-search', waraka), 'r')
+    myfile = open(join(asm_path.LIBRARY_DIR_rw, 'waraka-search', waraka), 'r')
     new_w = u'''<head>\n<title>new</title>\n</head>\n<body dir="rtl">\n\
     <div style="text-align: right;">ــــــــــــــــــــــــــــــــــــــــــــــــــــــ</div>\n\
     </body>
@@ -46,7 +46,7 @@ def copy_to(widget, buff, waraka, parent):
     liens_file.insert(-2,
     u'<div style="text-align: right;"><font face="KacstOne" size="3"><a name="{}">({})</a> {}</font></div>'.format(n_hawamech, n_hawamech, hamich))
     new_text = '\n'.join(liens_file)
-    y = open(join(asm_customs.MY_DIR, 'waraka-search', waraka) , 'wb')
+    y = open(join(asm_path.LIBRARY_DIR_rw, 'waraka-search', waraka) , 'wb')
     y.write(new_text.encode('utf8'))
     y.close()
 
@@ -172,10 +172,16 @@ def populate_popup(view, menu, parent):
     f5.show()
     imenu = Gtk.Menu()
     f5.set_submenu(imenu)
-    list_n = os.listdir(join(asm_customs.MY_DIR, 'waraka-search'))
-    for v in list_n:
-        fm = Gtk.MenuItem(v)
-        fm.connect("activate", copy_to, buff, v, parent)
+    list_n = os.listdir(join(asm_path.LIBRARY_DIR_rw, 'waraka-search'))
+    if len(list_n) > 0: 
+        for v in list_n:
+            fm = Gtk.MenuItem(v)
+            fm.connect("activate", copy_to, buff, v, parent)
+            imenu.append(fm)
+            fm.show()
+    else:
+        fm = Gtk.MenuItem('لا يوجد ورقة بحث')
+        fm.set_sensitive(False)
         imenu.append(fm)
         fm.show()
     c3 = Gtk.SeparatorMenuItem()
@@ -205,7 +211,7 @@ def populate_popup(view, menu, parent):
         f2.set_sensitive(True)
         f3.set_sensitive(True)
         f4.set_sensitive(True)
-        if len(list_n) > 0: f5.set_sensitive(True)
+        f5.set_sensitive(True)
     f1.connect("activate", explain_term, buff, parent)
     f2.connect("activate", tafsir_ayat, buff, parent)
     f3.connect("activate", tarjama_rawi, buff, parent)

@@ -4,31 +4,15 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  ########
 ##############################################################################
 
-from os.path import join, dirname, realpath, exists, expanduser
 from gi.repository import Gtk, Gdk, Pango
-import asm_config, asm_araby
-from os import mkdir
-import re, sqlite3
+import asm_araby
+import re
 
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.0.7'
+version = '2.1.0'
 #a--------------------------------------------------
-APP_DIR      = dirname(dirname(realpath(__file__))).decode('utf8')
-HOME_DIR     = expanduser(u'~/.asmaa')
-if exists(join(APP_DIR, u'asmaa-data', u'icons', u'tab.png')):
-    DATA_DIR = join(APP_DIR, u'asmaa-data')
-elif exists(u'/usr/share/asmaa/asmaa-data/icons/tab.png'):
-    DATA_DIR = u'/usr/share/asmaa/asmaa-data'
-elif exists(u'/usr/local/share/asmaa/asmaa-data/icons/tab.png'):
-    DATA_DIR = u'/usr/local/share/asmaa/asmaa-data'
-
-ICON_DIR     = join(DATA_DIR, u'icons')
-MY_DATA      = join(DATA_DIR, u'data')
-
-# a ------------------------------------------------
-
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
             auth_death INTEGER DEFAULT 0, islamshort INTEGER DEFAULT 0, is_tafseer INTEGER DEFAULT 0, \
@@ -65,117 +49,6 @@ def sure(parent, msg):
     return r
 
 #a------------------------------------------
-def sure_start():
-    dlg = Gtk.MessageDialog(None, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING,
-                             Gtk.ButtonsType.YES_NO)
-    dlg.set_markup('''
-    لم يتمكن البرنامج من الاتصال بقاعدة البيانات،
-    إذا كنت قد نزلتها بالفعل فربما لم تربطها بالبرنامج، 
-    أو قد يكون القرص الموجود عليه القاعدة غير مضموم،
-    هل تريد تحديد مسار قاعدة البيانات ؟''')
-    db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/AsmaaLibrary.tar.gz/download",
-                                                'تنزيل قاعدة بيانات للتجربة')
-    new_lib = Gtk.Button('إنشاء مكتبة مفرغة')
-    dlg.add_action_widget(new_lib, 3)
-    area = dlg.get_content_area()
-    area.set_spacing(7)
-    hbox = Gtk.HBox(False, 7)
-    hbox.pack_end(db_void, False, False, 0)
-    area.pack_start(hbox, False, False, 0)
-    area.show_all()
-    r = dlg.run()
-    dlg.destroy()
-    return r
-
-#a------------------------------------------------
-def change_path_db():
-        open_dlg = Gtk.FileChooserDialog(u'تحديد مسار قاعدة البيانات',
-                                         None, Gtk.FileChooserAction.OPEN,
-                                        (Gtk.STOCK_OK, Gtk.ResponseType.OK,
-                                         Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
-        
-        Filter = Gtk.FileFilter()
-        Filter.set_name(u"قاعدة البيانات")
-        Filter.add_pattern("Listbooks.db")
-        open_dlg.add_filter(Filter)
-        
-        res = open_dlg.run()
-        if res == Gtk.ResponseType.OK:
-            asm_config.setv('path', open_dlg.get_filenames()[0])          
-            open_dlg.destroy()
-        else:
-            open_dlg.destroy()
-            quit()
-
-#a------------------------------------------
-if not exists(asm_config.getv('path')): 
-    res = sure_start()
-    if res == Gtk.ResponseType.YES:
-        change_path_db()
-        PATH_DIR  = asm_config.getv('path')
-        MY_DIR = dirname(dirname(PATH_DIR)).decode('utf8')
-    elif res == Gtk.ResponseType.NO:
-        my_return = 0
-        quit()
-    elif res == 3:
-        save_dlg = Gtk.FileChooserDialog(u'مسار قاعدة البيانات الجديدة', None,
-                                    Gtk.FileChooserAction.SELECT_FOLDER,
-                                    (Gtk.STOCK_OK, Gtk.ResponseType.OK,
-                                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
-        res = save_dlg.run()
-        if res == Gtk.ResponseType.OK:
-            new_dir = join(save_dlg.get_filename().decode('utf8'), u'مكتبة أسماء')
-            if exists(join(new_dir, 'data', 'Listbooks.db')):
-                erro(None, u'يوجد مكتبة في هذا الدليل بالفعل')
-            else:
-                if not exists(new_dir):
-                    mkdir(new_dir)
-                if not exists(join(new_dir, u'data')):
-                    mkdir(join(new_dir, u'data'))
-                if not exists(join(new_dir, u'books')):
-                    mkdir(join(new_dir, u'books'))
-                if not exists(join(new_dir, u'index')):
-                    mkdir(join(new_dir, u'index'))
-                con = sqlite3.connect(join(new_dir, 'data', 'Listbooks.db'))
-                cur = con.cursor()
-                cur.execute('CREATE TABLE groups (id_group integer primary key, tit varchar(255), sub INTEGER, cat INTEGER)') 
-                cur.execute('CREATE TABLE books (id_book integer primary key, tit varchar(255), \
-                parent INTEGER, fav  INTEGER DEFAULT 0, last  INTEGER DEFAULT 1, cat  INTEGER DEFAULT 0,\
-                tafsir  INTEGER DEFAULT 0, indx INTEGER DEFAULT 0)')
-                info(None, u'تم إضافة مكتبة مفرغة جديدة')
-        save_dlg.destroy()
-        asm_config.setv('path', join(new_dir, 'data', 'Listbooks.db'))
-        PATH_DIR  = asm_config.getv('path')
-        MY_DIR = dirname(dirname(PATH_DIR)).decode('utf8')
-else:
-    PATH_DIR = asm_config.getv('path')
-    MY_DIR = dirname(dirname(PATH_DIR)).decode('utf8')
-    
-if not exists(join(MY_DIR, 'fields-search')):
-    mkdir(join(MY_DIR, 'fields-search'))
-    
-if not exists(join(MY_DIR, 'waraka-search')):
-    mkdir(join(MY_DIR, 'waraka-search'))
-    
-#a--------------------------------------------------
-try: greet = Gtk.Window(Gtk.WindowType.POPUP)
-except: 
-    greet = Gtk.Window()
-    greet.set_title("مرحبا !")
-greet.set_border_width(15)
-greet.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
-greet.set_size_request(400,300)
-vb = Gtk.VBox(False, 10)
-img_greet = Gtk.Image()
-img_greet.set_from_file(join(ICON_DIR,"greet.png"))
-vb.pack_start(img_greet, False, False, 0)
-vb.pack_start(Gtk.Label('الإصدار {}\nجاري تحميل برنامج مكتبة أسماء....'.format(version, ))
-              , False, False, 0)
-greet.add(vb)
-greet.show_all()
-while (Gtk.events_pending()): Gtk.main_iteration()
-
-#a------------------------------------------
 def rgba(value):
     value = value.lstrip('#')
     v = len(value)/3
@@ -198,7 +71,7 @@ def rgb(value):
 def tool_button(icon_file, tooltip, function, data=None):
         ''' Build custom toolbutton '''
         toolbtn = Gtk.ToolButton()
-        widget = Gtk.Image.new_from_file(join(APP_DIR, icon_file))
+        widget = Gtk.Image.new_from_file(icon_file)
         toolbtn.set_icon_widget(widget)
         toolbtn.set_tooltip_text(tooltip)
         toolbtn.connect('clicked', function, data)
@@ -318,11 +191,6 @@ def with_tag(text_buff, text_tag, ls, tt=0, view=None):
             start = text_buff.get_start_iter()
         search_and_mark(text_buff, text_tag, text, start, tt, view)
 
-##a------------------------------------------           
-#def tashkil(text):
-#    if asm_config.getv('tashkil') == '0': return daw_araby.stripTashkeel(text)
-#    else: return text
-    
 #a------------------------------------------
 class ViewClass(Gtk.TextView):
     __gtype_name__ = 'View'
@@ -378,24 +246,3 @@ def first_term(text):
     txt = asm_araby.stripTatweel(ls[0])
     return txt
         
-#a------------------------------------------
-class SpinnerClass(Gtk.Dialog):
-
-    def __init__(self, parent, title):
-        while (Gtk.events_pending()): Gtk.main_iteration()
-        Gtk.Dialog.__init__(self, parent=parent)
-        self.set_title(title)
-        self.set_size_request(300, 160)
-        area = self.get_content_area()
-        area.set_spacing(6)
-        lab = Gtk.Label('\nانتظر قليلاً من فضلك ...\n')
-        self.spinner = Gtk.Spinner()
-        self.spinner.start()
-        vb = Gtk.VBox(False, 6)
-        vb.pack_start(lab, False, False, 0)
-        vb.pack_start(self.spinner,  True, True, 0)
-        area.pack_start(vb, True, True, 0)
-        self.show_all()
-
-    def close(self, *a):
-        self.destroy()

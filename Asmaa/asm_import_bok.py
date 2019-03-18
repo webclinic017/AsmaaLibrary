@@ -3,7 +3,7 @@
 import sqlite3
 from os.path import join, exists
 import re, os, sys
-import asm_customs
+import asm_customs, asm_path
 from subprocess import Popen, PIPE
 
 
@@ -107,9 +107,9 @@ def add_to_booksDB(con, nm_book, nm_group, is_tafsir):
                      (id_book, nm_book, id_part, 0, 0, 0, is_tafsir, 0))
     con.commit()
     
-def create_asmaa_bok(con_ls, cur_ls, new_path, inf_book, inf_group, shorts_book, shrooh_book, com_book, inf_page, inf_title, sharh, tafsir, is_tafsir, is_sharh, version):
-    if not exists(join(new_path, 'books', inf_group[1])): 
-        os.mkdir(join(new_path, 'books', inf_group[1]))
+def create_asmaa_bok(con_ls, cur_ls, inf_book, inf_group, shorts_book, shrooh_book, com_book, inf_page, inf_title, sharh, tafsir, is_tafsir, is_sharh, version):
+    if not exists(join(asm_path.BOOK_DIR_rw, inf_group[1])): 
+        os.mkdir(join(asm_path.BOOK_DIR_rw, inf_group[1]))
         cur_ls.execute('SELECT id_group FROM groups ORDER BY id_group')
         groups = cur_ls.fetchall()
         if len(groups) == 0: id_group = 1
@@ -117,7 +117,7 @@ def create_asmaa_bok(con_ls, cur_ls, new_path, inf_book, inf_group, shorts_book,
         cur_ls.execute('INSERT INTO groups VALUES (?, ?, ?, ?)', 
                          (id_group, inf_group[1], 0, len(groups)))
         con_ls.commit()
-    db = join(new_path, 'books', inf_group[1], inf_book[1]+'.asm')
+    db = join(asm_path.BOOK_DIR_rw, inf_group[1], inf_book[1]+'.asm')
     if exists(db): os.unlink(db)
     con = sqlite3.connect(db, isolation_level=None)
     cur = con.cursor() 
@@ -129,13 +129,12 @@ def create_asmaa_bok(con_ls, cur_ls, new_path, inf_book, inf_group, shorts_book,
                 (inf_book[1],'', inf_book[2], inf_book[3], inf_book[4], inf_book[5], 0,  inf_book[6], is_tafsir, is_sharh, version))
     # shorts table ----------------------------------------------------
     for stb in shorts_book:
-        cur.execute('INSERT INTO shorts VALUES (?, ?)', (stb[0], stb[1]))
+        try: cur.execute('INSERT INTO shorts VALUES (?, ?)', (stb[0], stb[1]))
+        except: pass
     # shrooh table ----------------------------------------------------
     for shb in shrooh_book:
-        cur.execute('INSERT INTO shrooh VALUES (?, ?, ?, ?)', (shb[0], shb[1], shb[2], shb[3]))
-    # com table ----------------------------------------------------
-    for cm in com_book:
-        cur.execute('INSERT INTO com VALUES (?, ?)', (cm[0], cm[1]))
+        try: cur.execute('INSERT INTO shrooh VALUES (?, ?, ?, ?)', (shb[0], shb[1], shb[2], shb[3]))
+        except: pass
     # pages table ----------------------------------------------------
     page_dict = {}
     for pg in range(len(inf_page)):
@@ -154,8 +153,12 @@ def create_asmaa_bok(con_ls, cur_ls, new_path, inf_book, inf_group, shorts_book,
     for ti in range(len(inf_title)):
         try: cur.execute('INSERT INTO titles VALUES (?, ?, ?, ?)', (page_dict[inf_title[ti][0]], inf_title[ti][1], inf_title[ti][2], 
                         inf_title[ti][3]))
-        except: continue
+        except: pass
     con.commit()
+    # com table ----------------------------------------------------
+    for cm in com_book:
+        try: cur.execute('INSERT INTO com VALUES (?, ?)', (page_dict[cm[1]], cm[0]))
+        except: pass
     add_to_booksDB(con_ls, inf_book[1], inf_group[1], is_tafsir)
 
 def export_bok(ifile, cat, con_ls, cur_ls, cur):
@@ -185,10 +188,10 @@ def export_bok(ifile, cat, con_ls, cur_ls, cur):
     cur.execute('SELECT id, tit, lvl , sub FROM t{}'.format(inf_book[0],))
     inf_title = cur.fetchall()
     version = 0.1
-    create_asmaa_bok(con_ls, cur_ls, asm_customs.MY_DIR, inf_book, inf_group, shorts_book, 
+    create_asmaa_bok(con_ls, cur_ls, inf_book, inf_group, shorts_book, 
                          shrooh_book, com_book, inf_page, inf_title, sharh, tafsir, is_tafsir, is_sharh, version)
 
-def export_mdb(path, new_path, con_ls, cur_ls, cur_main, cur_sp, cur, bkid):
+def export_mdb(path, con_ls, cur_ls, cur_main, cur_sp, cur, bkid):
     cur_main.execute('SELECT bkid, bk, cat, betaka, inf, authno, islamshort ,tafseernam FROM abok WHERE bkid=?', 
                      (bkid, ))
     inf_book = cur_main.fetchone()
@@ -217,5 +220,5 @@ def export_mdb(path, new_path, con_ls, cur_ls, cur_main, cur_sp, cur, bkid):
     cur.execute('SELECT id, tit, lvl , sub FROM title')
     inf_title = cur.fetchall()
     version = 0.1
-    create_asmaa_bok(con_ls, cur_ls, new_path, inf_book, inf_group, shorts_book, shrooh_book, com_book, 
+    create_asmaa_bok(con_ls, cur_ls, inf_book, inf_group, shorts_book, shrooh_book, com_book, 
                      inf_page, inf_title, sharh, tafsir, is_tafsir, is_sharh, version) 

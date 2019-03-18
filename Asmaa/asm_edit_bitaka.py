@@ -6,14 +6,13 @@
 
 from gi.repository import Gtk
 import asm_customs
-from asm_contacts import bookDB, listDB
+from asm_contacts import listDB
 
 class EditBitaka(Gtk.Dialog):
     
     def quit_dlg(self, *a):
-        self.destroy()
-        self.db.close_db()
         del self.db
+        self.destroy()
     
     def save_cb(self, *a):
         txt_bitaka = self.view_bitaka_bfr.get_text(self.view_bitaka_bfr.get_start_iter(),
@@ -22,13 +21,13 @@ class EditBitaka(Gtk.Dialog):
                             self.view_info_bfr.get_end_iter(), False).decode('utf8')
         name = self.ent_name.get_text().decode('utf8')
         short_name = self.ent_name_sh.get_text().decode('utf8')
-        self.db.save_info(name, short_name, txt_bitaka, txt_info)
+        self.db.save_info(self.book, name, short_name, txt_bitaka, txt_info)
         asm_customs.info(self.parent, 'تم حفظ المعلومات الجديدة')
     
     def __init__(self, parent, id_book):
         self.parent = parent
-        book = listDB().file_book(id_book)
-        self.db = bookDB(book, id_book)
+        self.db = listDB()
+        self.book = self.db.file_book(id_book)
         Gtk.Dialog.__init__(self, parent=self.parent)
         self.set_icon_name("asmaa")
         self.connect('destroy', self.quit_dlg)
@@ -43,7 +42,7 @@ class EditBitaka(Gtk.Dialog):
         self.n_n = Gtk.Label('اسم الكتاب')
         hbox.pack_start(self.n_n, False, False, 0) 
         self.ent_name = Gtk.Entry()
-        self.ent_name.set_text(self.db.info_book()[0])
+        self.ent_name.set_text(self.db.info_book(self.book)[0])
         hbox.pack_start(self.ent_name, True, True, 0)
         box.pack_start(hbox, False, False, 0)
         
@@ -51,7 +50,7 @@ class EditBitaka(Gtk.Dialog):
         self.n_ns = Gtk.Label('اسم مختصر')
         hbox.pack_start(self.n_ns, False, False, 0) 
         self.ent_name_sh = Gtk.Entry()
-        self.ent_name_sh.set_text(self.db.info_book()[1])
+        self.ent_name_sh.set_text(self.db.info_book(self.book)[1])
         hbox.pack_start(self.ent_name_sh, True, True, 0)
         box.pack_start(hbox, False, False, 0)
         
@@ -65,7 +64,7 @@ class EditBitaka(Gtk.Dialog):
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.view_bitaka)
-        self.bitaka_book = self.db.info_book()[3]
+        self.bitaka_book = self.db.info_book(self.book)[3]
         self.view_bitaka_bfr.set_text(self.bitaka_book)
         hbox = Gtk.HBox(False, 3)
         hbox.pack_start(Gtk.Label('بطاقة الكتاب'), False, False, 0)
@@ -91,7 +90,7 @@ class EditBitaka(Gtk.Dialog):
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.view_info)
-        self.info_book = self.db.info_book()[4]
+        self.info_book = self.db.info_book(self.book)[4]
         self.view_info_bfr.set_text(self.info_book)
         hbox = Gtk.HBox(False, 3)
         hbox.pack_start(Gtk.Label('نبذة عن الكتاب'), False, False, 0)

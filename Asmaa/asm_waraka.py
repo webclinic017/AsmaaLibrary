@@ -7,7 +7,7 @@
 from os.path import join, exists
 import os
 from gi.repository import Gtk
-import asm_customs
+import asm_customs, asm_path
 from asm_edit_html import EditHTML
 
 new_w = '''<head>
@@ -28,16 +28,16 @@ class Warakat(Gtk.HPaned):
             msg = asm_customs.sure(self.parent, "هل تريد مسح الورقة المحددة")
             if msg == Gtk.ResponseType.YES:
                 waraka = model.get_value(i,0).decode('utf8')
-                os.remove(join(asm_customs.MY_DIR, u'waraka-search', waraka))
+                os.remove(join(asm_path.LIBRARY_DIR_rw, u'waraka-search', waraka))
                 model.remove(i)
                 self.edit_html.set_sensitive(False)
                 
     def remove_all(self, *a):
         msg = asm_customs.sure(self.parent, "هل تريد مسح جميع أوراق البحث")
         if msg == Gtk.ResponseType.YES:
-            list_n = os.listdir(join(asm_customs.MY_DIR, u'waraka-search'))
+            list_n = os.listdir(join(asm_path.LIBRARY_DIR_rw, u'waraka-search'))
             for v in list_n:
-                os.remove(join(asm_customs.MY_DIR, u'waraka-search', v))
+                os.remove(join(asm_path.LIBRARY_DIR_rw, u'waraka-search', v))
             self.store_waraka.clear()
             self.edit_html.set_sensitive(False)
             self.edit_html.clear_page()
@@ -46,14 +46,14 @@ class Warakat(Gtk.HPaned):
         model, i = self.sel_waraka.get_selected()
         if i:
             waraka = model.get_value(i,0).decode('utf8')
-            myfile = join(asm_customs.MY_DIR, u'waraka-search', waraka)
+            myfile = join(asm_path.LIBRARY_DIR_rw, u'waraka-search', waraka)
             self.edit_html.open_html(myfile)
             self.myfile = myfile
             self.edit_html.set_sensitive(True)
     
     def load_warakat(self, *a):
         self.store_waraka.clear()
-        list_n = os.listdir(join(asm_customs.MY_DIR, u'waraka-search'))
+        list_n = os.listdir(join(asm_path.LIBRARY_DIR_rw, u'waraka-search'))
         for v in list_n:
                 self.store_waraka.append([v])
     
@@ -65,7 +65,7 @@ class Warakat(Gtk.HPaned):
     
     def new_waraka(self, *a):
         new_waraka = self.ent_new.get_text().decode('utf8')
-        myfile = join(asm_customs.MY_DIR, u'waraka-search', new_waraka)
+        myfile = join(asm_path.LIBRARY_DIR_rw, u'waraka-search', new_waraka)
         if not exists(myfile):
             try:
                 f = open(myfile,'w+')

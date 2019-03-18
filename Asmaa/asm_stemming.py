@@ -48,8 +48,7 @@
 #a============================================================================
 
 import re, sqlite3
-import  asm_araby, asm_customs
-from os.path import join
+import  asm_araby, asm_path
 
 duality_term = [u'يد', u'دم', u'فم', u'أب', u'أخ', u'حم', u'هن']
 
@@ -262,7 +261,7 @@ def get_stem(text):
 #a قائمة بالجذور المحتملة----------------------------------------------------
 
 def is_root(text):
-    con = sqlite3.connect(join(asm_customs.MY_DATA, 'Moejam.db'))
+    con = sqlite3.connect(asm_path.MOEJAM_DB)
     cur = con.cursor()
     cur.execute('SELECT term FROM dict WHERE term=?', (text,))
     result = cur.fetchall()

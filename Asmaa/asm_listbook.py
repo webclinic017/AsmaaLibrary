@@ -4,7 +4,7 @@ from gi.repository import GdkPixbuf
 from asm_contacts import listDB
 from asm_viewer import OpenBook
 from asm_tablabel import TabLabel
-import asm_customs, asm_araby, asm_config
+import asm_customs, asm_araby, asm_config, asm_path
 import cPickle
 from os.path import join
 from os import remove
@@ -22,7 +22,7 @@ class ListBooks(Gtk.HBox):
     def __init__(self, parent):
         self.parent = parent
         self.db = listDB()
-        try: self.last_books = cPickle.load(file((join(asm_customs.MY_DIR, 'data', 'last-books.pkl'))))
+        try: self.last_books = cPickle.load(file((join(asm_path.DATA_DIR_rw, u'last-books.pkl'))))
         except: self.last_books = []
         self.build()
    
@@ -49,8 +49,7 @@ class ListBooks(Gtk.HBox):
             tree == self.tree_list_search:
                 id_book = model.get_value(i, 0)
                 nm_book = model.get_value(i, 1).decode('utf8')
-                nm_group = self.db.group_book(id_book)
-                book = join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm')
+                book = self.db.file_book(id_book)
                 text_info = self.db.info_book(book)[3]
                 if text_info == None:
                     text_info = nm_book
@@ -62,7 +61,7 @@ class ListBooks(Gtk.HBox):
             self.last_books.remove(id_book)
         self.last_books.append(id_book)
         try: 
-            output = open(join(asm_customs.MY_DIR, u'data', u'last-books.pkl'), 'wb')
+            output = open(join(asm_path.DATA_DIR_rw, u'last-books.pkl'), 'wb')
             cPickle.dump(self.last_books, output)
             output.close()
         except: pass
@@ -74,9 +73,7 @@ class ListBooks(Gtk.HBox):
             if model.iter_parent(i):
                 id_book = model.get_value(i, 0)
                 nm_book = model.get_value(i, 1).decode('utf8')
-                i0 = model.iter_parent(i)
-                nm_group = model.get_value(i0, 1).decode('utf8')
-                my_book = join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm')
+                my_book = self.db.file_book(id_book)
                 self.open_book(my_book, nm_book, id_book)
                 self.add_to_lasts(id_book)
     
@@ -85,8 +82,7 @@ class ListBooks(Gtk.HBox):
         if i:
             id_book = model.get_value(i,0)
             nm_book = model.get_value(i,1).decode('utf8')
-            nm_group = self.db.group_book(id_book)
-            my_book = join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm')
+            my_book = self.db.file_book(id_book)
             self.open_book(my_book, nm_book, id_book)
             self.add_to_lasts(id_book)
         
@@ -121,8 +117,7 @@ class ListBooks(Gtk.HBox):
         if i:
             id_book = model.get_value(i,0)
             nm_book = model.get_value(i,1).decode('utf8')
-            nm_group = self.db.group_book(id_book)
-            my_book = join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm')
+            my_book = self.db.file_book(id_book)
             self.open_book(my_book, nm_book, id_book)
             self.add_to_lasts(id_book)
     
@@ -137,7 +132,7 @@ class ListBooks(Gtk.HBox):
     def rm_last_all(self, *a):
         msg = asm_customs.sure(self.parent, "هل تريد مسح قائمة الكتب المفتوحة أخيرا")
         if msg == Gtk.ResponseType.YES:
-            remove(join(asm_customs.MY_DIR, u'data', u'last-books.pkl'))
+            remove(join(asm_path.DATA_DIR_rw, u'last-books.pkl'))
             self.last_books = []
             self.store_last.clear()
     
@@ -146,8 +141,7 @@ class ListBooks(Gtk.HBox):
         if i:
             id_book = model.get_value(i,0)
             nm_book = model.get_value(i,1).decode('utf8')
-            nm_group = self.db.group_book(id_book)
-            my_book = join(asm_customs.MY_DIR, u'books', nm_group, nm_book+u'.asm')
+            my_book = self.db.file_book(id_book)
             self.open_book(my_book, nm_book, id_book)
             self.add_to_lasts(id_book)
     
@@ -225,8 +219,7 @@ class ListBooks(Gtk.HBox):
             model = widget.get_model()
             id_book = model[item][COL_ID]
             nm_book = model[item[0]][COL_NAME].decode('utf8')
-            name_part = self.db.group_book(id_book)
-            my_book = join(asm_customs.MY_DIR, u'books', name_part, nm_book+u'.asm')
+            my_book = self.db.file_book(id_book)
             text_info = self.db.info_book(my_book)[3]
             if text_info == None:
                 text_info = nm_book
@@ -265,7 +258,7 @@ class ListBooks(Gtk.HBox):
         # a أيقونات الكتب--------------------------
         self.vbox_iconview = Gtk.VBox(False, 5)
         hbox = Gtk.HBox(False, 3)
-        back = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'right.png'), 
+        back = asm_customs.tool_button(join(asm_path.ICON_DIR, 'right.png'), 
                            'الرجوع إلى صفحة الأقسام\nأو\nضم قائمة الكتب', self.back_cb)
         hbox.pack_start(back, False, False, 0)
         try: self.search_entry = Gtk.SearchEntry()
@@ -281,8 +274,8 @@ class ListBooks(Gtk.HBox):
         self.nb = Gtk.Notebook()
         self.nb.set_show_tabs(False)
         vbox = Gtk.VBox(False, 0) 
-        self.particon = GdkPixbuf.Pixbuf.new_from_file_at_size(join(asm_customs.ICON_DIR, 'Groups-128.png'), 128, 128)
-        self.bookicon = GdkPixbuf.Pixbuf.new_from_file_at_size(join(asm_customs.ICON_DIR, 'Book-128.png'), 96, 96)
+        self.particon = GdkPixbuf.Pixbuf.new_from_file_at_size(join(asm_path.ICON_DIR, 'Groups-128.png'), 128, 128)
+        self.bookicon = GdkPixbuf.Pixbuf.new_from_file_at_size(join(asm_path.ICON_DIR, 'Book-128.png'), 96, 96)
         sw = Gtk.ScrolledWindow()
         vbox.pack_start(sw, True, True, 0)
         self.store = Gtk.ListStore(str, GdkPixbuf.Pixbuf, int)

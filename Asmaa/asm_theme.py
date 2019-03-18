@@ -7,7 +7,6 @@
 
 from gi.repository import Gtk, Gdk
 import asm_config, asm_customs
-from os.path import join
 
 #a----------------------------------------------------------------------       
 

@@ -4,7 +4,7 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  ########
 ##############################################################################
 
-import asm_customs
+import asm_customs, asm_path, asm_config
 from gi.repository import Gtk, Gdk
 from os.path import join
 from asm_contacts import listDB
@@ -21,7 +21,6 @@ from asm_preference import Preference
 from asm_organize import Organize
 from asm_add import AddBooks
 from asm_waraka import Warakat
-import asm_config
 from asm_theme import MyTheme
 from asm_moshaf import ViewerMoshaf
 from asm_tablabel import TabLabel
@@ -30,6 +29,24 @@ from asm_author import Author
 
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
+
+#a--------------------------------------------------
+try: greet = Gtk.Window(Gtk.WindowType.POPUP)
+except: 
+    greet = Gtk.Window()
+    greet.set_title("مرحبا !")
+greet.set_border_width(15)
+greet.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+greet.set_size_request(400,300)
+vb = Gtk.VBox(False, 10)
+img_greet = Gtk.Image()
+img_greet.set_from_file(join(asm_path.ICON_DIR,"greet.png"))
+vb.pack_start(img_greet, False, False, 0)
+vb.pack_start(Gtk.Label('الإصدار {}\nجاري تحميل برنامج مكتبة أسماء....'.format(asm_customs.version, ))
+              , False, False, 0)
+greet.add(vb)
+greet.show_all()
+while (Gtk.events_pending()): Gtk.main_iteration()
 
 class AsmaaApp(Gtk.Window): 
     
@@ -53,7 +70,7 @@ class AsmaaApp(Gtk.Window):
         self.organizepage = Organize(self)
         self.warakapage = Warakat(self)
         self.editbook = EditBook(self)
-        self.help_book = OpenBook(self, join(asm_customs.MY_DATA, 'Dalil.db'), -1)
+        self.help_book = OpenBook(self, asm_path.DALIL_DB, -1)
         self.help_book.editbk.set_sensitive(False)
         self.help_book.comment_btn.set_sensitive(False)
         self.help_book.set_index()
@@ -222,47 +239,47 @@ class AsmaaApp(Gtk.Window):
         # a شريط الأدوات------------------------------------------
         self.toolbar = Gtk.Toolbar()
 
-        wins = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Windows-32.png'), "الرجوع إلى النافذة السابقة", 
+        wins = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Windows-32.png'), "الرجوع إلى النافذة السابقة", 
                                               self.show_menu)
         self.menu_wins = Gtk.Menu()      
         win_quran = Gtk.ImageMenuItem("القرآن الكريم")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'Quran-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'Quran-16.png'))
         win_quran.set_image(img)
         win_quran.connect('activate', lambda *a: self.notebook.set_current_page(2))
         win_tafsir = Gtk.ImageMenuItem("التفاسير")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'Tafsir-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'Tafsir-16.png'))
         win_tafsir.set_image(img)
         win_tafsir.connect('activate', lambda *a: self.notebook.set_current_page(4))
         win_list = Gtk.ImageMenuItem("قائمة الكتب")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'Books-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'Books-16.png'))
         win_list.set_image(img)
         win_list.connect('activate', lambda *a: self.notebook.set_current_page(0))
         win_opened = Gtk.ImageMenuItem("الكتب المفتوحة")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'Book-Open-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'Book-Open-16.png'))
         win_opened.set_image(img)
         win_opened.connect('activate', self.opened_book)
         win_waraka = Gtk.ImageMenuItem("أوراق البحث")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'Papers-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'Papers-16.png'))
         win_waraka.set_image(img)
         win_waraka.connect('activate', lambda *a: self.notebook.set_current_page(6))
         win_special = Gtk.ImageMenuItem("نوافذ خاصة")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'Wins-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'Wins-16.png'))
         win_special.set_image(img)
         win_special.connect('activate', lambda *a: self.notebook.set_current_page(3))
         win_help = Gtk.ImageMenuItem("صفحة المساعدة")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'Help-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'Help-16.png'))
         win_help.set_image(img)
         win_help.connect('activate', lambda *a: self.notebook.set_current_page(5))
         exit1 = Gtk.ImageMenuItem("خروج")
         img = Gtk.Image()
-        img.set_from_file(join(asm_customs.ICON_DIR, 'exit-16.png'))
+        img.set_from_file(join(asm_path.ICON_DIR, 'exit-16.png'))
         exit1.set_image(img)
         exit1.connect('activate', Gtk.main_quit)
         self.menu_wins.append(win_quran)
@@ -276,95 +293,95 @@ class AsmaaApp(Gtk.Window):
         self.menu_wins.append(exit1)
         self.toolbar.insert(wins, 0)
         
-        self.browse_page = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'browse.png'), "الرجوع إلى النافذة السابقة", 
+        self.browse_page = asm_customs.tool_button(join(asm_path.ICON_DIR, 'browse.png'), "الرجوع إلى النافذة السابقة", 
                                               self.back_to_previous_page)
         self.toolbar.insert(self.browse_page, 1)
         self.toolbar.insert(Gtk.SeparatorToolItem(), 2)
         
-        self.Quran = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Quran-32.png'), "المصحف الشريف", 
+        self.Quran = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Quran-32.png'), "المصحف الشريف", 
                                              lambda *a: self.notebook.set_current_page(2))
         self.toolbar.insert(self.Quran, 3)
-        self.Tafsir = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Tafsir-32.png'), "صفحة التفاسير", 
+        self.Tafsir = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Tafsir-32.png'), "صفحة التفاسير", 
                                              lambda *a: self.notebook.set_current_page(4))
         self.toolbar.insert(self.Tafsir, 4)
-        self.Books = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Books-32.png'), "قائمة الكتب", 
+        self.Books = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Books-32.png'), "قائمة الكتب", 
                                              lambda *a: self.notebook.set_current_page(0))
         self.Books.add_accelerator("clicked",self.axl, Gdk.KEY_Right, self.ACCEL_CTRL_MOD, Gtk.AccelFlags.VISIBLE)
         self.toolbar.insert(self.Books, 5)
-        self.Book_open = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Book-Open-32.png'), 
+        self.Book_open = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Book-Open-32.png'), 
                                      "الكتب ونتائج البحث المفتوحة", self.opened_book)
         self.toolbar.insert(self.Book_open, 6)
-        self.Papers = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Papers-32.png'), "أوراق البحث", 
+        self.Papers = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Papers-32.png'), "أوراق البحث", 
                                               lambda *a: self.notebook.set_current_page(6))
         self.toolbar.insert(self.Papers, 7)
-        self.Wins = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Wins-32.png'), "نوافذ خاصة", 
+        self.Wins = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Wins-32.png'), "نوافذ خاصة", 
                                               lambda *a: self.notebook.set_current_page(3))
         self.toolbar.insert(self.Wins, 8)
         
         self.toolbar.insert(Gtk.SeparatorToolItem(), 9)
 
-        self.Books_Saved = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Books-Saved-32.png'), 
+        self.Books_Saved = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Books-Saved-32.png'), 
                                                    "العلامات المرجعية", lambda *a: SavedMarks(self))
         self.toolbar.insert(self.Books_Saved, 10)
-        self.Saved_Result = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Saved-Result-32.png'), 
+        self.Saved_Result = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Saved-Result-32.png'), 
                                                     "النتائج المحفوظة", lambda *a: SavedResult(self))
         self.toolbar.insert(self.Saved_Result, 11)
         self.toolbar.insert(Gtk.SeparatorToolItem(), 12)
         
-        self.First = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'First-32.png'), "الصفحة الأولى", 
+        self.First = asm_customs.tool_button(join(asm_path.ICON_DIR, 'First-32.png'), "الصفحة الأولى", 
                                              self.first_page)
         self.toolbar.insert(self.First, 13)
-        self.Previous = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Previous-32.png'), "الصفحة السابقة", 
+        self.Previous = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Previous-32.png'), "الصفحة السابقة", 
                                                 self.previous_page)
         self.toolbar.insert(self.Previous, 14)
-        self.Next = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Next-32.png'), "الصفحة التالية", 
+        self.Next = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Next-32.png'), "الصفحة التالية", 
                                             self.next_page)
         self.toolbar.insert(self.Next, 15)
-        self.Last = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Last-32.png'), "الصفحة الأخيرة", 
+        self.Last = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Last-32.png'), "الصفحة الأخيرة", 
                                             self.last_page)
         self.toolbar.insert(self.Last, 16)
         
         self.toolbar.insert(Gtk.SeparatorToolItem(), 17)
         
-        self.Undo = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'undo-32.png'), "تراجع إلى التصفح الأقدم", 
+        self.Undo = asm_customs.tool_button(join(asm_path.ICON_DIR, 'undo-32.png'), "تراجع إلى التصفح الأقدم", 
                                             self.back_to_old)
         self.toolbar.insert(self.Undo, 18)
-        self.Redo = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'redo-32.png'), "تقدم إلى التصفح الأحدث", 
+        self.Redo = asm_customs.tool_button(join(asm_path.ICON_DIR, 'redo-32.png'), "تقدم إلى التصفح الأحدث", 
                                             self.advance_to_new)
         self.toolbar.insert(self.Redo, 19)
         
         self.toolbar.insert(Gtk.SeparatorToolItem(), 20)
         
-        self.Search_Books = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Search-Books-32.png'), 
+        self.Search_Books = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Search-Books-32.png'), 
                                                     "البحث في المكتبة", lambda *a: self.search_win.show_all())
         self.toolbar.insert(self.Search_Books, 21)
-        self.Organiz = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Configs-32.png'), "تنظيم المكتبة", 
+        self.Organiz = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Configs-32.png'), "تنظيم المكتبة", 
                                                lambda *a: self.notebook.set_current_page(7))
         self.toolbar.insert(self.Organiz, 22)
         
         self.toolbar.insert(Gtk.SeparatorToolItem(), 23)
 
-        self.Chamila = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Chamila-32.png'), "إضافة الكتب", 
+        self.Chamila = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Chamila-32.png'), "إضافة الكتب", 
                                                lambda *a: AddBooks(self))
         self.toolbar.insert(self.Chamila, 24)
-        self.Prefers = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Prefers-32.png'), "التفضيلات", 
+        self.Prefers = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Prefers-32.png'), "التفضيلات", 
                                                lambda *a: Preference(self))
         self.toolbar.insert(self.Prefers, 25)
         
         self.toolbar.insert(Gtk.SeparatorToolItem(), 26)
         
-        self.Bitaka = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Bitaka-32.png'), "بطاقة الكتاب", 
+        self.Bitaka = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Bitaka-32.png'), "بطاقة الكتاب", 
                                               self.show_bitaka)
         self.toolbar.insert(self.Bitaka, 27)
-        self.Help = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'Help-32.png'), "دليل المستخدم", 
+        self.Help = asm_customs.tool_button(join(asm_path.ICON_DIR, 'Help-32.png'), "دليل المستخدم", 
                                             lambda *a: self.notebook.set_current_page(5))
         self.toolbar.insert(self.Help, 28)
-        self.About = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'About-32.png'), "لمحة عن المكتبة", 
+        self.About = asm_customs.tool_button(join(asm_path.ICON_DIR, 'About-32.png'), "لمحة عن المكتبة", 
                                              lambda *a: About(self))
         self.toolbar.insert(self.About, 29)
         self.toolbar.insert(Gtk.SeparatorToolItem(), 30)
         
-        self.Exit = asm_customs.tool_button(join(asm_customs.ICON_DIR, 'exit-32.png'), "الخروج من المكتبة", 
+        self.Exit = asm_customs.tool_button(join(asm_path.ICON_DIR, 'exit-32.png'), "الخروج من المكتبة", 
                                             self.delete_event_cb)
         self.toolbar.insert(self.Exit, 31)
            
@@ -385,7 +402,8 @@ class AsmaaApp(Gtk.Window):
         self.axl.connect(Gdk.KEY_Left, self.ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE, self.next_page)
         self.axl.connect(Gdk.KEY_Up, self.ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE, self.first_page)
         self.axl.connect(Gdk.KEY_Down, self.ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE, self.last_page)
-        self.axl.connect(Gdk.KEY_F1, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(6))
+        self.axl.connect(Gdk.KEY_F1, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(5))
+        self.axl.connect(Gdk.KEY_F2, 0, Gtk.AccelFlags.VISIBLE, self.show_bitaka)
         self.axl.connect(Gdk.KEY_F12, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(0))
         self.axl.connect(Gdk.KEY_F7, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(2))
         self.axl.connect(Gdk.KEY_F9, 0, Gtk.AccelFlags.VISIBLE, self.viewerbook.hide_index)
@@ -400,7 +418,7 @@ class AsmaaApp(Gtk.Window):
         self.add(self.vbox)
         self.show_all()
         self.help_book.scroll_search.hide()
-        asm_customs.greet.destroy()
+        greet.destroy()
         try: self.start_session()
         except: pass
 

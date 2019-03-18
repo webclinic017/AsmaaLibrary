@@ -4,9 +4,9 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  ########
 ##############################################################################
 
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
 from asm_contacts import bookDB, Othman, listDB
-import asm_customs, asm_araby
+import asm_customs, asm_araby, asm_path
 from os.path import join, basename
 import asm_popup
 
@@ -272,8 +272,8 @@ class OpenBook(Gtk.VBox):
         self.ent_page.set_text(str(self.all_in_page[4]))
         self.ent_part.set_text(str(self.all_in_page[3]))
         parts_all, pages_all = self.db.parts_pages(self.all_in_page[3])
-        self.parts_all.set_text('/'+str(parts_all))
-        self.pages_all.set_text('/'+str(pages_all)+'    ')
+        self.parts_all.set_text('~'+str(parts_all))
+        self.pages_all.set_text('~'+str(pages_all)+'    ')
         text = self.entry_search.get_text().decode('utf8')
         self.scroll_nasse.get_vadjustment().set_value(0.0)
         if text != u'': 
@@ -285,9 +285,9 @@ class OpenBook(Gtk.VBox):
     
     def has_commment(self, id_page):
         if self.db.show_comment(id_page) != None and self.db.show_comment(id_page) != []:
-            img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, u'com_full.png'))
+            img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, u'com_full.png'))
         else:
-            img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, u'com_empty.png'))
+            img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, u'com_empty.png'))
         self.comment_btn.set_icon_widget(img)
         self.comment_btn.show_all()
     
@@ -303,23 +303,17 @@ class OpenBook(Gtk.VBox):
                                                  nasse_quran, self.view_quran_tag)
     
 #    def scroll_event(self, *a):
-#        vadj = self.scroll_nasse.get_vadjustment().get_value()
-#        if self.nn < 5:
-#            self.nn += 1
-#            self.scroll_nasse.get_vadjustment().set_value(0.0) 
-#        else:
-#            if self.vadjustment_page != vadj:
-#                self.vadjustment_page = vadj
+#        vadj = self.scroll_nasse.get_vadjustment()
+#        m = vadj.get_upper()-vadj.get_page_size()
+#        v = vadj.get_value()
+#        if m == v:
+#            if self.vadj_page == 2:
+#                self.next_page()
+#                self.vadj_page = 0
+#                while (Gtk.events_pending()): Gtk.main_iteration()
+#                time.sleep(1)
 #            else:
-#                if self.n_scroll == 2: 
-#                    if self.vadjustment_page == 0.0:
-#                        self.previous_page()
-#                    else: self.next_page()
-#                    self.scroll_nasse.get_vadjustment().set_value(0.0) 
-#                    self.n_scroll = 0
-#                   .nn  self= 0
-#                else: 
-#                    self.n_scroll += 1
+#                self.vadj_page += 1
     
     def move_to_page(self, *a):
         n_page = int(self.ent_page.get_text())
@@ -343,17 +337,17 @@ class OpenBook(Gtk.VBox):
                 c += 1
             self.scroll_search.show_all()
     
-#    def autoScroll(self, btn):
-#        if not self.autoScrolling: return True
-#        vadj = self.scroll_nasse.get_vadjustment()
-#        m = vadj.get_upper-vadj.get_page_size
-#        n = min(m, vadj.get_value() + 2 )
-#        if n == m: btn.set_active(False)
-#        vadj.set_value(n)
-#        return True
-#    
-#    def autoScrollCb(self, b, *a):
-#        self.autoScrolling = b.get_active()
+    def autoScroll(self, btn):
+        if not self.autoScrolling: return True
+        vadj = self.scroll_nasse.get_vadjustment()
+        m = vadj.get_upper()-vadj.get_page_size()
+        n = min(m, vadj.get_value()+1)
+        if n == m: btn.set_active(False)
+        vadj.set_value(n)
+        return True
+    
+    def autoScrollCb(self, b, *a):
+        self.autoScrolling = b.get_active()
     
     def editbk_cb(self, *a):
         msg = asm_customs.sure(self.parent, 'عملية تعديل الكتاب عملية دقيقة،\nأي خطأ قد يؤدي لتلف الكتاب،\nهل تريد الاستمرار؟')
@@ -401,7 +395,7 @@ class OpenBook(Gtk.VBox):
             if comment == u'': return
             self.db.add_comment(id_page, comment)
             add_widget()
-            img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, u'com_full.png'))
+            img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, u'com_full.png'))
             self.comment_btn.set_icon_widget(img)
             self.comment_btn.show_all()
         #------------------------    
@@ -414,7 +408,7 @@ class OpenBook(Gtk.VBox):
             self.db.remove_comment(id_page)
             view_comment_bfr.set_text('')
             add_widget()
-            img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, u'com_empty.png'))
+            img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, u'com_empty.png'))
             self.comment_btn.set_icon_widget(img)
             self.comment_btn.show_all()
         #-----------------------------------
@@ -431,7 +425,7 @@ class OpenBook(Gtk.VBox):
         add_widget()
        
     def build(self, *a):
-        self.vadjustment_page = 0.0
+        self.vadj_page = 0
         self.hp = Gtk.HPaned()
         
         # a الفهرس-----------------------------------
@@ -489,16 +483,17 @@ class OpenBook(Gtk.VBox):
         self.scroll_nasse = Gtk.ScrolledWindow()
         self.scroll_nasse.set_shadow_type(Gtk.ShadowType.IN)
         self.scroll_nasse.add_with_viewport(self.view_nasse)
+        #self.scroll_nasse.connect('scroll-event', self.scroll_event)
         vbox.pack_start(self.scroll_nasse, True, True, 0)
         hbox = Gtk.HBox(False, 3)
-        self.page_n = Gtk.Label('الصفحة')
+        self.page_n = Gtk.Label('صـ:')
         hbox.pack_start(self.page_n, False, False, 0) 
         self.ent_page = Gtk.Entry()
         self.ent_page.set_width_chars(5)
         hbox.pack_start(self.ent_page, False, False, 0)
         self.pages_all = Gtk.Label()
         hbox.pack_start(self.pages_all, False, False, 0) 
-        self.part_n = Gtk.Label('الجزء') 
+        self.part_n = Gtk.Label('جـ:') 
         self.ent_part = Gtk.Entry()
         self.ent_part.set_width_chars(5) 
         hbox.pack_start(self.part_n, False, False, 0)
@@ -517,12 +512,10 @@ class OpenBook(Gtk.VBox):
         except: self.entry_search = Gtk.Entry()
         self.entry_search.set_placeholder_text('بحث في النصّ')
         self.entry_search.connect('changed', self.search_in_page)
-        self.entry_search.connect('activate', self.search_in_page)
+        self.entry_search.connect('activate', self.search_in_book)
         hbox.pack_start(search_btn, False, False, 0)
         hbox.pack_start(self.entry_search, False, False, 0)
-        
-#        img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, u'com_empty.png'))
-#        self.comment_btn.set_icon_widget(img)
+
         self.comment_btn = Gtk.ToolButton() 
         self.comment_btn.set_tooltip_text("أظهر التعليق")
         self.comment_btn.connect('clicked', self.comment_cb)
@@ -534,18 +527,22 @@ class OpenBook(Gtk.VBox):
         hbox.pack_end(self.editbk, False, False, 0)
         vbox.pack_start(hbox, False, False, 0)
         
-#        img = Gtk.Image()
-#        img.set_from_stock(Gtk.STOCK_MEDIA_FORWARD, Gtk.IconSize.BUTTON)
-#        btn_autoScroll = Gtk.ToggleButton()
-#        btn_autoScroll.add(img)
-#        hbox.pack_start(btn_autoScroll, False, False, 0)
-#        self.autoScrolling = False
-#        btn_autoScroll.connect("clicked", self.autoScrollCb)
-#        GLib.timeout_add(100, self.autoScroll, btn_autoScroll)
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_MEDIA_FORWARD, Gtk.IconSize.BUTTON)
+        btn_autoScroll = Gtk.ToggleButton()
+        btn_autoScroll.add(img)
+        btn_autoScroll.set_tooltip_text("استعراض آلي")
+        hbox.pack_start(btn_autoScroll, False, False, 11)
+        self.autoScrolling = False
+        btn_autoScroll.connect("clicked", self.autoScrollCb)
+        GLib.timeout_add(100, self.autoScroll, btn_autoScroll)
         
         self.hp.pack2(vbox, True, False)
         self.pack_start(self.hp, True, True, 0)
         self.show_all()
         self.scroll_search.hide()
-#        self.set_index()
         self.change_font()
+        if self.id_book != -1:
+            if self.db_list.book_dir(self.id_book) == asm_path.BOOK_DIR_r:
+                self.comment_btn.set_sensitive(False)
+                self.editbk.set_sensitive(False)

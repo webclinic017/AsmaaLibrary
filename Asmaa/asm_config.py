@@ -17,7 +17,7 @@ def load():
     if not config.has_section(section):
         config.add_section(section)
     if not config.has_option(section, 'path'):
-        config.set(section, 'path', os.path.expanduser('~/مكتبة أسماء/Listbooks.db'))
+        config.set(section, 'path', os.path.expanduser('~/.asmaa/asmaa-library/data/Listbooks.db'))
     if not config.has_option(section, 'idx_qrn'):
         config.set(section, 'idx_qrn', 1)
     if not config.has_option(section, 'saved_session'):

@@ -6,7 +6,7 @@
 
 from gi.repository import Gtk, WebKit
 from asm_contacts import Othman
-import asm_customs
+import asm_customs, asm_path
 from asm_contacts import bookDB
 from os.path import join
 import cPickle
@@ -119,7 +119,7 @@ class ViewerMoshaf(Gtk.HPaned):
         if [] in new_list: new_list.remove([])
         if sura == u'': sura = self.db.info_page(page)[0]
         new_text = ' '.join(new_list)
-        html = open(join(asm_customs.DATA_DIR, 'moshaf', 'page_quran.html'), 'r')
+        html = open(join(asm_path.MOSHAF_DIR, 'page_quran.html'), 'r')
         html = html.read()
         html = html.replace('{nasse}', new_text)
         html = html.replace('{sura}', u'سورة '+sura)
@@ -128,7 +128,7 @@ class ViewerMoshaf(Gtk.HPaned):
         if self.term_0 != []:
             for a in self.term_0:
                 html = re.sub(a, u'<span style="background-color: rgb(255, 255, 0);">{}</span>'.format(a,), html)
-        self.view_quran.load_html_string(html, 'file://{}/moshaf/'.format(asm_customs.DATA_DIR,))
+        self.view_quran.load_html_string(html, 'file://{}/'.format(asm_path.MOSHAF_DIR,))
         self.page_id = page
         if len(self.opened_old) == 0: self.opened_old.append(page)
         elif page != self.opened_old[-1]: self.opened_old.append(page)
@@ -187,7 +187,7 @@ class ViewerMoshaf(Gtk.HPaned):
                         n = ayat[0]
                         i_sura = (n/512)+1
                         i_ayat = n-((i_sura-1)*512)
-                        quran = bookDB(join(asm_customs.MY_DATA, 'Tafsir.db'))
+                        quran = bookDB(asm_path.TAFSIR_DB)
                         page= quran.page_ayat(i_sura, i_ayat+1)
                         suras_names = Othman().get_suras_names()
                         sura = suras_names[i_sura-1]
@@ -237,8 +237,8 @@ class ViewerMoshaf(Gtk.HPaned):
                     self.store_index.append(None, [id_page, suranm[1]])
         
     def build(self, *a):
-        self.list_sura = cPickle.load(file(join(asm_customs.DATA_DIR, u'moshaf', u'list_sura.pkl')))
-        self.list_ahzab = cPickle.load(file(join(asm_customs.DATA_DIR, u'moshaf', u'list_ahzab.pkl')))
+        self.list_sura = cPickle.load(file(join(asm_path.MOSHAF_DIR, u'list_sura.pkl')))
+        self.list_ahzab = cPickle.load(file(join(asm_path.MOSHAF_DIR, u'list_ahzab.pkl')))
         self.term_0 = []
         self.page_id = asm_config.getn('quran_pos')
         Gtk.HPaned.__init__(self)

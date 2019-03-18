@@ -8,7 +8,7 @@ from gi.repository import Gtk, Gdk, Pango
 from asm_contacts import bookDB, Othman, listDB
 from asm_viewer import OpenBook
 from asm_tablabel import TabLabel
-import asm_customs
+import asm_customs, asm_path
 from asm_edit_bitaka import EditBitaka
 from os.path import join, basename
 import os, re
@@ -39,16 +39,14 @@ class EditBook(Gtk.VBox):
 
     def index_highlight(self, model, path, i, page_id):
         pid = model.get(i,0)[0]
-        if pid < page_id:
+        if pid == page_id: 
             self.tree_index.scroll_to_cell(path)
             self.sel_index.select_path(path)
             return False
-        elif pid == page_id: 
-            self.tree_index.scroll_to_cell(path)
-            self.sel_index.select_path(path)
-            return True 
+        elif pid < page_id:
+            return False
         else:
-            return False
+            return True
 
     def first_page(self, *a):
         self.current_id = 0
@@ -62,20 +60,20 @@ class EditBook(Gtk.VBox):
         if self.current_id > 0: 
             self.current_id -= 1
         self.show_page()
-        try: self.store_index.foreach(self.index_highlight, self.current_id)
+        try: self.store_index.foreach(self.index_highlight, self.all_pages[self.current_id][0])
         except: pass
     
     def next_page(self, *a):
         if self.current_id < len(self.all_pages)-1: 
             self.current_id += 1
         self.show_page()
-        try: self.store_index.foreach(self.index_highlight, self.current_id)
+        try: self.store_index.foreach(self.index_highlight, self.all_pages[self.current_id][0])
         except: pass
     
     def last_page(self, *a):
         self.current_id = len(self.all_pages)-1
         self.show_page()
-        try: self.store_index.foreach(self.index_highlight, self.current_id)
+        try: self.store_index.foreach(self.index_highlight, self.all_pages[self.current_id][0])
         except: pass
     
     def back_to_old(self, *a):
@@ -164,9 +162,11 @@ class EditBook(Gtk.VBox):
         self.db = bookDB(book, id_book)
         self.all_pages = self.db.all_page()
         self.n_all_page = len(self.all_pages)+1
-        self.show_page()
         self.set_index()
+        self.show_page(id_page)
         self.ent_version.set_text(str(self.db.n_version))
+        try: self.store_index.foreach(self.index_highlight, id_page)
+        except: pass
     
     def change_font(self, *a):
         return
@@ -178,6 +178,34 @@ class EditBook(Gtk.VBox):
         f1 = Gtk.MenuItem('اجعل النص المحدد عنوانا')
         menu.append(f1)
         f1.set_sensitive(False)
+        model, i = self.sel_index.get_selected()
+        if i:
+            pgid = model.get_value(i, 0)
+            if pgid == self.all_pages[self.current_id][0]:
+                imenu = Gtk.Menu()
+                f1.set_submenu(imenu)
+                fm1 = Gtk.MenuItem('قبل العنوان المحدد')
+                fm1.connect("activate", self.add_title_before)
+                imenu.append(fm1)
+                fm1.show()
+                fm2 = Gtk.MenuItem('بعد العنوان المحدد')
+                imenu.append(fm2)
+                iimenu = Gtk.Menu()
+                fm2.set_submenu(iimenu)
+                fm21 = Gtk.MenuItem('قسيما لسابقه')
+                fm21.connect("activate", self.add_title_after, 0)
+                iimenu.append(fm21)
+                fm21.show()
+                fm22 = Gtk.MenuItem('ابنا لسابقه')
+                fm22.connect("activate", self.add_title_after, 1)
+                iimenu.append(fm22)
+                fm22.show()
+                fm2.show()
+            else:
+                f1.connect("activate", self.add_title_after)
+        else:
+            f1.connect("activate", self.add_title_after)
+                
         f1.show()
         f2 = Gtk.MenuItem('أضف صفحة قبل')
         menu.append(f2)
@@ -194,32 +222,36 @@ class EditBook(Gtk.VBox):
         
         if buff.get_has_selection():
             f1.set_sensitive(True)
-        f1.connect("activate", self.add_title)
         f2.connect("activate", self.add_page, 0)
         f3.connect("activate", self.add_page, 1)
         f4.connect("activate", self.del_page)
     
-    def add_title(self, *a):
+    def add_title_before(self, *a):
         start_iter, end_iter = self.view_nasse_bfr.get_selection_bounds()
         sel_text = self.view_nasse_bfr.get_text(start_iter, end_iter, True).strip()
-        model, i = self.sel_index.get_selected()
-        if not i:
-            try: self.store_index.foreach(self.index_highlight, self.current_id)
-            except: pass
         model, i = self.sel_index.get_selected()
         if i:
             p = model.get_path(i)
             v = model.get_value(i, 1)
-            pgid = model.get_value(i, 0)
             n = v.count('      ')
-            if pgid == self.all_pages[self.current_id][0]:
-                self.store_index.insert_before(None, i, [self.all_pages[self.current_id][0], ('      '*(n))+sel_text])
-                self.sel_index.select_path(p)
-            elif pgid < self.all_pages[self.current_id][0]:
-                i0 = self.store_index.insert_after(None, i, [self.all_pages[self.current_id][0], ('      '*(n))+sel_text])
-                p = model.get_path(i0)
-                self.sel_index.select_path(p)
-                self.tree_index.scroll_to_cell(p)
+            self.store_index.insert_before(None, i, [self.all_pages[self.current_id][0], ('      '*(n))+sel_text])
+            self.sel_index.select_path(p)
+            self.tree_index.scroll_to_cell(p)
+        else:
+            self.store_index.append(None, [self.all_pages[self.current_id][0], sel_text])
+    
+    def add_title_after(self, item, s=0):
+        start_iter, end_iter = self.view_nasse_bfr.get_selection_bounds()
+        sel_text = self.view_nasse_bfr.get_text(start_iter, end_iter, True).strip()
+        model, i = self.sel_index.get_selected()
+        if i:
+            p = model.get_path(i)
+            v = model.get_value(i, 1)
+            n = v.count('      ')
+            i0 = self.store_index.insert_after(None, i, [self.all_pages[self.current_id][0], ('      '*(n+s))+sel_text])
+            p = model.get_path(i0)
+            self.sel_index.select_path(p)
+            self.tree_index.scroll_to_cell(p)
         else:
             self.store_index.append(None, [self.all_pages[self.current_id][0], sel_text])
         
@@ -465,35 +497,35 @@ class EditBook(Gtk.VBox):
         self.popup.show_all()
         
         hbox = Gtk.HBox(False, 3)
-        img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, 'right.png'))
+        img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, 'right.png'))
         toright = Gtk.ToolButton()
         toright.set_icon_widget(img)
         toright.set_tooltip_text('اجعله أبا')
         toright.connect('clicked', self.make_parent)
         hbox.pack_start(toright, False, False, 0)
         
-        img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, 'left.png'))
+        img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, 'left.png'))
         toleft = Gtk.ToolButton()
         toleft.set_icon_widget(img)
         toleft.set_tooltip_text('اجعله ابنا')
         toleft.connect('clicked', self.make_child)
         hbox.pack_start(toleft, False, False, 0)
         
-        img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, 'up.png'))
+        img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, 'up.png'))
         toup = Gtk.ToolButton()
         toup.set_icon_widget(img)
         toup.set_tooltip_text('ارفعه سطرا')
         toup.connect('clicked', self.up_row)
         hbox.pack_start(toup, False, False, 0)
         
-        img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, 'down.png'))
+        img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, 'down.png'))
         todown = Gtk.ToolButton()
         todown.set_icon_widget(img)
         todown.set_tooltip_text('اخفضه سطرا')
         todown.connect('clicked', self.down_row)
         hbox.pack_start(todown, False, False, 0)
         
-        img = Gtk.Image.new_from_file(join(asm_customs.ICON_DIR, 'remove.png'))
+        img = Gtk.Image.new_from_file(join(asm_path.ICON_DIR, 'remove.png'))
         toremove = Gtk.ToolButton()
         toremove.set_icon_widget(img)
         toremove.set_tooltip_text('احذف عنوانا')

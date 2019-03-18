@@ -18,7 +18,7 @@ setup(
       name="Asmaa",
       description='library',
       long_description='library',
-      version="2.0.7",
+      version="2.1.0",
       author='Ahmed Raghdi',
       author_email='asmaaarab@gmail.com',
       url="http://linuxac.org",

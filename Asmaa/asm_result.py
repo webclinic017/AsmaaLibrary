@@ -9,7 +9,7 @@ import os, cPickle
 from gi.repository import Gtk
 from asm_search import ShowResult
 from asm_tablabel import TabLabel
-import asm_customs
+import asm_customs, asm_path
 
 class SavedResult(Gtk.Dialog):
     
@@ -22,7 +22,7 @@ class SavedResult(Gtk.Dialog):
             sr.hb_stop.hide()
             self.parent.viewerbook.append_page(sr,TabLabel(sr, nm))
             self.parent.viewerbook.set_current_page(-1)
-            store = cPickle.load(file(join(asm_customs.HOME_DIR, nm+u".pkl")))
+            store = cPickle.load(file(join(asm_path.HOME_DIR, nm+u".pkl")))
             sr.results_books = store
             sr.lab_n_result.set_text('عدد النتائج : {}'.format(len(store), ))
             self.destroy()
@@ -36,7 +36,7 @@ class SavedResult(Gtk.Dialog):
             res_self = asm_customs.sure(self, " هل ترغب في حذف النتيجة المحددة ؟")
             if res_self:
                 nm = model.get_value(i,0)
-                os.remove(join(asm_customs.HOME_DIR, nm+'.pkl'))
+                os.remove(join(asm_path.HOME_DIR, nm+'.pkl'))
                 self.store_sav.remove(i)
                 
     def remove_iters(self, *a):
@@ -44,7 +44,7 @@ class SavedResult(Gtk.Dialog):
         if res_self:
             for a in self.list_n:
                 if a[-4:] == '.pkl':
-                    os.remove(join(asm_customs.HOME_DIR, a))
+                    os.remove(join(asm_path.HOME_DIR, a))
             self.store_sav.clear()
     
     def __init__(self, parent):
@@ -57,7 +57,7 @@ class SavedResult(Gtk.Dialog):
         self.set_default_size(350, 300)
         box = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
         self.store_sav = Gtk.ListStore(str)
-        self.list_n = os.listdir(asm_customs.HOME_DIR)
+        self.list_n = os.listdir(asm_path.HOME_DIR)
         self.store_sav.clear()
         for v in self.list_n:
             if '.pkl' in v:
