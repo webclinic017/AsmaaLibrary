@@ -211,7 +211,7 @@ class Tafsir(Gtk.HBox):
         self.tafsirs1.set_active(0)
         
         try: self.search_entry = Gtk.SearchEntry()
-        except: self.search_search_entry = Gtk.Entry()
+        except: self.search_entry = Gtk.Entry()
         self.search_entry.set_placeholder_text('بحث في القرآن')
         self.search_entry.connect('activate', self.search_cb)
         hbox = Gtk.HBox(False, 2)

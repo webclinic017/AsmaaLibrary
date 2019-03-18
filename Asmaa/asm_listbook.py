@@ -217,7 +217,7 @@ class ListBooks(Gtk.HBox):
         item = widget.get_selected_items() 
         if len(item) > 0:
             model = widget.get_model()
-            id_book = model[item][COL_ID]
+            id_book = model[item[0]][COL_ID]
             nm_book = model[item[0]][COL_NAME].decode('utf8')
             my_book = self.db.file_book(id_book)
             text_info = self.db.info_book(my_book)[3]
@@ -279,7 +279,8 @@ class ListBooks(Gtk.HBox):
         sw = Gtk.ScrolledWindow()
         vbox.pack_start(sw, True, True, 0)
         self.store = Gtk.ListStore(str, GdkPixbuf.Pixbuf, int)
-        iconView = Gtk.IconView(self.store)
+        iconView = Gtk.IconView()
+        iconView.set_model(self.store)
         iconView.override_font(Pango.FontDescription('KacstOne 20'))
         iconView.set_text_column(COL_NAME)
         iconView.set_pixbuf_column(COL_PIXBUF)
@@ -292,7 +293,8 @@ class ListBooks(Gtk.HBox):
         sw = Gtk.ScrolledWindow()
         vbox.pack_start(sw, True, True, 0)
         self.store_books = Gtk.ListStore(str, GdkPixbuf.Pixbuf, int)
-        iconView_books = Gtk.IconView(self.store_books)
+        iconView_books = Gtk.IconView()
+        iconView_books.set_model(self.store_books)
         iconView_books.override_font(Pango.FontDescription('KacstOne 16'))
         iconView_books.set_text_column(COL_NAME)
         iconView_books.set_pixbuf_column(COL_PIXBUF)
