@@ -171,7 +171,7 @@ class AddBooks(Gtk.Dialog):
                     raise OSError("Executing the command caused an error: %s" % erroroutput)
             except OSError: self.no_add += u'\n'+name_file+u'  -يرجى التحقق من تثبيت حزمة "catdoc"'
             except: self.no_add += u'\n'+name_file
-        # OTHER----------------------------
+        #OTHER----------------------------
         else:
             try: 
                 text = file(myfile).read().decode('utf8')

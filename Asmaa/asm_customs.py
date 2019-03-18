@@ -11,7 +11,7 @@ import re
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.4.1'
+version = '2.4.2'
 #a--------------------------------------------------
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
@@ -90,15 +90,23 @@ def combo(ls, name):
     renderer_text = Gtk.CellRendererText()
     renderer_text.set_property("ellipsize-set", True)
     renderer_text.set_property("ellipsize", Pango.EllipsizeMode.END)
-    renderer_text.set_property("max-width-chars",14)
-    renderer_text.set_property("weight", 14)
+    if name == u"التفسير":
+        renderer_text.set_property("max-width-chars",24)
+        renderer_text.set_property("weight", 24)
+    else:
+        renderer_text.set_property("max-width-chars",14)
+        renderer_text.set_property("weight", 14)
     cmt.pack_start(renderer_text, True)
     cmt.add_attribute(renderer_text, "text", 1)
     lab = Gtk.Label(name)
     lab.set_alignment(0,0.5)
-    hb.pack_start(lab, False, False, 0)
-    hb.pack_end(cmt, False, False, 0)
-    return hb, cmt
+    if name == u"التفسير":
+        return cmt
+    else:
+        hb.pack_start(lab, False, False, 0)
+        hb.pack_end(cmt, False, False, 0)
+        return hb, cmt
+    
 
 #a------------------------------------------
 def button_fontnm():

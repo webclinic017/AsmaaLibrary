@@ -5,8 +5,10 @@
 #a############################################################################
 
 from gi.repository import Gtk, Pango
-import asm_customs, asm_popup, asm_path, asm_araby
+import asm_customs, asm_popup, asm_path, asm_araby, asm_config
 from asm_contacts import Othman, listDB, bookDB
+from asm_edit_tafsir import ListTafasir
+import re
 
 # class نافذة التفسير---------------------------------------------------------    
 
@@ -14,12 +16,13 @@ class Tafsir(Gtk.HBox):
     
     def show_tafsir(self, tafsir, sura, aya):
         self.aya_now = aya
-        if self.db != None:
-            self.db.close_db()
-            del self.db
-        if tafsir == -1: book = asm_path.TAFSIR_DB
-        else: book = self.listbook.file_book(tafsir)
-        self.db = bookDB(book, tafsir)
+        self.db = bookDB(asm_path.TAFSIR_DB, -1)
+        if tafsir != None:
+            if tafsir != -1:
+                self.db.close_db()
+                del self.db
+                book = self.listbook.file_book(tafsir)
+                self.db = bookDB(book, tafsir)
         id_page = self.db.page_ayat(sura, aya)
         self.show_page(id_page)
     
@@ -161,14 +164,23 @@ class Tafsir(Gtk.HBox):
     def search_now(self, text):
         search_tokens = []
         nasse = self.view_tafsir_bfr.get_text(self.view_tafsir_bfr.get_start_iter(), 
-                                            self.view_tafsir_bfr.get_end_iter(),True).split()
+                                            self.view_tafsir_bfr.get_end_iter(),True)
         if text == u'': 
             return
         else:
-            txt = asm_araby.fuzzy(text)
-            for term in nasse: 
-                if txt in asm_araby.fuzzy(term.decode('utf8')):
-                    search_tokens.append(term)
+            text = text.strip()
+            ls_term = asm_araby.fuzzy(text).split(u' ')
+        for text in ls_term:
+            if len(text) == 1 or text == u"ال": continue
+            new_term = u''
+            for l in text:
+                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
+            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
+            new_term = new_term.replace(u'ه', u'[هة]')
+            re_term = re.compile(u'({})'.format(new_term,))
+            r_findall = re_term.findall(nasse.decode('utf8'))
+            for r in r_findall:
+                if r[0] not in search_tokens: search_tokens.append(r[0])
         asm_customs.with_tag(self.view_tafsir_bfr, self.view_search_tag, search_tokens, 1, self.view_tafsir)
                     
     def change_font(self, *a):
@@ -176,6 +188,41 @@ class Tafsir(Gtk.HBox):
         self.view_quran_tag.set_property("paragraph-background", self.parent.theme.color_bg_qrn)
         self.view_quran_tag.set_property('font', self.parent.theme.font_qrn)
         self.view_search_tag.set_property('background', self.parent.theme.color_fnd)
+    
+    def load_list(self, *a):
+        self.store_tafasir = []
+        list_tafsir = eval(asm_config.getv('list_tafsir'))
+        if list_tafsir[2] == 0:
+            all_tafsir = self.listbook.all_tafsir()
+            for a in all_tafsir: 
+                self.store_tafasir.append(a)
+        elif list_tafsir[2] == 1:
+            for a in list_tafsir[1]:
+                self.store_tafasir.append([a, self.listbook.tit_book(a)[1]])
+        self.store_tafasir.insert(0, [-1, u'التفسير الميسر'])
+        self.n_warp = list_tafsir[0]+1
+        
+    def refresh_list(self, *a):
+        model = self.tafsirs.get_model()
+        model1 = self.tafsirs1.get_model()
+        model.clear()
+        model1.clear()
+        list_tafsir = eval(asm_config.getv('list_tafsir'))
+        model.append([-1, u'التفسير الميسر', 0])
+        model1.append([-1, u'التفسير الميسر', 0])
+        for a in list_tafsir[1]:
+            model.append([a, self.listbook.tit_book(a)[1], 0])
+            model1.append([a, self.listbook.tit_book(a)[1], 0])
+        self.tafsirs.set_active(0)
+        self.tafsirs1.set_active(0)
+        self.tafsirs.set_wrap_width(list_tafsir[0]+1)
+        self.tafsirs1.set_wrap_width(list_tafsir[0]+1)
+        self.tafsirs.show_all()
+        self.tafsirs1.show_all()
+        
+    def show_modif_list_tafsir(self, *a):
+        ListTafasir(self.parent)
+        return
     
     def __init__(self, parent):
         self.db = None
@@ -193,18 +240,13 @@ class Tafsir(Gtk.HBox):
         self.set_border_width(5)
         vbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
         
-        store = []
-        all_tafsir = self.listbook.all_tafsir()
-        for a in all_tafsir: 
-            store.append(a)
-        store.insert(0, [-1, u'التفسير الميسر'])
-        
         self.notebook = Gtk.Notebook()
         self.notebook.set_show_tabs(False)
         vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
-        
-        hb, self.tafsirs = asm_customs.combo(store, u'التفسير')
-        vb.pack_start(hb, False, False, 0)
+        self.load_list()
+        self.tafsirs = asm_customs.combo(self.store_tafasir, u'التفسير')
+        self.tafsirs.set_wrap_width(self.n_warp)
+        vb.pack_start(self.tafsirs, False, False, 0)
         self.tafsirs.set_active(0)
         
         adj = Gtk.Adjustment(1, 1, 7, 1, 5.0, 0.0)
@@ -232,12 +274,16 @@ class Tafsir(Gtk.HBox):
             self.ok_result()
         show_search.connect('clicked', show_search_cb)
         vb.pack_end(show_search, False, False, 0)
+        modif_list_tafsir = Gtk.Button('تعديل قائمة التفاسير')
+        modif_list_tafsir.connect('clicked', self.show_modif_list_tafsir)
+        vb.pack_end(modif_list_tafsir, False, False, 0)
         self.notebook.append_page(vb, Gtk.Label('تصفح'))
         
         vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
         
-        hb, self.tafsirs1 = asm_customs.combo(store, u'التفسير')
-        vb.pack_start(hb, False, False, 0)
+        self.tafsirs1 = asm_customs.combo(self.store_tafasir, u'التفسير')
+        self.tafsirs1.set_wrap_width(self.n_warp)
+        vb.pack_start(self.tafsirs1, False, False, 0)
         self.tafsirs1.set_active(0)
         
         self.search_entry = Gtk.SearchEntry()

@@ -70,6 +70,8 @@ def load():
         config.set(section, 'tashkil', 1)
     if not config.has_option(section, 'marks'):
         config.set(section, 'marks', '[]')
+    if not config.has_option(section, 'list_tafsir'):
+        config.set(section, 'list_tafsir', '[3, [], 0]')
     if not config.has_option(section, 'quran_pos'):
         config.set(section, 'quran_pos', 1)
     if not config.has_option(section, 'view_books'):

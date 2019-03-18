@@ -5,7 +5,7 @@
 #a############################################################################
 
 from os.path import join, exists
-import os
+import os, re
 from gi.repository import Gtk, GObject, Pango
 import asm_araby, asm_customs, asm_popup, asm_path
 from asm_viewer import OpenBook
@@ -89,6 +89,9 @@ class ShowResult(Gtk.VPaned):
             print db.get_text_body(a["page"])[3], db.get_text_body(a["page"])[4]                
     
     def search_in_book(self, id_book, nm_book, text, dict_perf, dict_field):
+        text0 = asm_araby.fuzzy_plus(text)
+        for t in text.split(u' '):
+            self.ls_term.append(t)
         self.cursive = dict_perf['cursive']
         text = text.replace('"','')
         text = text.replace("'","")
@@ -103,7 +106,6 @@ class ShowResult(Gtk.VPaned):
             cond = '{} LIKE ?'.format(field,)
         else:
             cond = 'fuzzy({}) LIKE ?'.format(field,)
-            text = asm_araby.fuzzy_plus(text)
         if dict_perf['identical'] == True:  pfx, sfx = '% ', ' %'
         else: pfx, sfx = '%', '%'
         if dict_perf['cursive'] == True:
@@ -116,8 +118,6 @@ class ShowResult(Gtk.VPaned):
                 condition = ' OR '.join([cond]*len(ls_term))
             else :
                 condition = ' AND '.join([cond]*len(ls_term))
-        for a in ls_term:
-            self.ls_term.append(a.replace('%', ''))
         book = self.db_list.file_book(id_book)
         con = sqlite3.connect(book)
         con.create_function('fuzzy', 1, asm_araby.fuzzy_plus)
@@ -206,13 +206,18 @@ class ShowResult(Gtk.VPaned):
         
     def show_term_search(self, *a):
         search_tokens = []
-        nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
-                                            self.view_nasse_bfr.get_end_iter(),True).split()
+        nasse0 = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
+                                            self.view_nasse_bfr.get_end_iter(),True)
         for text in self.ls_term:
-            txt = asm_araby.fuzzy(text)
-            for term in nasse: 
-                if txt in asm_araby.fuzzy(term.decode('utf8')):
-                    search_tokens.append(term)
+            new_term = u''
+            for l in text:
+                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
+            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
+            new_term = new_term.replace(u'ه', u'[هة]')
+            re_term = re.compile(u'({})'.format(new_term,))
+            r_findall = re_term.findall(nasse0.decode('utf8'))
+            for r in r_findall:
+                if r[0] not in search_tokens: search_tokens.append(r[0])
         asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1, self.view_nasse)
     
     def is_tafsir(self, all_in_page):
@@ -287,14 +292,23 @@ class ShowResult(Gtk.VPaned):
     def search_now(self, text):
         search_tokens = []
         nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
-                                            self.view_nasse_bfr.get_end_iter(),True).split()
+                                            self.view_nasse_bfr.get_end_iter(),True)
         if text == u'': 
             return
         else:
-            txt = asm_araby.fuzzy(text)
-            for term in nasse: 
-                if txt in asm_araby.fuzzy(term.decode('utf8')):
-                    search_tokens.append(term)
+            text = text.strip()
+            ls_term = asm_araby.fuzzy(text).split(u' ')
+        for text in ls_term:
+            if len(text) == 1 or text == u"ال": continue
+            new_term = u''
+            for l in text:
+                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
+            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
+            new_term = new_term.replace(u'ه', u'[هة]')
+            re_term = re.compile(u'({})'.format(new_term,))
+            r_findall = re_term.findall(nasse.decode('utf8'))
+            for r in r_findall:
+                if r[0] not in search_tokens: search_tokens.append(r[0])
         asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1, self.view_nasse)
         
     def build(self, *a):

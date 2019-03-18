@@ -154,6 +154,7 @@ class AsmaaApp(Gtk.Window):
         else:
             self.entry_search.set_placeholder_text('بحث في النّصّ')
         if n in [1,2,4,5,7]: self.btnbox_pages.show_all()
+        else: self.btnbox_pages.hide()
         if n!= 0: self.go_parts.hide()
         else: self.btnbox_pages.hide()
         self.pref_btn.set_active(False)

@@ -9,6 +9,7 @@ from asm_contacts import bookDB, Othman, listDB
 import asm_customs, asm_araby, asm_path, asm_config
 from os.path import join, basename
 import asm_popup
+import re
 
 # class صفحة الكتب المفتوحة-----------------------------------------------------------------------
 
@@ -212,27 +213,37 @@ class OpenBook(Gtk.VBox):
         self.search_now(text)
         
     def search_now(self, text):
-        search_tokens = []
+        search_tokens1 = []
+        search_tokens2 = []
         star_iter1 = self.view_nasse_bfr1.get_start_iter()
         end_iter1 = self.view_nasse_bfr1.get_end_iter()
         star_iter2 = self.view_nasse_bfr2.get_start_iter()
         end_iter2 = self.view_nasse_bfr2.get_end_iter()
         self.view_nasse_bfr1.remove_tag_by_name("search1", star_iter1, end_iter1)
         self.view_nasse_bfr2.remove_tag_by_name("search2", star_iter2, end_iter2)
-        nasse1 = self.view_nasse_bfr1.get_text(star_iter1, end_iter1, True).split()
-        nasse2 = self.view_nasse_bfr2.get_text(star_iter2, end_iter2, True).split()
+        nasse1 = self.view_nasse_bfr1.get_text(star_iter1, end_iter1, True)
+        nasse2 = self.view_nasse_bfr2.get_text(star_iter2, end_iter2, True)
         if text == u'': 
             return
         else:
-            txt = asm_araby.fuzzy(text)
-            for term in nasse1: 
-                if txt in asm_araby.fuzzy(term.decode('utf8')):
-                    search_tokens.append(term)
-            for term in nasse2: 
-                if txt in asm_araby.fuzzy(term.decode('utf8')):
-                    search_tokens.append(term)
-        asm_customs.with_tag(self.view_nasse_bfr1, self.view_search_tag1, search_tokens, 1, self.view_nasse1)
-        asm_customs.with_tag(self.view_nasse_bfr2, self.view_search_tag2, search_tokens, 1, self.view_nasse2)
+            text = text.strip()
+            ls_term = asm_araby.fuzzy(text).split(u' ')
+        for text in ls_term:
+            if len(text) == 1 or text == u"ال": continue
+            new_term = u''
+            for l in text:
+                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
+            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
+            new_term = new_term.replace(u'ه', u'[هة]')
+            re_term = re.compile(u'({})'.format(new_term,))
+            r_findall1 = re_term.findall(nasse1.decode('utf8'))
+            r_findall2 = re_term.findall(nasse2.decode('utf8'))
+            for r in r_findall1:
+                if r[0] not in search_tokens1: search_tokens1.append(r[0])
+            for r in r_findall2:
+                if r[0] not in search_tokens2: search_tokens2.append(r[0])
+        asm_customs.with_tag(self.view_nasse_bfr1, self.view_search_tag1, search_tokens1, 1, self.view_nasse1)
+        asm_customs.with_tag(self.view_nasse_bfr2, self.view_search_tag2, search_tokens2, 1, self.view_nasse2)
 
 
     # a التصفح--------------------------------------------
@@ -660,7 +671,14 @@ class OpenBook(Gtk.VBox):
         box.pack_start(hb, False, False, 0)
         area.pack_start(box, True, True, 0)
         add_widget()
-       
+        
+#    def sss(self, *a):
+#        print self.view_nasse1.buffer_to_window_coords(Gtk.TextWindowType.WIDGET, -1, -1)
+#        return
+#        print self.view_nasse1.get_line_at_y(200)
+#        print self.view_nasse_bfr1.place_cursor()
+#        print self.view_nasse_bfr1.get_iter_at_line(2)
+        
     def build(self, *a):
         self.vadj_page_next = 0
         self.vadj_page_prev= 0
@@ -721,6 +739,7 @@ class OpenBook(Gtk.VBox):
         self.view_nasse1 = asm_customs.ViewClass()
         self.view_nasse_bfr1 = self.view_nasse1.get_buffer()
         self.view_nasse1.connect_after("populate-popup", asm_popup.populate_popup, self.parent)
+        #self.view_nasse1.connect('button-press-event', self.sss)
         self.scroll_nasse1 = Gtk.ScrolledWindow()
         #self.scroll_nasse1.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.scroll_nasse1.set_shadow_type(Gtk.ShadowType.IN)

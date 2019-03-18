@@ -88,7 +88,7 @@ def tafsir_ayat(widget, buff, parent):
         if len(text) >= 3:
             all_ayat = Othman().search('"'+text+'"')
             parent.tafsirpage.store_search.clear()
-            if len(all_ayat[0]) == 0:
+            if len(all_ayat) == 0:
                 asm_customs.erro(parent, 'لا يوجد نتيجة'); return
             else: 
                 for ayat in all_ayat:

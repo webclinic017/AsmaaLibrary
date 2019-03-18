@@ -4,8 +4,8 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  ########
 ##############################################################################
 
-from gi.repository import Gtk
-import asm_customs
+from gi.repository import Gtk, Pango, GObject
+import asm_customs, asm_config
 from asm_contacts import bookDB, listDB, Othman
 
 class EditTafsir(Gtk.Dialog):
@@ -152,4 +152,148 @@ class EditTafsir(Gtk.Dialog):
         box.pack_end(Gtk.HSeparator(), False, False, 3)
         
         self.suras.connect('changed', self.select_sura)
+        self.show_all()
+        
+class ListTafasir(Gtk.Dialog):
+    
+    def __init__(self, parent):
+        self.parent = parent
+        self.db = listDB()
+        self.build()
+
+    def load_tafasir(self, *a):
+        list_tafsir = eval(asm_config.getv('list_tafsir'))
+        all_tafsir = self.parent.db.all_tafsir()
+        if list_tafsir[2] == 0:
+            for a in all_tafsir:
+                self.store_tafsir_added.append(a)
+                list_tafsir[1].append(a[0])
+        else:
+            for a in list_tafsir[1]:
+                self.store_tafsir_added.append(self.parent.db.tit_book(a))
+            for t in all_tafsir:
+                if t[0] not in list_tafsir[1]:
+                    self.store_tafsir_no_added.append(t)
+        self.col_btn.set_active(list_tafsir[0])
+        list_tafsir[2] = 1
+        list_tafsir = repr(list_tafsir)
+        asm_config.setv('list_tafsir', list_tafsir)
+
+    def save_list(self, *a):
+        list_tafsir = eval(asm_config.getv('list_tafsir'))
+        list_tafsir[2] = 1
+        list_tafsir[1] = []
+        list_tafsir[0] = self.col_btn.get_active()
+        for a in self.store_tafsir_added:
+            list_tafsir[1].append(a[0])
+        list_tafsir = repr(list_tafsir)
+        asm_config.setv('list_tafsir', list_tafsir)
+        self.parent.tafsirpage.refresh_list()
+        self.destroy()
+    
+    def to_add_cb(self, *a):
+        model, i = self.sel_tafsir_no_added.get_selected()
+        if i:
+            id_tafsir = model.get_value(i, 0)
+            model.remove(i)
+            self.store_tafsir_added.append(self.parent.db.tit_book(id_tafsir))
+    
+    def no_add_cb(self, *a):
+        model, i = self.sel_tafsir_added.get_selected()
+        if i:
+            id_tafsir = model.get_value(i, 0)
+            model.remove(i)
+            self.store_tafsir_no_added.append(self.parent.db.tit_book(id_tafsir))
+    
+    def build(self, *a):
+        Gtk.Dialog.__init__(self, parent=self.parent)
+        self.set_border_width(3)
+        self.set_icon_name("asmaa")
+        self.set_title("تعديل قائمة التفاسير")
+        self.set_size_request(620, 450)
+        self.connect('delete-event', lambda *a: self.destroy())
+        vbox = self.vbox
+        
+        hbox = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
+        vbox1 = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
+        self.store_tafsir_added = Gtk.ListStore(GObject.TYPE_INT, GObject.TYPE_STRING)
+        self.tree_tafsir_added = Gtk.TreeView()
+        self.tree_tafsir_added.set_model(self.store_tafsir_added)
+        self.sel_tafsir_added = self.tree_tafsir_added.get_selection()
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        scroll.add(self.tree_tafsir_added)
+        scroll.set_size_request(200, -1)
+        celltext = Gtk.CellRendererText()
+        celltext.set_property("ellipsize", Pango.EllipsizeMode.END)
+        columntext = Gtk.TreeViewColumn("التفاسير المعتمدة", celltext, text = 1 )
+        columntext.set_expand(True)
+        self.tree_tafsir_added.append_column(columntext)
+        vbox1.pack_start(scroll, True, True, 3)
+        hbox.pack_start(vbox1, True, True, 0)
+        
+        vbox1 = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
+        icon_theme = Gtk.IconTheme.get_default ()
+        no_add = Gtk.Button()
+        img = Gtk.Image()
+        has = icon_theme.has_icon("gtk-go-forward-rtl")
+        if  has: 
+            img.set_from_icon_name('gtk-go-forward-rtl', Gtk.IconSize.BUTTON)
+        else:
+            img.set_from_stock(Gtk.STOCK_GO_BACK, Gtk.IconSize.BUTTON)
+        no_add.set_image(img)
+        no_add.set_tooltip_text('ألغ')
+        no_add.connect('clicked', self.no_add_cb)
+        vbox1.pack_start(no_add, True, False, 0)
+        #--------------------------------------
+        to_add = Gtk.Button()
+        img = Gtk.Image()
+        has = icon_theme.has_icon("gtk-go-back-rtl")
+        if  has: 
+            img.set_from_icon_name('gtk-go-back-rtl', Gtk.IconSize.BUTTON)
+        else:
+            img.set_from_stock(Gtk.STOCK_GO_FORWARD, Gtk.IconSize.BUTTON)
+        to_add.set_image(img)
+        to_add.set_tooltip_text('أضف')
+        to_add.connect('clicked', self.to_add_cb)
+        vbox1.pack_start(to_add, True, False, 0)
+        hbox.pack_start(vbox1, False, False, 0)
+        #--------------------------------------
+        
+        vbox1 = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
+        self.store_tafsir_no_added = Gtk.ListStore(GObject.TYPE_INT, GObject.TYPE_STRING)
+        self.tree_tafsir_no_added = Gtk.TreeView()
+        self.tree_tafsir_no_added.set_model(self.store_tafsir_no_added)
+        self.sel_tafsir_no_added = self.tree_tafsir_no_added.get_selection()
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        scroll.add(self.tree_tafsir_no_added)
+        scroll.set_size_request(200, -1)
+        celltext = Gtk.CellRendererText()
+        celltext.set_property("ellipsize", Pango.EllipsizeMode.END)
+        columntext = Gtk.TreeViewColumn("التفاسير المهملة", celltext, text = 1 )
+        columntext.set_expand(True)
+        self.tree_tafsir_no_added.append_column(columntext)
+        vbox1.pack_start(scroll, True, True, 3)
+        hbox.pack_start(vbox1, True, True, 0)
+        vbox.pack_start(hbox, True, True, 0)
+        
+        ls = ['1', '2', '3', '4', '5']
+        self.col_btn = Gtk.ComboBoxText()
+        for a in ls:
+            self.col_btn.append_text(a)
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        hb.pack_start(Gtk.Label('عدد الأعمدة في قائمة التفاسير'), False, False, 0)
+        hb.pack_start(self.col_btn, False, False, 0)
+        vbox.pack_start(hb, False, False, 0)
+        
+        hbox = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
+        self.btn_save = asm_customs.ButtonClass('حفظ')
+        self.btn_save.connect('clicked', self.save_list)
+        hbox.pack_start(self.btn_save, False, False, 0)
+        btn_close = asm_customs.ButtonClass('إغلاق')
+        btn_close.connect('clicked', lambda *a: self.destroy())
+        hbox.pack_end(btn_close, False, False, 0)
+        vbox.pack_start(hbox, False, False, 0)
+        self.load_tafasir()
         self.show_all()
