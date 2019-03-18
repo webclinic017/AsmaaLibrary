@@ -7,7 +7,6 @@
 import sqlite3
 from gi.repository import Gtk
 import asm_araby, asm_customs, asm_path
-import bisect
 from os.path import join, exists, getsize, basename
 from os import unlink, listdir, mkdir
 
@@ -22,10 +21,10 @@ class listDB(object):
         cur.execute("SELECT * FROM main")
         return cur.fetchone()
     
-    def save_info(self, book, name, short_name, txt_bitaka, txt_info):
+    def save_info(self, book, name, short_name, txt_bitaka, txt_info, is_short):
         con = sqlite3.connect(book)
         cur = con.cursor()
-        cur.execute('UPDATE main SET bk=?, shortname=?, betaka=?, inf=?', (name, short_name, txt_bitaka, txt_info))
+        cur.execute('UPDATE main SET bk=?, shortname=?, betaka=?, inf=?, islamshort=?', (name, short_name, txt_bitaka, txt_info, is_short))
         con.commit()
     
     def rename_book_in_main(self, book, name):
@@ -349,10 +348,29 @@ class listDB(object):
         check = self.con.commit()
         return check
     
+    # a هل الكتاب مفهرس؟------------------------------------
+    def is_indexed(self, id_book):
+        self.cur.execute('SELECT id_book FROM books WHERE indx=1 AND id_book=? LIMIT 1', (id_book, ))
+        books = self.cur.fetchone()
+        if books == None or len(books) == 0: return False
+        else: return True
+        
+    # a تعيين كتاب مفهرس------------------------------------
+    def add_indexed(self, id_book):
+        self.cur.execute('UPDATE books SET indx=1 WHERE id_book=?', (id_book, ))
+        check = self.con.commit()
+        return check
+        
+    # a إلغاء فهرسة كتاب------------------------------------
+    def null_indexed(self, id_book):
+        self.cur.execute('UPDATE books SET indx=0 WHERE id_book=?', (id_book, ))
+        check = self.con.commit()
+        return check
+    
     # a بحث في قائمة الكتب-----------------------------------
     
     def search_books(self, text):
-        self.cur.execute('SELECT id_book, tit FROM books WHERE fuzzy(tit) LIKE ? LIMIT 100', ('%'+text+'%', ))
+        self.cur.execute('SELECT id_book, tit FROM books WHERE fuzzy(tit) LIKE ? LIMIT 100', ('%'+asm_araby.fuzzy(text)+'%', ))
         books = self.cur.fetchall()
         return books
 
@@ -505,6 +523,10 @@ class bookDB(object):
         self.cur.execute("SELECT id FROM pages WHERE part=? AND page=?" , (n_part, n_page))
         return self.cur.fetchone()
     
+    def go_to_nearer_page(self, n_part, n_page, n):
+        self.cur.execute("SELECT id FROM pages WHERE part=? AND page=?" , (n_part, n_page-n))
+        return self.cur.fetchone()
+    
     def page_ayat(self, sora, aya):
         self.cur.execute("""SELECT id FROM pages WHERE sora=? AND aya<=?""", (sora, aya))
         page = self.cur.fetchall()
@@ -514,6 +536,12 @@ class bookDB(object):
     def edit_tafsir(self, id_page, sura, aya, na):
         self.cur.execute('UPDATE pages SET sora=?, aya=?, na=? WHERE id=?', (sura, aya, na, id_page))
         self.con.commit()
+    
+    def get_title(self, id_page):
+        self.cur.execute('SELECT tit FROM titles WHERE id<=?', (id_page,)) 
+        try: tit = self.cur.fetchall()[-1][0]
+        except: tit = '......'
+        return tit
         
     def search(self, text, store, condition, phrase):
         len_book = len(self.list_pages)
@@ -535,15 +563,12 @@ class bookDB(object):
             i_pgs = self.cur.fetchall()
             for i in i_pgs:
                 j = i[0]
-                k = bisect.bisect(self.toc_ids, j)-1
-                if k < 0: k = 0
-                try: h = self.toc_uniq[k]
-                except: h = [1, 1, '......']
+                tit = self.get_title(j)
                 try: pg = int(i[2])
                 except: pg = 1
                 try: pr = int(i[1])
                 except: pr = 1
-                store.append([j, s, self.book_name, h[2], pr, pg, self.book, self.id_book])
+                store.append([j, s, self.book_name, tit, pr, pg, self.book, self.id_book])
                 s += 1
             v += 1
     
@@ -627,38 +652,34 @@ class Othman(object):
         
     def get_suras_names(self):
         self.cur.execute("SELECT id, sura_name, ayat FROM SuraNames")
-        return map(lambda i: [i[0], i[1], i[2]], self.cur.fetchall())
+        ls = []
+        for i in self.cur.fetchall():
+            ls.append([i[0], i[1], i[2]])
+        return ls
 
     def get_sura_info(self, sura):
         self.cur.execute("SELECT id, sura_name, other_names, ayat FROM SuraNames WHERE id=?", (sura, ))
         sura_info = self.cur.fetchone()
         return sura_info
-
+    
+    def get_aya(self, id_binary):
+        self.cur.execute("SELECT othmani FROM quran WHERE id_binary=?", (id_binary,))
+        return self.cur.fetchone()[0]
+    
     def get_ayat(self, sura, aya1, aya2):
         self.cur.execute("SELECT othmani FROM quran WHERE sura=? and aya BETWEEN ? and ?", (sura, aya1, aya2-1))
         return map(lambda i: i[0], self.cur.fetchall())
 
     def search(self, text):
-        term = text.split()[0].replace('"', '')
         s = '''fuzzy(imlai) LIKE ? ESCAPE "|"'''
         text=asm_araby.fuzzy(text)
         self.search_tokens=asm_araby.tokenize_search(text)
         l = map(lambda s: '%'+s.replace('|', '||').replace('%', '|%')+'%', self.search_tokens)
         if len(l) < 1: return []
         condition = ' AND '.join([s]*len(l))
-        self.cur.execute("""SELECT sura, aya, page, othmani, imlai  FROM Quran WHERE {} LIMIT 50""".format(condition, ), l)
+        self.cur.execute("""SELECT sura, aya, page, othmani, imlai, id_binary  FROM Quran WHERE {} LIMIT 50""".format(condition, ), l)
         ayat = self.cur.fetchall()
-        all_term = []
-        for a in ayat:
-            li =  a[4].split()
-            lo =  a[3].split()
-            if u'۞' in lo: lo.remove(u'۞')
-            for b in li:
-                if asm_araby.fuzzy(term) in asm_araby.fuzzy(b):
-                    index_term = li.index(b)
-                    term_o = lo[index_term]
-                    all_term.append(term_o)
-        return ayat, all_term
+        return ayat
     
     #-------------------------------------------------- 
     

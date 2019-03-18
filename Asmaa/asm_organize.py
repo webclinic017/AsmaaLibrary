@@ -8,7 +8,7 @@ from os.path import join, exists
 from os import mkdir, rename, listdir, unlink
 from shutil import rmtree, copyfile
 from asm_contacts import listDB
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 import asm_araby, asm_customs, asm_config, asm_path
 from asm_edit_bitaka import EditBitaka
 from asm_edit_tafsir import EditTafsir
@@ -25,8 +25,11 @@ class Organize(Gtk.Box):
             return True
         else: return False
         
-    def search_cb(self, *a):
-        self.theword = [self.search_book.get_text().decode('utf8')]
+    def search_on_active(self, text):
+        self.search_on_page(text)
+        
+    def search_on_page(self, text):
+        self.theword = [text]
         self.modelfilter.refilter()
     
     def __init__(self, parent):
@@ -35,7 +38,7 @@ class Organize(Gtk.Box):
         self.mycount = Count()
         self.size_font = int(self.parent.theme.font_nass[-2:])
         self.list_modifieds = []
-        self .build()
+        self.build()
     
     def add_to_favory(self, *a):
         model, i = self.sel_book.get_selected()
@@ -249,15 +252,15 @@ class Organize(Gtk.Box):
         info = self.db.info_book(book)
         if info[8] != 1:
             msg = asm_customs.sure(self.parent, 'هذا الكتاب ليس تفسيرا هل تريد جعله كذلك')
-            if msg == Gtk.ResponseType.NO:
-                return
-            else:
+            if msg == Gtk.ResponseType.YES:
                 self.db.make_tafsir(book, self.id_book)
+            else:
+                return
         EditTafsir(self.parent, self.id_book)
     
     def editbk_cb(self, *a):
         self.parent.editbook.close_db()
-        self.parent.notebook.set_current_page(8)
+        self.parent.notebook.set_current_page(7)
         book = self.db.file_book(self.id_book)
         self.parent.editbook.add_book(book, self.id_book, 1)
     
@@ -282,58 +285,21 @@ class Organize(Gtk.Box):
                 return
             db = join(asm_path.BOOK_DIR_rw, nm_group, new_bk+u'.asm')
             if exists(db):
-                asm_customs.erro(self.parent, 'يوجد كتاب بنفس الاسم')
+                asm_customs.erro(self.parent, 'يوجد كتاب بنفس الاسم في هذا القسم')
                 return
             self.db.empty_book(db)
             self.db.add_book(new_bk, id_part)
             asm_customs.info(self.parent, 'تم إضافة كتاب فارغ')
         
-    def count_cb(self, *a):
-        n_group = len(self.db.all_parts())
-        n_book = self.db.n_books()
-        asm_config.setv('n_group', n_group)
-        asm_config.setv('n_book', n_book)
-        self.n_group.set_text('عدد الأقسام : {}'.format(n_group))
-        self.n_book.set_text('عدد الكتب : {}'.format(n_book)) 
-    
-    def open_file(self, *a):
-        hb = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
-        box = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
-        dlg = Gtk.Dialog(parent=self.parent)
-        dlg.set_icon_name("asmaa")
-        dlg.set_default_size(1000, 700)
-        area = dlg.get_content_area()
-        area.set_spacing(6)
-        dlg.set_title('إحصاء الكتب')
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_shadow_type(Gtk.ShadowType.IN)
-        self.view_html = EditHTML()
-        self.view_html.open_html(self.file_html)
-        close_btn = asm_customs.ButtonClass("إغلاق")
-        close_btn.connect('clicked',lambda *a: dlg.destroy())
-        hb.pack_end(close_btn, False, False, 0)
-        box.pack_start(self.view_html, True, True, 0)
-        box.pack_start(hb, False, False, 0)
-        area.pack_start(box, True, True, 0)
-        dlg.show_all()
-    
-    def count_fast(self, *a):
-        self.file_html = self.mycount.fast()
-        self.open_file()
-        
-    def count_detail(self, *a):
-        self.file_html = self.mycount.detail()
-        self.open_file()
-        
     def build(self,*a): 
-        Gtk.Box.__init__(self,spacing=7,orientation=Gtk.Orientation.VERTICAL)
+        Gtk.Box.__init__(self,spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
         hp1 = Gtk.HPaned()
         self.pack_start(hp1, True, True, 0)
         self.tree_group = asm_customs.TreeClass()
         self.sel_group = self.tree_group.get_selection()
         self.tree_group.connect("cursor-changed", self.ok_group)
         cell = Gtk.CellRendererText()
-        cell.set_property("wrap-width", 200)
+        cell.set_property("ellipsize", Pango.EllipsizeMode.END)
         kal = Gtk.TreeViewColumn('الأقسام', cell, text=1)
         self.tree_group.append_column(kal)
         self.store_group = Gtk.ListStore(int, str)
@@ -344,29 +310,22 @@ class Organize(Gtk.Box):
         scroll.add(self.tree_group)
         scroll.set_size_request(150, -1)
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        hp1.pack1(scroll, False, False)
-        
-        hp2 = Gtk.HPaned()
-        hp1.pack2(hp2, True, True)
-        vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
+        hp1.pack1(scroll, True, True)
+
         self.store_books = Gtk.ListStore(int, str)
         self.tree_books = asm_customs.TreeIndex()
         self.tree_books.connect("cursor-changed", self.ok_book)
         self.sel_book = self.tree_books.get_selection()
         self.tree_books.set_grid_lines(Gtk.TreeViewGridLines.HORIZONTAL)
-        books = Gtk.TreeViewColumn('الكتب', Gtk.CellRendererText(), text=1)
+        cell = Gtk.CellRendererText()
+        cell.set_property("ellipsize", Pango.EllipsizeMode.END)
+        books = Gtk.TreeViewColumn('الكتب', cell, text=1)
         self.tree_books.append_column(books)
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.tree_books)
         scroll.set_size_request(250, -1)
-        vb.pack_start(scroll, True, True, 0)
-        try: self.search_book = Gtk.SearchEntry()
-        except: self.search_book = Gtk.Entry()
-        self.search_book.set_placeholder_text('بحث عن كتاب')
-        self.search_book.connect('changed', self.search_cb)
-        vb.pack_start(self.search_book, False, False, 0)
-        hp2.pack1(vb, False, False)
+        hp1.pack2(scroll, True, True)
             
         self.notebk = Gtk.Notebook()
         self.notebk.set_show_tabs(False)
@@ -375,47 +334,33 @@ class Organize(Gtk.Box):
         self.entry_group.set_placeholder_text('أدخل اسما!')
         vb.pack_start(self.entry_group, False, False, 0)
         
-        hb = Gtk.Box(False, 0)
-        btn_new_g = asm_customs.ButtonClass('قسم جديد')
+        btn_new_g = Gtk.Button('قسم جديد')
         btn_new_g.connect('clicked', self.new_group)
-        hb.pack_start(btn_new_g, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
-        
-        hb = Gtk.Box(False, 0)
-        btn_rn_g = asm_customs.ButtonClass('تغيير اسم')
+        vb.pack_start(btn_new_g, False, False, 0)    
+
+        btn_rn_g = Gtk.Button('تغيير اسم')
         btn_rn_g.connect('clicked', self.rename_group)
-        hb.pack_start(btn_rn_g, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(btn_rn_g, False, False, 0)
         
-        hb = Gtk.Box(False, 0)
-        btn_rm_g = asm_customs.ButtonClass('حذف قسم')
+        btn_rm_g = Gtk.Button('حذف قسم')
         btn_rm_g.connect('clicked', self.remove_group)
-        hb.pack_start(btn_rm_g, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(btn_rm_g, False, False, 0)
         
-        hb = Gtk.Box(False, 0)
-        btn_up_g = asm_customs.ButtonClass('حرك لأعلى')
+        btn_up_g = Gtk.Button('حرك لأعلى')
         btn_up_g.connect('clicked', self.move_group, -1)
-        hb.pack_start(btn_up_g, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(btn_up_g, False, False, 0)
         
-        hb = Gtk.Box(False, 0)
-        btn_down_g = asm_customs.ButtonClass('حرك لأسفل')
+        btn_down_g = Gtk.Button('حرك لأسفل')
         btn_down_g.connect('clicked', self.move_group, 1)
-        hb.pack_start(btn_down_g, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(btn_down_g, False, False, 0)
         
-        hb = Gtk.Box(False, 7)
-        btn_merge_g = asm_customs.ButtonClass('دمج قسم')
+        btn_merge_g = Gtk.Button('دمج قسم')
         btn_merge_g.connect('clicked', self.merge_group_cb)
-        hb.pack_start(btn_merge_g, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(btn_merge_g, False, False, 0)
         
-        hb = Gtk.Box(False, 0)
-        btn_empty_book = asm_customs.ButtonClass('كتاب فارغ')
+        btn_empty_book = Gtk.Button('كتاب فارغ')
         btn_empty_book.connect('clicked', self.empty_book_cb)
-        hb.pack_start(btn_empty_book, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(btn_empty_book, False, False, 0)
         self.notebk.append_page(vb, Gtk.Label('القسم'))
         
         vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
@@ -423,70 +368,42 @@ class Organize(Gtk.Box):
         self.entry_book.set_placeholder_text('أدخل اسما!')
         vb.pack_start(self.entry_book, False, False, 0)
         
-        hb = Gtk.Box(False, 0)
-        self.btn_rn_book = asm_customs.ButtonClass('تغيير اسم')
+        self.btn_rn_book = Gtk.Button('تغيير اسم')
         self.btn_rn_book.connect('clicked', self.rename_book)
-        hb.pack_start(self.btn_rn_book, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
-        
-        hb = Gtk.Box(False, 0)
-        self.btn_rm_book = asm_customs.ButtonClass('حذف كتاب')
+        vb.pack_start(self.btn_rn_book, False, False, 0)
+
+        self.btn_rm_book = Gtk.Button('حذف كتاب')
         self.btn_rm_book.connect('clicked', self.remove_book)
-        hb.pack_start(self.btn_rm_book, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
-        
-        hb = Gtk.Box(False, 0)
-        btn_fav_b = asm_customs.ButtonClass('تفضيل كتاب')
+        vb.pack_start(self.btn_rm_book, False, False, 0)
+
+        btn_fav_b = Gtk.Button('تفضيل كتاب')
         btn_fav_b.connect('clicked', self.add_to_favory)
-        hb.pack_start(btn_fav_b, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(btn_fav_b, False, False, 0)
         
-        hb = Gtk.Box(False, 7)
-        self.btn_move_book = asm_customs.ButtonClass('نقل كتاب')
+        self.btn_move_book = Gtk.Button('نقل كتاب')
         self.btn_move_book.connect('clicked', self.move_book_cb)
-        hb.pack_start(self.btn_move_book, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(self.btn_move_book, False, False, 0)
         
-        hb = Gtk.Box(False, 7)
-        self.btn_info_book = asm_customs.ButtonClass('بطاقة كتاب')
+        self.btn_info_book = Gtk.Button('بطاقة كتاب')
         self.btn_info_book.connect('clicked', lambda *a: EditBitaka(self.parent, self.id_book))
-        hb.pack_start(self.btn_info_book, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(self.btn_info_book, False, False, 0)
         
-        hb = Gtk.Box(False, 7)
-        self.btn_edit_book = asm_customs.ButtonClass('تحرير كتاب')
+        self.btn_edit_book = Gtk.Button('تحرير كتاب')
         self.btn_edit_book.connect('clicked', self.editbk_cb)
-        hb.pack_start(self.btn_edit_book, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(self.btn_edit_book, False, False, 0)
         
-        hb = Gtk.Box(False, 7)
-        self.btn_tafsir = asm_customs.ButtonClass('تحرير تفسير')
+        self.btn_tafsir = Gtk.Button('تحرير تفسير')
         self.btn_tafsir.connect('clicked', self.edit_tafsir_cb)
-        hb.pack_start(self.btn_tafsir, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(self.btn_tafsir, False, False, 0)
         
-        hb = Gtk.Box(False, 7)
-        self.btn_mode_write = asm_customs.ButtonClass('وضع الكتابة')
+        self.btn_mode_write = Gtk.Button('وضع الكتابة')
         self.btn_mode_write.set_tooltip_text('نسخ الكتاب إلى دليل المكتبة الموجود في المنزل\nللتمكن من تحريره')
         self.btn_mode_write.connect('clicked', self.mode_write_cb)
-        hb.pack_start(self.btn_mode_write, False, False, 0)
-        vb.pack_start(hb, False, False, 0)
+        vb.pack_start(self.btn_mode_write, False, False, 0)
         
         self.notebk.append_page(vb, Gtk.Label('الكتاب'))
-        hp2.pack2(self.notebk, True, True)
-        
-        hbox = Gtk.Box(spacing=6,orientation=Gtk.Orientation.HORIZONTAL)
-        self.rapid_count = asm_customs.ButtonClass('إحصاء سريع')
-        self.rapid_count.connect('clicked', self.count_fast)
-        self.rapid_count.connect('clicked', self.count_cb)
-        self.detail_count = asm_customs.ButtonClass('إحصاء مفصل')
-        self.detail_count.connect('clicked', self.count_detail)
-        hbox.pack_start(self.rapid_count, False, False, 0)
-        hbox.pack_start(self.detail_count, False, False, 0)
-        self.n_group = Gtk.Label('- عدد الأقسام : {}'.format(asm_config.getn('n_group')))
-        hbox.pack_start(self.n_group, False, False, 0)
-        self.n_book = Gtk.Label('،   - عدد الكتب : {}'.format(asm_config.getn('n_book')))
-        hbox.pack_start(self.n_book, False, False, 0)
-        self.pack_start(hbox, False, False, 0)
+        self.notebk.set_size_request(250, -1)
+        self.pack_start(self.notebk, False, False, 0)
+        self.set_border_width(5)
         self.show_all()
         

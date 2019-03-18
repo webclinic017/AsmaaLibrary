@@ -46,8 +46,7 @@ class DB_from_MDB(object):
         sys.stdout.flush()
    
     def creat_newDB(self):
-        self.get_tables()     
-        self.cur.execute("BEGIN;")
+        self.get_tables()
         for table in self.table_list:
             if table in self.my_tables or self.my_tables == []:
                 new_table = re.sub('^(\d)', 'a', re.sub(' ', '_', table)).lower()
@@ -60,28 +59,33 @@ class DB_from_MDB(object):
                 s = re.compile(r'.*create table')
                 e = re.compile(r'\);.*')
                 self.new_cmd = re.sub(s, 'create table', cmd)
+                self.new_cmd = re.sub(u'\[|\]', '', self.new_cmd)
                 self.new_cmd = re.sub(u'create table '+table.lower(), u'create table '+new_table, self.new_cmd)
                 self.new_cmd = re.sub(e, ');', self.new_cmd)
                 self.get_cols()
-                for col in self.cols:
+                for col in self.cols: 
                     new_col = re.sub(r'/', '', col)
+                    new_col = re.sub(u'\[|\]', '', new_col)#######
                     new_col = re.sub('\s+', '_', new_col)
                     self.new_cmd = re.sub(col, new_col, self.new_cmd) 
                 self.cur.execute(self.new_cmd)
                 #-------------------------------------------------------------------------------
                 self.contents = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', self.ifile, table], 
                            0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode('utf8')
-                self.contents = re.sub(r'"', '', self.contents)
+                
                 self.list_contents = self.contents.split('new_row')
                 for a in range(len(self.list_contents)):
+                    contents0 = re.sub(r'"', '', self.list_contents[a])
                     if a == 0: 
-                        motif = '\n'.join(self.list_contents[0].split('\n')[1:]).split('new_col')
+                        motif = '\n'.join(contents0.split('\n')[1:]).split('new_col')
                     else:
-                        motif = self.list_contents[a].split('new_col')
+                        motif = contents0.split('new_col')
                     try:
+                        
                         self.cur.execute('INSERT INTO {} VALUES (?{})'.format(new_table,', ?'*(len(motif)-1)), motif)
+                        self.con.commit()
                     except: continue
-        self.con.commit()
+        
         
     def destroy_db(self):
         self.cur.close()
@@ -192,8 +196,9 @@ def export_bok(ifile, cat, con_ls, cur_ls, cur):
                          shrooh_book, com_book, inf_page, inf_title, sharh, tafsir, is_tafsir, is_sharh, version)
 
 def export_mdb(path, con_ls, cur_ls, cur_main, cur_sp, cur, bkid):
-    cur_main.execute('SELECT bkid, bk, cat, betaka, inf, authno, islamshort ,tafseernam FROM abok WHERE bkid=?', 
-                     (bkid, ))
+    #cur_main.execute('SELECT bkid, bk, cat, betaka, inf, authno, islamshort ,tafseernam FROM abok WHERE bkid=?', (bkid, ))
+    cur_main.execute('SELECT bkid, bk, cat, betaka, inf, authno, islamshort ,tafseernam, archive FROM abok WHERE bkid=?', 
+                     (bkid, ))##############
     inf_book = cur_main.fetchone()
     cur_main.execute('SELECT id, name, catord, lvl FROM acat WHERE id=?', (inf_book[2], ))
     inf_group = cur_main.fetchone()
@@ -203,21 +208,31 @@ def export_mdb(path, con_ls, cur_ls, cur_main, cur_sp, cur, bkid):
     shorts_book = cur_sp.fetchall()
     cur_sp.execute('SELECT matn, matnid, sharh, sharhid FROM shrooh WHERE matnid=?', (inf_book[0], ))
     shrooh_book = cur_sp.fetchall()
-    cur.execute('SELECT id, nass, part, page FROM book')
+    #cur.execute('SELECT id, nass, part, page FROM book')
+    if inf_book[8] == 0:
+        nm_book_table = 'book'
+        nm_title_table = 'title'
+    else:
+        nm_book_table = 'b'+str(bkid)
+        nm_title_table = 't'+str(bkid)
+    cur.execute('SELECT id, nass, part, page FROM {}'.format(nm_book_table))############
     inf_page = cur.fetchall()
     if len(shrooh_book) > 0: 
         is_sharh = 1
-        sharh = cur.execute('SELECT hno FROM book').fetchall()
+        #sharh = cur.execute('SELECT hno FROM book').fetchall()
+        sharh = cur.execute('SELECT hno FROM {}'.format(nm_book_table)).fetchall()###########
     else: 
         is_sharh = 0
         sharh = []
     if len(inf_book[7]) > 2:
-        tafsir = cur.execute('SELECT sora, aya, na FROM book').fetchall()
+        #tafsir = cur.execute('SELECT sora, aya, na FROM book').fetchall()
+        tafsir = cur.execute('SELECT sora, aya, na FROM {}'.format(nm_book_table)).fetchall()##############
         is_tafsir = 1
     else: 
         tafsir = []
         is_tafsir = 0
-    cur.execute('SELECT id, tit, lvl , sub FROM title')
+    #cur.execute('SELECT id, tit, lvl , sub FROM title')
+    cur.execute('SELECT id, tit, lvl , sub FROM {}'.format(nm_title_table))###########
     inf_title = cur.fetchall()
     version = 0.1
     create_asmaa_bok(con_ls, cur_ls, inf_book, inf_group, shorts_book, shrooh_book, com_book, 

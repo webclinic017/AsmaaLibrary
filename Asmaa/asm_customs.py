@@ -11,7 +11,7 @@ import re
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.1.1'
+version = '2.3.0'
 #a--------------------------------------------------
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
@@ -78,19 +78,15 @@ def tool_button(icon_file, tooltip, function, data=None):
         return toolbtn
 
 #a------------------------------------------
-def combo(ls, name, v):
+def combo(ls, name):
     new_ls = []
     new_ls.extend(ls)
     hb = Gtk.HBox(False, 6) 
     store = Gtk.ListStore(int, str, int)
     cmt = Gtk.ComboBox.new_with_model(store)
-    if v == 1:
-        new_ls.insert(0, [0, u'الكل'])
     for a in new_ls:
-        if len(a) == 2:
-            store.append([a[0], a[1], 0])
-        else:
-            store.append([a[0], a[1], a[2]])
+        if len(a) == 3: store.append([a[0], a[1], a[2]])
+        else: store.append([a[0], a[1], 0])
     renderer_text = Gtk.CellRendererText()
     renderer_text.set_property("ellipsize-set", True)
     renderer_text.set_property("ellipsize", Pango.EllipsizeMode.END)
@@ -100,19 +96,8 @@ def combo(ls, name, v):
     cmt.add_attribute(renderer_text, "text", 1)
     lab = Gtk.Label(name)
     lab.set_alignment(0,0.5)
-    if v == 3:
-        lab.set_size_request(200, 8)
-        cmt.set_size_request(120, -1)
-    elif v == 4:
-        lab.set_size_request(40, -1)
-        cmt.set_size_request(40, -1)
-    else:
-        lab.set_size_request(50, -1)
-        cmt.set_size_request(140, -1)
     hb.pack_start(lab, False, False, 0)
     hb.pack_end(cmt, False, False, 0)
-    if v == 1:
-        cmt.set_active(0)
     return hb, cmt
 
 #a------------------------------------------
@@ -201,7 +186,7 @@ class ViewClass(Gtk.TextView):
         self.set_right_margin(10)
         self.set_left_margin(10)
         self.set_wrap_mode(Gtk.WrapMode.WORD)
-#        self.get_width = self.get_size_request()[0]
+        #self.get_width = self.get_size_request()[0]
         
 #a------------------------------------------
 class ViewBitaka(Gtk.TextView):

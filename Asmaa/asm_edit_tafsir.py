@@ -92,7 +92,7 @@ class EditTafsir(Gtk.Dialog):
         self.view_quran_tag.set_property('font', self.parent.theme.font_qrn)
         self.scroll_nasse = Gtk.ScrolledWindow()
         self.scroll_nasse.set_shadow_type(Gtk.ShadowType.IN)
-        self.scroll_nasse.add_with_viewport(self.view_nasse)
+        self.scroll_nasse.add(self.view_nasse)
         box.pack_start(self.scroll_nasse, True, True, 0)
         box.pack_start(Gtk.HSeparator(), False, False, 3)
         

@@ -4,7 +4,7 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  #########
 #a############################################################################
 
-from os.path import join, exists
+from os.path import join, exists, isdir
 import os
 from gi.repository import Gtk
 import asm_customs, asm_path
@@ -55,16 +55,21 @@ class Warakat(Gtk.HPaned):
         self.store_waraka.clear()
         list_n = os.listdir(join(asm_path.LIBRARY_DIR_rw, u'waraka-search'))
         for v in list_n:
-                self.store_waraka.append([v])
+            if isdir(join(asm_path.LIBRARY_DIR_rw, u'waraka-search', v)): continue
+            self.store_waraka.append([v])
     
-    def search_in_page(self, text):
-        self.iv.search_on_waraka(text)
+    def search_on_active(self, text):
+        self.edit_html.search_on_active(text)
     
-    def near_page(self, v):
-        self.iv.near_waraka(v) 
+    def search_on_page(self, text):
+        self.edit_html.search_on_page(text)
+    
+#    def near_page(self, v):
+#        self.iv.near_waraka(v) 
     
     def new_waraka(self, *a):
         new_waraka = self.ent_new.get_text().decode('utf8')
+        if new_waraka == u'': return
         myfile = join(asm_path.LIBRARY_DIR_rw, u'waraka-search', new_waraka)
         if not exists(myfile):
             try:
@@ -84,6 +89,7 @@ class Warakat(Gtk.HPaned):
         self.edit_html = EditHTML()
         self.edit_html.set_sensitive(False)
         Gtk.HPaned.__init__(self)
+        self.set_border_width(5)
         self.set_position(150)
         vbox = Gtk.Box(spacing=3,orientation=Gtk.Orientation.VERTICAL)
         

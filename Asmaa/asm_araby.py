@@ -748,7 +748,6 @@ def tokenize_search(s):
 
 def tashkil(s):
     t = []
-    print len(s)
     for a in range(len(s)):
         for a1 in range(len(s[a])):
             for a2 in s[a][a1]:
@@ -801,6 +800,3 @@ def i3lal(text):
     if t4 not in ls: ls.append(t4)
     
     return ls
-#for a in i3lal('ازر'):
-#    print a
-#

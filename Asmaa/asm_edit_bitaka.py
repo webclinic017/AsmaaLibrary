@@ -11,7 +11,7 @@ from asm_contacts import listDB
 class EditBitaka(Gtk.Dialog):
     
     def quit_dlg(self, *a):
-        del self.db
+        #del self.db
         self.destroy()
     
     def save_cb(self, *a):
@@ -21,7 +21,9 @@ class EditBitaka(Gtk.Dialog):
                             self.view_info_bfr.get_end_iter(), False).decode('utf8')
         name = self.ent_name.get_text().decode('utf8')
         short_name = self.ent_name_sh.get_text().decode('utf8')
-        self.db.save_info(self.book, name, short_name, txt_bitaka, txt_info)
+        if self.has_shorts.get_active(): is_short = 1
+        else: is_short = 0
+        self.db.save_info(self.book, name, short_name, txt_bitaka, txt_info, is_short)
         asm_customs.info(self.parent, 'تم حفظ المعلومات الجديدة')
     
     def __init__(self, parent, id_book):
@@ -38,13 +40,17 @@ class EditBitaka(Gtk.Dialog):
         self.set_default_size(500, 600)
         box = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
         
+        self.notebook = Gtk.Notebook()
+        box1 = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
+        box2 = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
+        
         hbox = Gtk.HBox(False, 3)
         self.n_n = Gtk.Label('اسم الكتاب')
         hbox.pack_start(self.n_n, False, False, 0) 
         self.ent_name = Gtk.Entry()
         self.ent_name.set_text(self.db.info_book(self.book)[0])
         hbox.pack_start(self.ent_name, True, True, 0)
-        box.pack_start(hbox, False, False, 0)
+        box1.pack_start(hbox, False, False, 0)
         
         hbox = Gtk.HBox(False, 3)
         self.n_ns = Gtk.Label('اسم مختصر')
@@ -52,9 +58,9 @@ class EditBitaka(Gtk.Dialog):
         self.ent_name_sh = Gtk.Entry()
         self.ent_name_sh.set_text(self.db.info_book(self.book)[1])
         hbox.pack_start(self.ent_name_sh, True, True, 0)
-        box.pack_start(hbox, False, False, 0)
+        box1.pack_start(hbox, False, False, 0)
         
-        box.pack_start(Gtk.HSeparator(), False, False, 0)
+        box1.pack_start(Gtk.HSeparator(), False, False, 0)
         
         self.view_bitaka = Gtk.TextView()
         self.view_bitaka.set_wrap_mode(Gtk.WrapMode.WORD)
@@ -79,8 +85,8 @@ class EditBitaka(Gtk.Dialog):
                 self.view_bitaka_bfr.set_text(self.bitaka_book)
         sample_btn.connect('toggled', sample_cb)
         hbox.pack_end(sample_btn, False, False, 0)
-        box.pack_start(hbox, False, False, 0)
-        box.pack_start(scroll, True, True, 0)
+        box1.pack_start(hbox, False, False, 0)
+        box1.pack_start(scroll, True, True, 0)
         
         self.view_info = Gtk.TextView()
         self.view_info.set_wrap_mode(Gtk.WrapMode.WORD)
@@ -104,8 +110,17 @@ class EditBitaka(Gtk.Dialog):
                 self.view_info_bfr.set_text(self.info_book)
         sample_btn1.connect('toggled', sample_cb1)
         hbox.pack_end(sample_btn1, False, False, 0)
-        box.pack_start(hbox, False, False, 0)
-        box.pack_start(scroll, True, True, 0)
+        box1.pack_start(hbox, False, False, 0)
+        box1.pack_start(scroll, True, True, 0)
+        self.notebook.append_page(box1, Gtk.Label("بطاقة ونبذة"))
+        
+        hbox = Gtk.HBox(False, 3)
+        self.has_shorts = Gtk.CheckButton('هل به اختصارات قياسية')
+        self.has_shorts.set_tooltip_text("'A'='صلى الله عليه وسلم', 'B'='رضي الله عن', 'C'='رحمه الله',\n'D'='عز وجل', 'E'='عليه الصلاة و السلام', 'Y'=':'")
+        hbox.pack_start(self.has_shorts, False, False, 0) 
+        if self.db.info_book(self.book)[7] == 1: self.has_shorts.set_active(True)
+        box2.pack_start(hbox, False, False, 0)
+        self.notebook.append_page(box2, Gtk.Label("معلومات أخرى"))
         
         hbox = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
         save_btn = asm_customs.ButtonClass("حفظ")
@@ -114,6 +129,8 @@ class EditBitaka(Gtk.Dialog):
         clo = asm_customs.ButtonClass("إغلاق")
         clo.connect('clicked', self.quit_dlg)
         hbox.pack_end(clo, False, False, 0)
+        
+        box.pack_start(self.notebook, True, True, 0)
         box.pack_start(hbox, False, False, 0)
         
         area.pack_start(box, True, True, 0)

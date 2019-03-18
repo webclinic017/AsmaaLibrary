@@ -17,9 +17,12 @@ class Author(Gtk.HPaned):
         if asm_araby.fuzzy(self.theword[0]) in asm_araby.fuzzy(model.get_value(itr, 2).decode('utf8')):
             return True
         else: return False
-        
-    def search_cb(self, *a):
-        self.theword = [self.search_author.get_text().decode('utf8')]
+    
+    def search_on_active(self, text):
+        return
+    
+    def search_on_page(self, text):
+        self.theword = [text]
         self.modelfilter.refilter()
     
     def show_author(self, *a):
@@ -30,9 +33,9 @@ class Author(Gtk.HPaned):
             if auth == '': auth = self.db.info_auth(id_auth)[3]
             self.view_author_bfr.set_text(auth)
 
-    def near_page(self, v):
-        self.size_font += v
-        self.view_author.override_font(Pango.FontDescription("{}".format(self.size_font,))) 
+#    def near_page(self, v):
+#        self.size_font += v
+#        self.view_author.override_font(Pango.FontDescription("{}".format(self.size_font,))) 
     
     def change_font(self, *a):
         self.view_author_tag.set_property('foreground', self.parent.theme.color_tit)
@@ -41,19 +44,14 @@ class Author(Gtk.HPaned):
     def __init__(self, parent):
         self.parent = parent
         self.db = AuthorDB()
-        self.size_font = int(self.parent.theme.font_nass[-2:])
+        #self.size_font = int(self.parent.theme.font_nass[-2:])
         Gtk.HPaned.__init__(self)
         self.set_border_width(3)
-        vbox = Gtk.VBox(False, 3)
-        try: self.search_author = Gtk.SearchEntry()
-        except: self.search_author = Gtk.Entry()
-        self.search_author.set_placeholder_text('بحث عن مؤلف')
-        self.search_author.connect('changed', self.search_cb)
-        vbox.pack_start(self.search_author, False, False, 0)
         
         self.tree_author = asm_customs.TreeIndex()
         self.sel_author = self.tree_author.get_selection()
         cell = Gtk.CellRendererText()
+        cell.set_property("ellipsize", Pango.EllipsizeMode.END)
         kal = Gtk.TreeViewColumn('المؤلفين', cell, text=1)
         self.tree_author.append_column(kal)
         self.store_author = Gtk.TreeStore(int, str, str)
@@ -70,8 +68,7 @@ class Author(Gtk.HPaned):
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.tree_author)
         self.tree_author.connect("cursor-changed", self.show_author)
-        vbox.pack_start(scroll, True, True, 0)
-        self.pack1(vbox, True, True)
+        self.pack1(scroll, True, True)
         
         self.view_author = asm_customs.ViewClass()
         self.view_author_bfr = self.view_author.get_buffer()
@@ -81,6 +78,6 @@ class Author(Gtk.HPaned):
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.view_author)
         self.pack2(scroll, True, True)
-        self.set_position(200)
+        self.set_position(250)
         
         self.show_all()

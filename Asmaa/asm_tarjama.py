@@ -40,8 +40,10 @@ class Tarjama(Gtk.HPaned):
     tags = [ "الاسم :  ","المولد :  ","الوفاة :  ","الطبقة :  "
                 ,"الرواة عنه :  ","الرتبة عند الحافظ :  ","الرتبة عند الذهبي :  "]
         
-    def search_cb(self, *a):
-        text = self.search_rawi.get_text().decode('utf8')
+    def search_on_page(self, text):
+        return
+        
+    def search_on_active(self, text):
         rawis = self.db.tardjma(text)
         self.store_tarjama.clear()
         for a in rawis:
@@ -100,16 +102,11 @@ class Tarjama(Gtk.HPaned):
         self.all_term = []
         Gtk.HPaned.__init__(self)
         self.set_border_width(3)
-        vbox = Gtk.VBox(False, 3)
-        try: self.search_rawi = Gtk.SearchEntry()
-        except: self.search_rawi = Gtk.Entry()
-        self.search_rawi.set_placeholder_text('بحث عن راوِ')
-        self.search_rawi.connect('activate', self.search_cb)
-        vbox.pack_start(self.search_rawi, False, False, 0)
         
         self.tree_tarjama = asm_customs.TreeIndex()
         self.sel_tarjama = self.tree_tarjama.get_selection()
         cell = Gtk.CellRendererText()
+        cell.set_property("ellipsize", Pango.EllipsizeMode.END)
         kal = Gtk.TreeViewColumn('الرواة', cell, text=1)
         self.tree_tarjama.append_column(kal)
         self.store_tarjama = Gtk.TreeStore(int, str)
@@ -118,8 +115,7 @@ class Tarjama(Gtk.HPaned):
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.tree_tarjama)
         self.tree_tarjama.connect("cursor-changed", self.show_tarjama)
-        vbox.pack_start(scroll, True, True, 0)
-        self.pack1(vbox, True, True)
+        self.pack1(scroll, True, True)
         
         self.view_tarjama = asm_customs.ViewClass()
         self.view_tarjama_bfr = self.view_tarjama.get_buffer()
@@ -129,6 +125,6 @@ class Tarjama(Gtk.HPaned):
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.view_tarjama)
         self.pack2(scroll, True, True)
-        self.set_position(200)
+        self.set_position(250)
         
         self.show_all()

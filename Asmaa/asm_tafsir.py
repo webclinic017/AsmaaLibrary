@@ -5,7 +5,7 @@
 #a############################################################################
 
 from gi.repository import Gtk, Pango
-import asm_customs, asm_popup, asm_path
+import asm_customs, asm_popup, asm_path, asm_araby
 from asm_contacts import Othman, listDB, bookDB
 
 # class نافذة التفسير---------------------------------------------------------    
@@ -25,26 +25,29 @@ class Tafsir(Gtk.HBox):
     def mov_browse(self, id_page):
         self.suras.handler_block(self.change_sura)
         self.ayas.handler_block(self.change_aya)
-        all_in_page = self.db.get_text_body(id_page)#rowid, id, text, part, page, hno, sora, aya, na
+        self.all_in_page = self.db.get_text_body(id_page)#rowid, id, text, part, page, hno, sora, aya, na
         if self.notebook.get_current_page() == 0: 
-            if all_in_page[6] >= 1 and self.suras.get_active() != all_in_page[6]-1:
-                self.suras.set_active(all_in_page[6]-1)
+            if self.all_in_page[6] >= 1 and self.suras.get_active() != self.all_in_page[6]-1:
+                self.suras.set_active(self.all_in_page[6]-1)
                 ayat = asm_customs.value_active(self.suras, 2)
                 adj = self.ayas.get_adjustment()
                 if ayat == None: ayat = 100
                 adj.set_upper(ayat)
                 adj.set_value(1)
-            self.ayas.set_value(all_in_page[7])
+            self.ayas.set_value(self.all_in_page[7])
         self.suras.handler_unblock(self.change_sura)
         self.ayas.handler_unblock(self.change_aya)
         
     def show_page(self, id_page):
-        all_in_page = self.db.get_text_body(id_page)#rowid, id, text, part, page, hno, sora, aya, na
-        self.current_id = all_in_page[0]
-        self.part_now = all_in_page[3]
-        self.page_now = all_in_page[4]
-        self.view_tafsir_bfr.set_text(all_in_page[2])
-        try: sora, aya, na = all_in_page[6], all_in_page[7], all_in_page[8]
+        self.all_in_page = self.db.get_text_body(id_page)#rowid, id, text, part, page, hno, sora, aya, na
+        self.current_id = self.all_in_page[0]
+        self.part_now = self.all_in_page[3]
+        self.page_now = self.all_in_page[4]
+        self.view_tafsir_bfr.set_text(self.all_in_page[2])
+        text = self.parent.entry_search.get_text().decode('utf8')
+        if text != u'': 
+            self.search_now(text)
+        try: sora, aya, na = self.all_in_page[6], self.all_in_page[7], self.all_in_page[8]
         except: sora = 0
         if sora > 0 and sora < 115:
             try: na = int(na)
@@ -82,13 +85,14 @@ class Tafsir(Gtk.HBox):
         self.show_tafsir(tafsir, sura, aya)
     
     def select_sura(self, w):
-        sura = asm_customs.value_active(w, 0)
+        #sura = asm_customs.value_active(w, 0)
         ayat = asm_customs.value_active(w, 2)
         adj = self.ayas.get_adjustment()
+        print str(ayat)
         adj.set_upper(ayat)
         adj.set_value(1)
-        tafsir = asm_customs.value_active(self.tafsirs, 0)
-        self.show_tafsir(tafsir, sura, 1)
+        #tafsir = asm_customs.value_active(self.tafsirs, 0)
+        #self.show_tafsir(tafsir, sura, 1)
         
     def select_aya(self, w):
         sura = asm_customs.value_active(self.suras, 0)
@@ -122,31 +126,46 @@ class Tafsir(Gtk.HBox):
         self.show_page(n[0])
         if n != self.opened_old[-1]: self.opened_old.append(n)
     
-    def search_cb(self, *a):
+    def search_on_quran(self, *a):
         text = self.search_entry.get_text().decode('utf8')
         if len(text) >= 3:
             all_ayat = Othman().search('"'+text+'"')
             self.store_search.clear()
-            if len(all_ayat[0]) == 0:
+            if len(all_ayat) == 0:
                 asm_customs.erro(self.parent, 'لا يوجد نتيجة'); return
             else: 
-                for ayat in all_ayat[0]:
+                for ayat in all_ayat:
                     i_sura = ayat[0]
                     i_ayat = ayat[1]
                     suras_names = Othman().get_suras_names()
                     sura = suras_names[i_sura-1]
                     self.store_search.append(None, [i_sura, i_ayat, sura[1]])
+    
+    def search_on_active(self, text):
+        return
+    
+    def search_on_page(self, text):
+        self.show_page(self.all_in_page[1])
+        self.search_now(text)
+        
+    def search_now(self, text):
+        search_tokens = []
+        nasse = self.view_tafsir_bfr.get_text(self.view_tafsir_bfr.get_start_iter(), 
+                                            self.view_tafsir_bfr.get_end_iter(),True).split()
+        if text == u'': 
+            return
+        else:
+            txt = asm_araby.fuzzy(text)
+            for term in nasse: 
+                if txt in asm_araby.fuzzy(term.decode('utf8')):
+                    search_tokens.append(term)
+        asm_customs.with_tag(self.view_tafsir_bfr, self.view_search_tag, search_tokens, 1)
                     
     def change_font(self, *a):
         self.view_quran_tag.set_property('foreground', self.parent.theme.color_qrn) 
         self.view_quran_tag.set_property("paragraph-background", self.parent.theme.color_bg_qrn)
         self.view_quran_tag.set_property('font', self.parent.theme.font_qrn)
-    
-    def show_bitaka(self, *a):
-        if self.db.info_book() == None:
-            text_info = self.nm_book
-        else: text_info = self.db.info_book()
-        return text_info
+        self.view_search_tag.set_property('background', self.parent.theme.color_fnd)
     
     def __init__(self, parent):
         self.db = None
@@ -161,6 +180,7 @@ class Tafsir(Gtk.HBox):
         self.opened_new = []
         self.opened_old = []
         Gtk.HBox.__init__(self, False, 0)
+        self.set_border_width(5)
         vbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
         
         store = []
@@ -172,9 +192,8 @@ class Tafsir(Gtk.HBox):
         self.notebook = Gtk.Notebook()
         self.notebook.set_show_tabs(False)
         vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
-        vb.set_border_width(7)
         
-        hb, self.tafsirs = asm_customs.combo(store, u'التفسير', 0)
+        hb, self.tafsirs = asm_customs.combo(store, u'التفسير')
         vb.pack_start(hb, False, False, 0)
         self.tafsirs.set_active(0)
         
@@ -183,7 +202,8 @@ class Tafsir(Gtk.HBox):
         self.ayas.set_adjustment(adj)
         self.ayas.connect('activate', self.select_aya)
         
-        hb, self.suras = asm_customs.combo(sura_list, u'السورة', 0)
+        hb, self.suras = asm_customs.combo(sura_list, u'السورة')
+        self.suras.set_wrap_width(10)
         vb.pack_start(hb, False, False, 0)
         self.suras.set_active(0)
         
@@ -204,16 +224,14 @@ class Tafsir(Gtk.HBox):
         self.notebook.append_page(vb, Gtk.Label('تصفح'))
         
         vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
-        vb.set_border_width(7)
         
-        hb, self.tafsirs1 = asm_customs.combo(store, u'التفسير', 0)
+        hb, self.tafsirs1 = asm_customs.combo(store, u'التفسير')
         vb.pack_start(hb, False, False, 0)
         self.tafsirs1.set_active(0)
         
-        try: self.search_entry = Gtk.SearchEntry()
-        except: self.search_entry = Gtk.Entry()
+        self.search_entry = Gtk.SearchEntry()
         self.search_entry.set_placeholder_text('بحث في القرآن')
-        self.search_entry.connect('activate', self.search_cb)
+        self.search_entry.connect('activate', self.search_on_quran)
         hbox = Gtk.HBox(False, 2)
         hbox.pack_start(self.search_entry, True, True, 0)
         vb.pack_start(hbox, False, False, 0)
@@ -250,6 +268,7 @@ class Tafsir(Gtk.HBox):
         self.view_tafsir_bfr = self.view_tafsir.get_buffer()
         self.view_tafsir.connect_after("populate-popup", asm_popup.populate_popup, self.parent)
         self.view_quran_tag = self.view_tafsir_bfr.create_tag("quran")
+        self.view_search_tag = self.view_tafsir_bfr.create_tag("search")
         self.change_font()
         self.scroll_nasse = Gtk.ScrolledWindow()
         self.scroll_nasse.set_shadow_type(Gtk.ShadowType.IN)

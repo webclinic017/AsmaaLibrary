@@ -8,17 +8,22 @@ from os.path import join, exists
 import os
 from shutil import copyfile
 from asm_contacts import listDB
-from gi.repository import Gtk
+from gi.repository import Gtk ,Gdk
 import asm_config, asm_customs, asm_path
+from asm_add import AddBooks
+from asm_count import Count
+from asm_edit_html import EditHTML
+from asm_about import About
 
 
 # class نافذة التفضيلات----------------------------------------------------------       
         
-class Preference(Gtk.Dialog):
+class Preference(Gtk.Box):
     
     def __init__(self, parent):
         self.parent = parent
         self.db = listDB()
+        self.mycount = Count()
         self.build()        
     
     def refresh(self, *a):
@@ -36,18 +41,47 @@ class Preference(Gtk.Dialog):
                 for a in range(n):
                     ch = self.parent.winspage.get_nth_page(a)
                     ch.change_font()
-        
-    def specified(self, *a):
-        if self.dfo.get_active():
+    
+    def specified(self, cbox):
+        if cbox.get_active() == 0:
             self.frame.set_sensitive(False)
-            asm_config.setv('tr', '0')
-        elif self.dark.get_active():
+            asm_config.setv('theme', 0)
+            #asm_customs.info(self.parent, "سوف تحتاج إلى إعادة تشغيل المكتبة")
+        elif cbox.get_active() == 1:
             self.frame.set_sensitive(False)
-            asm_config.setv('tr', '2')
+            asm_config.setv('theme', 1)
+        elif cbox.get_active() == 2:
+            self.frame.set_sensitive(False)
+            asm_config.setv('theme', 2)
         else:
             self.frame.set_sensitive(True)
-            asm_config.setv('tr', '1')
-        
+            asm_config.setv('theme', 3)
+        self.parent.theme.refresh()
+        self.refresh()
+    
+    def switch_page(self, btn):
+        if btn.get_active():
+            if btn.get_name()== u"theme":
+                self.notebook.set_current_page(0)
+                self.prop_btn.set_active(False)
+                self.modifie_btn.set_active(False)
+                self.info_btn.set_active(False)
+            elif btn.get_name()== u"prop":
+                self.notebook.set_current_page(1)
+                self.theme_btn.set_active(False)
+                self.modifie_btn.set_active(False)
+                self.info_btn.set_active(False)
+            elif btn.get_name()== u"modifie":
+                self.notebook.set_current_page(2)
+                self.theme_btn.set_active(False)
+                self.prop_btn.set_active(False)
+                self.info_btn.set_active(False)
+            elif btn.get_name()== u"info":
+                self.notebook.set_current_page(3)
+                self.theme_btn.set_active(False)
+                self.prop_btn.set_active(False)
+                self.modifie_btn.set_active(False)
+    
     def ch_font(self, btn):
         nconf = btn.get_name()
         dialog = Gtk.FontChooserDialog("اختر خطا")
@@ -89,7 +123,6 @@ class Preference(Gtk.Dialog):
         
         res = open_dlg.run()
         if res == Gtk.ResponseType.OK:
-            self.e_dest.set_text(open_dlg.get_filenames()[0].decode('utf8')) 
             asm_config.setv('path', open_dlg.get_filenames()[0])          
             asm_customs.info(self.parent, u'يرجى إعادة تشغيل المكتبة ليتغير المسار فعليا!')
         open_dlg.destroy()
@@ -119,9 +152,31 @@ class Preference(Gtk.Dialog):
     
     def saved_session_cb(self, *a):
         if self.saved_session.get_active():
-            asm_config.setv('saved_session', '1')
+            asm_config.setv('saved_session', 1)
         else:
-            asm_config.setv('saved_session', '0')
+            asm_config.setv('saved_session', 0)
+    
+    def style_browse_cb(self, btn):
+        v = btn.get_active()
+        asm_config.setv('style_browse', v)
+        self.parent.viewerbook.convert_browse()
+        
+    def time_browse_cb(self, btn):
+        v = btn.get_active()
+        asm_config.setv('time_browse', v)
+        self.parent.viewerbook.convert_browse()
+        
+    def auto_browse_cb(self, btn):
+        v = btn.get_active_text()
+        asm_config.setv('auto_browse', int(v))
+        self.parent.viewerbook.convert_browse()
+              
+    def active_mouse_browse_cb(self, *a):
+        if self.active_mouse_browse.get_active():
+            asm_config.setv('mouse_browse', 1)
+        else:
+            asm_config.setv('mouse_browse', 0)
+        self.parent.viewerbook.convert_browse()
     
     def copy_to_home_cb(self, *a):
         groups = self.db.all_parts()
@@ -137,40 +192,62 @@ class Preference(Gtk.Dialog):
                     copyfile(book_old, book_new)
         asm_customs.info(self.parent, 'تمت عملية النسخ بنجاح')
         self.copy_to_home.set_sensitive(False)
-             
-    def build(self,*a):
-        Gtk.Dialog.__init__(self, parent=self.parent)
-        self.set_icon_name("asmaa")
-        self.set_title("التفضيلات")
-        self.resize(500, 300)
-        area = self.get_content_area()
-        area.set_spacing(6)
-        self.connect('delete-event', lambda *a: self.destroy())
-        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+    
+    def count_cb(self, *a):
+        n_group = len(self.db.all_parts())
+        n_book = self.db.n_books()
+        asm_customs.info(self.parent, 'عدد الأقسام : {}\nعدد الكتب : {}'.format(n_group,n_book))
+    
+    def count_fast(self, *a):
+        self.file_html = self.mycount.fast()
+        self.open_file()
         
+    def count_detail(self, *a):
+        self.file_html = self.mycount.detail()
+        self.open_file()
+    
+    def open_file(self, *a):
+        dlg = Gtk.Dialog(parent=self.parent)
+        box = dlg.vbox
+        dlg.set_icon_name("asmaa")
+        dlg.set_default_size(1000, 700)
+        dlg.set_title('إحصاء الكتب')
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        self.view_html = EditHTML()
+        self.view_html.open_html(self.file_html)
+        close_btn = Gtk.Button("إغلاق")
+        close_btn.connect('clicked',lambda *a: dlg.destroy())
+        self.view_html.hb_tb.pack_end(close_btn, False, False, 0)
+        box.pack_start(self.view_html, True, True, 0)
+        dlg.show_all()
+    
+    def build(self,*a):
+        Gtk.Box.__init__(self, orientation=Gtk.Orientation.HORIZONTAL)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox.set_border_width(5)
+        evbox = Gtk.EventBox()
+        evbox.add(vbox)
+        evbox.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0.27,0.26,0.24,1)) 
         self.notebook = Gtk.Notebook()
-        self.box0 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.box00 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.box1 = Gtk.Box(spacing=4, orientation=Gtk.Orientation.VERTICAL)
-        self.box2 = Gtk.Box(spacing=4,orientation=Gtk.Orientation.VERTICAL)
-        hbox = Gtk.Box(spacing=40,orientation=Gtk.Orientation.HORIZONTAL)
-        hbox.pack_start(self.box1, False, False, 0)
-        hbox.pack_start(self.box2, False, False, 0)
+        self.notebook.set_show_tabs(False)
+        
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box1 = Gtk.Box(spacing=4, orientation=Gtk.Orientation.VERTICAL)
+        box1.set_border_width(5)
         self.frame = Gtk.Frame()
-        self.frame.add(hbox)
-        hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
-        self.dfo = Gtk.RadioButton.new_with_label_from_widget(None, 'افتراضي')
-        self.cos = Gtk.RadioButton.new_with_label_from_widget(self.dfo, 'مخصص')
-        self.dark = Gtk.RadioButton.new_with_label_from_widget(self.cos, 'تباين')
-        self.dfo.connect('toggled',self.specified,'0')
-        self.cos.connect('toggled',self.specified,'1')
-        self.dark.connect('toggled',self.specified,'2')
-        hbox.pack_start(self.dfo, False, False, 0)
-        hbox.pack_start(self.cos, False, False, 0)
-        hbox.pack_start(self.dark, False, False, 0)
-        hbox.set_border_width(5)
-        self.box0.pack_start(hbox, False, False, 0)
-        self.box0.pack_start(self.frame, True, True, 0)
+        self.frame.add(box1)
+        ls = [u'بدون', u'مقترح', u'متباين', u'مخصص']
+        style_btn = Gtk.ComboBoxText()
+        for a in ls:
+            style_btn.append_text(a)
+        style_btn.connect("changed", self.specified)
+        style_btn.set_active(asm_config.getn('theme'))
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        hb.pack_start(Gtk.Label('النمط'), False, False, 0)
+        hb.pack_end(style_btn, False, False, 0)
+        box.pack_start(hb, False, False, 0)
+        box.pack_start(self.frame, True, True, 0)
        
         list_w1 = [[u'القوائم الجانبية','_idx'], [u'قائمة الكتب','_bks'], [u'نصوص الكتاب','_nass'], 
                    [u'نصوص أخرى','_oth'], [u'العناوين','_tit'], [u'النص القرآني', '_qrn']]
@@ -178,112 +255,237 @@ class Preference(Gtk.Dialog):
                    [u'لون تحديد البحث','_fnd'], [u'لون خلفية القوائم','_bgs'], [u'خلفية النص القرآني', '_bg_qrn']]
         
         for a in list_w1:
-            hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
+            hbox = Gtk.Box(spacing=3,orientation=Gtk.Orientation.HORIZONTAL)
             btn1 = Gtk.ToolButton(stock_id = Gtk.STOCK_SELECT_FONT)
             btn1.set_name('font'+a[1])
             btn1.connect('clicked',self.ch_font)
             btn2 = Gtk.ToolButton(stock_id = Gtk.STOCK_SELECT_COLOR)
             btn2.set_name('color'+a[1])
             btn2.connect('clicked',self.ch_color)
-            hbox.pack_start(btn2, False, False, 0)
-            hbox.pack_start(btn1, False, False, 0)
             hbox.pack_start(Gtk.Label(a[0]), False, False, 0)
-            self.box1.pack_start(hbox, False, False, 0)
+            hbox.pack_end(btn2, False, False, 0)
+            hbox.pack_end(btn1, False, False, 0)
+            box1.pack_start(hbox, False, False, 0)
             
         for a in list_w2:
-            hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
+            hbox = Gtk.Box(spacing=3,orientation=Gtk.Orientation.HORIZONTAL)
             btn = Gtk.ToolButton(stock_id = Gtk.STOCK_SELECT_COLOR)
             btn.set_name('color'+a[1])
             btn.connect('clicked',self.ch_color)
-            hbox.pack_start(btn, False, False, 0)
             hbox.pack_start(Gtk.Label(a[0]), False, False, 0)
-            self.box2.pack_start(hbox, False, False, 0)
-        self.notebook.append_page(self.box0, Gtk.Label('خط ولون'))
+            hbox.pack_end(btn, False, False, 0)
+            box1.pack_start(hbox, False, False, 0)
+            
+        ref = Gtk.Button("تحديث الواجهة")
+        ref.connect('clicked', lambda *a: self.parent.theme.refresh())
+        ref.connect('clicked', self.refresh)
+        box1.pack_end(ref, False, False, 0)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        scroll.add(box)
+        self.notebook.append_page(scroll, Gtk.Label('خط ولون'))
         
-        vb = Gtk.VBox(False, 6)
-        vb.set_border_width(6)
+        box = Gtk.VBox(False, 6)
+        box.set_border_width(6)
         
-        hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
-        self.saved_session = Gtk.CheckButton('حفظ الجلسة')
-        hbox.pack_start(self.saved_session, False, False, 0)
-        if asm_config.getv('saved_session') == '1': self.saved_session.set_active(True)
+        
+        self.saved_session = Gtk.CheckButton('حفظ الجلسة عند الإغلاق')
+        box.pack_start(self.saved_session, False, False, 0)
+        if asm_config.getn('saved_session') == 1: self.saved_session.set_active(True)
         else: self.saved_session.set_active(False)
         self.saved_session.connect("toggled", self.saved_session_cb)
-        vb.pack_start(hbox, False, False, 0)
         
-        hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
-        self.add_db = asm_customs.ButtonClass('إنشاء مكتبة مفرغة')
+        self.active_mouse_browse = Gtk.CheckButton('التصفح بعجلة الفأرة')
+        box.pack_start(self.active_mouse_browse, False, False, 0)
+        if asm_config.getn('mouse_browse') == 1: self.active_mouse_browse.set_active(True)
+        else: self.active_mouse_browse.set_active(  False)
+        self.active_mouse_browse.connect("toggled", self.active_mouse_browse_cb)
+        
+        ls = [u'بدون', u'اختفاء وظهور', u'زحلقة أفقية', u'زحلقة عمودية']
+        style_browse = Gtk.ComboBoxText()
+        for a in ls:
+            style_browse.append_text(a)
+        style_browse.connect("changed", self.style_browse_cb)
+        style_browse.set_active(asm_config.getn('style_browse'))
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        hb.pack_start(Gtk.Label('نمط التصفح'), False, False, 0)
+        hb.pack_end(style_browse, False, False, 0)
+        box.pack_start(hb, False, False, 0)
+        
+        ls = [u'0.1', u'0.2', u'0.5', u'1', u'1.5', u'2', u'3']
+        time_browse = Gtk.ComboBoxText()
+        for a in ls:
+            time_browse.append_text(a)
+        time_browse.connect("changed", self.time_browse_cb)
+        time_browse.set_active(asm_config.getn('time_browse'))
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        hb.pack_start(Gtk.Label('زمن التصفح بالثواني'), False, False, 0)
+        hb.pack_end(time_browse, False, False, 0)
+        box.pack_start(hb, False, False, 0)
+        
+        ls = [u'1', u'2', u'3', u'4', u'5', u'10']
+        auto_browse = Gtk.ComboBoxText()
+        for a in ls:
+            auto_browse.append_text(a)
+        auto_browse.connect("changed", self.auto_browse_cb)
+        idx = ls.index(str(asm_config.getv('auto_browse')), )
+        auto_browse.set_active(idx)
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        hb.pack_start(Gtk.Label('سرعة الاستعراض الآلي'), False, False, 0)
+        hb.pack_end(auto_browse, False, False, 0)
+        box.pack_start(hb, False, False, 0)
+        
+        self.notebook.append_page(box, Gtk.Label('خيارات'))
+        
+        box = Gtk.VBox(False, 6)
+        box.set_border_width(6) 
+        btn_win_organize = Gtk.Button('تعديل المكتبة')
+        btn_win_organize.connect('clicked', lambda *a: self.parent.notebook.set_current_page(8))
+        box.pack_start(btn_win_organize, False, False, 0)
+        
+        btn_win_siana = Gtk.Button('نافذة الصيانة')
+        btn_win_siana.connect('clicked', lambda *a: SianaWin(self.parent))
+        box.pack_start(btn_win_siana, False, False, 0)
+        
+        btn_win_add = Gtk.Button('نافذة الاستيراد')
+        btn_win_add.connect('clicked', lambda *a: AddBooks(self.parent))
+        box.pack_start(btn_win_add, False, False, 0)
+        
+        btn_win_export = Gtk.Button('نافذة التصدير')
+        btn_win_export.set_sensitive(False)
+        #btn_win_export.connect('clicked', lambda *a: AddBooks(self.parent))
+        box.pack_start(btn_win_export, False, False, 0)
+        
+        btn_win_index = Gtk.Button('نافذة الفهرسة')
+        btn_win_index.set_sensitive(False)
+        try:
+            from asm_indexer import WinIndexer
+            btn_win_index.connect('clicked', lambda *a: WinIndexer(self.parent))
+        except: pass
+        box.pack_start(btn_win_index, False, False, 0)
+        
+        self.add_db = Gtk.Button('إنشاء مكتبة مفرّغة')
         self.add_db.connect('clicked', self.new_db)
-        hbox.pack_start(self.add_db, False, False, 0)
-        vb.pack_start(hbox, False, False, 0)
+        box.pack_start(self.add_db, False, False, 0)
         
-        hbox = Gtk.Box(spacing=6,orientation=Gtk.Orientation.HORIZONTAL)
-        self.e_dest = Gtk.Entry()
-        self.e_dest.set_text(asm_config.getv('path').decode('utf8'))
-        self.b_dest = asm_customs.ButtonClass('تغيير مسار المكتبة')
+        self.b_dest = Gtk.Button('تغيير مسار المكتبة')
         self.b_dest.connect('clicked', self.change_path_db)  
-        hbox.pack_start(self.b_dest, False, False, 0)
-        hbox.pack_start(self.e_dest, True, True, 0)
-        vb.pack_start(hbox, False, False, 0)
+        self.b_path = Gtk.Button('عرض المسار الحاليّ')
+        self.b_path.connect('clicked', lambda *a: asm_customs.info(self.parent, asm_config.getv('path').decode('utf8')))  
+        box.pack_start(self.b_dest, False, False, 0)
+        box.pack_start(self.b_path, False, False, 0)
         
-        hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
-        self.copy_to_home = asm_customs.ButtonClass('نسخ المكتبة  إلى المنزل')
+        self.copy_to_home = Gtk.Button('نسخ المكتبة  إلى المنزل')
         self.copy_to_home.set_tooltip_text('هذا الخيار إذا كانت كتب المكتبة في الدليل :\n"/usr/share/asmaa/"')
         if self.db.check_books_library() == False:
             self.copy_to_home.set_sensitive(False) 
         self.copy_to_home.connect('clicked', self.copy_to_home_cb)
-        hbox.pack_start(self.copy_to_home, False, False, 0)
-        vb.pack_start(hbox, False, False, 0)
+        box.pack_start(self.copy_to_home, False, False, 0)
         
-        hbox = Gtk.Box(spacing=11,orientation=Gtk.Orientation.HORIZONTAL)
+        self.notebook.append_page(box, Gtk.Label('العمليات'))
+        
+        box = Gtk.VBox(False, 6)
+        box.set_border_width(6)
+        self.n_books_parts = Gtk.Button('عدد الكتب')
+        self.n_books_parts.connect('clicked', self.count_cb)
+        box.pack_start(self.n_books_parts, False, False, 0)
+        self.rapid_count = Gtk.Button('إحصاء سريع')
+        self.rapid_count.connect('clicked', self.count_fast)
+        self.detail_count = Gtk.Button('إحصاء مفصل')
+        self.detail_count.connect('clicked', self.count_detail)
+        box.pack_start(self.rapid_count, False, False, 0)
+        box.pack_start(self.detail_count, False, False, 0)
+        
+        btn_about = Gtk.Button('حول المكتبة')
+        btn_about.connect('clicked', lambda *a: About(self.parent))
+        box.pack_start(btn_about, False, False, 0)
+        
+        btn_help = Gtk.Button('صفحة المساعدة')
+        btn_help.connect('clicked', lambda *a: self.parent.notebook.set_current_page(5))
+        box.pack_start(btn_help, False, False, 0)
+        
         db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/",
-                                                'صفحة البرنامج على النت')
-        hbox.pack_start(db_void, False, False, 0)
+                                                'صفحة البرنامج على الشّبكة')
+        box.pack_start(db_void, False, False, 0)
+        self.notebook.append_page(box, Gtk.Label('المعلومات'))
         
-        src_prog = Gtk.LinkButton.new_with_label("https://github.com/RaaH/asmaa",
-                                                'مصدر البرنامج على النت')
-        hbox.pack_start(src_prog, False, False, 0)
-        vb.pack_start(hbox, False, False, 0)
-        self.notebook.append_page(vb, Gtk.Label('خيارات'))
+        frame = Gtk.Frame()
+        frame.add(self.notebook)
+        self.pack_start(frame, True, True, 0)
         
-        vb = Gtk.VBox(False, 7)
-        vb.set_border_width(5)
+        self.pack_start(evbox, False, False, 0)
+        
+        self.theme_btn = Gtk.ToggleButton()
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_SELECT_COLOR, Gtk.IconSize.LARGE_TOOLBAR)
+        self.theme_btn.set_image(img)
+        self.theme_btn.set_name('theme')
+        self.theme_btn.set_size_request(-1, 100)
+        self.theme_btn.set_active(True)
+        self.theme_btn.connect("clicked", self.switch_page)
+        self.theme_btn.set_relief (Gtk.ReliefStyle.NONE)
+        vbox.pack_start(self.theme_btn, False, False, 0)
+        
+        self.prop_btn = Gtk.ToggleButton()
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_PROPERTIES, Gtk.IconSize.LARGE_TOOLBAR)
+        self.prop_btn.set_image(img)
+        self.prop_btn.set_name('prop')
+        self.prop_btn.set_size_request(-1, 100)
+        self.prop_btn.connect("clicked", self.switch_page)
+        self.prop_btn.set_relief (Gtk.ReliefStyle.NONE)
+        vbox.pack_start(self.prop_btn, False, False, 0)
+        
+        self.modifie_btn = Gtk.ToggleButton()
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_PREFERENCES, Gtk.IconSize.LARGE_TOOLBAR)
+        self.modifie_btn.set_image(img)
+        self.modifie_btn.set_name('modifie')
+        self.modifie_btn.set_size_request(-1, 100)
+        self.modifie_btn.connect("clicked", self.switch_page)
+        self.modifie_btn.set_relief (Gtk.ReliefStyle.NONE)
+        vbox.pack_start(self.modifie_btn, False, False, 0)
+        
+        self.info_btn = Gtk.ToggleButton()
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_INFO, Gtk.IconSize.LARGE_TOOLBAR)
+        self.info_btn.set_image(img)
+        self.info_btn.set_name('info')
+        self.info_btn.set_size_request(-1, 100)
+        self.info_btn.connect("clicked", self.switch_page)
+        self.info_btn.set_relief (Gtk.ReliefStyle.NONE)
+        vbox.pack_start(self.info_btn, False, False, 0)
+        
+        self.show_all()
+
+class SianaWin (Gtk.Dialog):
+    
+    def star_siana(self, btn):
+        btn.set_sensitive(False)
+        self.db.repair(self.store_repair, self.progress_repair)
+        btn.set_sensitive(True)
+    
+    def __init__(self, parent):
+        self.parent = parent
+        self.db = listDB()
+        Gtk.Dialog.__init__(self, parent=self.parent)
+        Box = self.vbox
+        self.set_border_width(5)
+        self.set_size_request(620, 450)
         hbox = Gtk.HBox(False, 7)
         self.progress_repair = Gtk.ProgressBar()
         self.store_repair = Gtk.ListStore(str)
-        vb.pack_start(self.progress_repair, False, False, 0)
         self.tree_repair = Gtk.TreeView()
         sah1 = Gtk.TreeViewColumn('نتائج الفحص',Gtk.CellRendererText(),text = 0)
         self.tree_repair.append_column(sah1)
         self.tree_repair.set_model(self.store_repair)
         scroll = Gtk.ScrolledWindow()
         scroll.add(self.tree_repair)
-        vb.pack_start(scroll, True, True, 0)
-        vb.pack_start(hbox, False, False, 0)
-        siana = asm_customs.ButtonClass("صيانة")
-        siana.connect('clicked', lambda *a: self.db.repair(self.store_repair, self.progress_repair))
+        Box.pack_start(hbox, False, False, 0)
+        Box.pack_start(scroll, True, True, 5)
+        Box.pack_start(self.progress_repair, False, False, 0)
+        siana = Gtk.Button("صيانة")
+        siana.connect('clicked', self.star_siana)
         hbox.pack_start(siana, False, False, 0)
-        self.notebook.append_page(vb, Gtk.Label('صيانة'))
-        
-        self.box.pack_start(self.notebook, True, True, 0)
-        
-        clo = asm_customs.ButtonClass("إغلاق")
-        clo.connect('clicked', lambda *a: self.hide())
-        ref = asm_customs.ButtonClass("تحديث الواجهة")
-        ref.connect('clicked', lambda *a: self.parent.theme.refresh())
-        ref.connect('clicked', self.refresh)
-        hbox = Gtk.Box(spacing=10, orientation=Gtk.Orientation.HORIZONTAL)
-        hbox.set_border_width(5)
-        hbox.pack_start(ref, False, False, 0)
-        hbox.pack_end(clo, False, False, 0)
-        self.box.pack_start(hbox, False, False, 0)
-        if asm_config.getv('tr') == '1':
-            self.cos.set_active(True)
-        elif asm_config.getv('tr') == '2':
-            self.frame.set_sensitive(False)
-            self.dark.set_active(True)
-        else:
-            self.frame.set_sensitive(False)
-            self.dfo.set_active(True)
-        area.pack_start(self.box, True, True, 0)
         self.show_all()
+        

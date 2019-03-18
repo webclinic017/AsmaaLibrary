@@ -10,10 +10,13 @@
 الاعتماديات:
 ------------
 
-أولا   - python-gobject >= 3.0
-ثانيا - gir1.2-gtk-3.0
-ثالثا - gir1.2-webkit-3.0
-رابعا - python2.7
+أ - python-gobject >= 3.10
+ب - 3.10 =< gir1.2-gtk-3.0
+ج - gir1.2-webkit-3.0
+د - python2.7
+ه - mdbtools
+و - catdoc
+ز - python-whoosh
 
 
 الرخصة:

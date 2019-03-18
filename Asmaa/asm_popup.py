@@ -9,7 +9,9 @@ from asm_contacts import Othman, TarajimDB
 import asm_customs, asm_stemming, asm_path
 from os.path import join
 import re, os
-import asm_config
+
+ACCEL_CTRL_KEY, ACCEL_CTRL_MOD = Gtk.accelerator_parse("<Ctrl>")
+ACCEL_ALT_KEY, ACCEL_ALT_MOD = Gtk.accelerator_parse("<Alt>")
 
 clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 
@@ -65,19 +67,19 @@ def explain_term(widget, buff, parent):
             all_root, all_term = asm_stemming.get_root(u''+text)
             if len(all_root) == 0:
                 asm_customs.erro(parent, 'لا يوجد نتيجة'); return
-            parent.dictpage.tree_dict.collapse_all()
-            parent.dictpage.store_dict.clear()
-            parent.dictpage.view_dict_bfr.set_text('')
+            parent.winspage.dictpage.tree_dict.collapse_all()
+            parent.winspage.dictpage.store_dict.clear()
+            parent.winspage.dictpage.view_dict_bfr.set_text('')
             if len(all_root) != 0: 
                 for text in all_root:
-                    parent.dictpage.store_dict.append(None, [text])
-            parent.dictpage.all_term = all_term
-            i = parent.dictpage.store_dict.get_iter_first()
-            p = parent.dictpage.store_dict.get_path(i)
-            parent.dictpage.sel_dict.select_path(p)
+                    parent.winspage.dictpage.store_dict.append(None, [text])
+            parent.winspage.dictpage.all_term = all_term
+            i = parent.winspage.dictpage.store_dict.get_iter_first()
+            p = parent.winspage.dictpage.store_dict.get_path(i)
+            parent.winspage.dictpage.sel_dict.select_path(p)
             parent.notebook.set_current_page(3)
             parent.winspage.set_current_page(0)
-            parent.dictpage.search_in_page(u"")
+            parent.winspage.dictpage.search_on_page(u"")
             
 def tafsir_ayat(widget, buff, parent):
     if buff.get_has_selection():
@@ -89,7 +91,7 @@ def tafsir_ayat(widget, buff, parent):
             if len(all_ayat[0]) == 0:
                 asm_customs.erro(parent, 'لا يوجد نتيجة'); return
             else: 
-                for ayat in all_ayat[0]:
+                for ayat in all_ayat:
                     i_sura = ayat[0]
                     i_ayat = ayat[1]
                     suras_names = Othman().get_suras_names()
@@ -107,44 +109,26 @@ def tarjama_rawi(widget, buff, parent):
         text = buff.get_text(sel[0], sel[1],True).decode('utf8')
         if len(text) >= 3:
             all_rewat = TarajimDB().tardjma('"'+text+'"')
-            parent.tarjamapage.store_tarjama.clear()
+            parent.winspage.tarjamapage.store_tarjama.clear()
             if len(all_rewat) == 0:
                 asm_customs.erro(parent, 'لا يوجد نتيجة'); return
             else: 
                 for id_rawi in all_rewat:
                     name = id_rawi[1].split(u'،')[0]
-                    parent.tarjamapage.store_tarjama.append(None, [id_rawi[0], name])
-            parent.tarjamapage.tree_tarjama.collapse_all()
-            parent.tarjamapage.view_tarjama_bfr.set_text('')
-            parent.tarjamapage.tree_tarjama.expand_all()
-            parent.tarjamapage.sel_tarjama.select_path((0,))
+                    parent.winspage.tarjamapage.store_tarjama.append(None, [id_rawi[0], name])
+            parent.winspage.tarjamapage.tree_tarjama.collapse_all()
+            parent.winspage.tarjamapage.view_tarjama_bfr.set_text('')
+            parent.winspage.tarjamapage.tree_tarjama.expand_all()
+            parent.winspage.tarjamapage.sel_tarjama.select_path((0,))
             parent.notebook.set_current_page(3)
             parent.winspage.set_current_page(1)
-
-def site_in_book(widget, buff, parent):
-    list_marks = eval(asm_config.getv('marks'))
-    if parent.notebook.get_current_page() == 1:
-        n = parent.viewerbook.get_current_page()
-        ch = parent.viewerbook.get_nth_page(n)
-        list_marks.append([ch.all_in_page[1], ch.nm_book, ch.id_book])
-        marks = repr(list_marks)
-        asm_config.setv('marks', marks)
-        asm_customs.info(parent, u'تم تعليم هذا الموضع')
-
-def add_to_favory(widget, buff, parent):
-    if parent.notebook.get_current_page() == 1:
-        n = parent.viewerbook.get_current_page()
-        ch = parent.viewerbook.get_nth_page(n)
-        check = ch.db_list.to_favorite(ch.id_book)
-        if check == None: asm_customs.info(parent, u'تم إضافة كتاب "{}" للمفضلة'.format(ch.nm_book,))
-        parent.list_books.load_fav()
 
 def populate_popup(view, menu, parent):
     for a in menu.get_children():
         a.destroy()
     buff = view.get_buffer()
     f1 = Gtk.MenuItem('شرح المفردة في القاموس')
-    f1.add_accelerator("activate", parent.axl, Gdk.KEY_D, parent.ACCEL_CTRL_MOD, 
+    f1.add_accelerator("activate", parent.axl, Gdk.KEY_D, ACCEL_CTRL_MOD, 
                        Gtk.AccelFlags.VISIBLE)
     menu.append(f1)
     f1.set_sensitive(False)
@@ -189,24 +173,15 @@ def populate_popup(view, menu, parent):
     menu.append(c3)
     c3.show()
     f6 = Gtk.MenuItem('الصفحة السابقة')
-    f6.add_accelerator("activate", parent.axl, Gdk.KEY_Right, parent.ACCEL_ALT_MOD, 
+    f6.add_accelerator("activate", parent.axl, Gdk.KEY_Right, ACCEL_ALT_MOD, 
                        Gtk.AccelFlags.VISIBLE)
     menu.append(f6)
     f6.show()
     f7 = Gtk.MenuItem('الصفحة التالية')
-    f7.add_accelerator("activate", parent.axl, Gdk.KEY_Left, parent.ACCEL_ALT_MOD, 
+    f7.add_accelerator("activate", parent.axl, Gdk.KEY_Left, ACCEL_ALT_MOD, 
                        Gtk.AccelFlags.VISIBLE)
     menu.append(f7)
     f7.show()
-    c4 = Gtk.SeparatorMenuItem()
-    menu.append(c4)
-    c4.show()
-    f8 = Gtk.MenuItem('ضم الكتاب إلى المفضلة')
-    menu.append(f8)
-    f8.show()
-    f9 = Gtk.MenuItem('تعليم الصفحة للرجوع إليها')
-    menu.append(f9)
-    f9.show()
     if buff.get_has_selection():
         f1.set_sensitive(True)
         f2.set_sensitive(True)
@@ -219,8 +194,3 @@ def populate_popup(view, menu, parent):
     f4.connect("activate", copy_sel, buff, parent)
     f6.connect("activate", parent.previous_page, buff, parent)
     f7.connect("activate", parent.next_page, buff, parent)
-    f8.connect("activate", add_to_favory, buff, parent)
-    f9.connect("activate", site_in_book, buff, parent)
-    if parent.notebook.get_current_page() == 4:
-        f8.hide()
-        f9.hide()

@@ -58,7 +58,7 @@ class EditHTML(Gtk.VBox):
         dialog.destroy()
 
     def on_removeFormat(self, *a):
-            self.editor.execute_script("document.execCommand('removeFormat', null, '%s');")
+        self.editor.execute_script("document.execCommand('removeFormat', null, '%s');")
 
     def on_save(self, *a):
         if self.myfile != None:
@@ -102,12 +102,18 @@ class EditHTML(Gtk.VBox):
             new_text = re.sub(a, a+'\n', new_text)
         return new_text
     
-    def open_html(self, file_html):
+    def  open_html(self, file_html):
         self.myfile = file_html
         with open(file_html) as f: self.editor.load_html_string(f.read(), "file:///")
     
     def clear_page(self):
         self.editor.load_html_string('', "file:///")
+    
+    def search_on_active(self, text):
+        self.editor.search_text(text, False, True, True)
+    
+    def search_on_page(self, text):
+        self.editor.search_text(text, False, True, True)
     
     def __init__(self):
         self.myfile = None
@@ -118,8 +124,10 @@ class EditHTML(Gtk.VBox):
         scroll.add(self.editor)
         
         self.toolbar = Gtk.Toolbar()
+        self.hb_tb = Gtk.Box(spacing=3,orientation=Gtk.Orientation.HORIZONTAL)
         self.pack_start(scroll, True, True, 0)
-        self.pack_start(self.toolbar, False, False, 0)
+        self.hb_tb.pack_start(self.toolbar, True, True, 0)
+        self.pack_start(self.hb_tb, False, False, 0)
         save = Gtk.ToolButton(stock_id=Gtk.STOCK_SAVE)
         save.connect('clicked', self.on_save)
         self.toolbar.insert(save, 0)

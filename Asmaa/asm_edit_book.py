@@ -8,15 +8,17 @@ from gi.repository import Gtk, Gdk, Pango
 from asm_contacts import bookDB, Othman, listDB
 from asm_viewer import OpenBook
 from asm_tablabel import TabLabel
-import asm_customs, asm_path
-from asm_edit_bitaka import EditBitaka
+import asm_customs, asm_path, asm_araby
 from os.path import join, basename
 import os, re
+
+
+ACCEL_CTRL_KEY, ACCEL_CTRL_MOD = Gtk.accelerator_parse("<Ctrl>")
 
 # class صفحة تحرير كتاب-----------------------------------------------------------------------
 
 class EditBook(Gtk.VBox):
-
+    
     def close_db(self, *a):
         self.all_pages = []
         self.modified_pages = {}
@@ -28,6 +30,7 @@ class EditBook(Gtk.VBox):
     
     def __init__(self, parent):
         Gtk.VBox.__init__(self, False, 3)
+        self.set_border_width(5)
         self.parent = parent
         self.othman = Othman()
         self.db_list = listDB()
@@ -115,7 +118,23 @@ class EditBook(Gtk.VBox):
                     self.current_id = self.all_pages.index(a)
                     break
             self.show_page()
-  
+    
+    def search_on_active(self, text):
+        return
+    
+    def search_on_page(self, text):
+        self.show_page(self.all_in_page[1])
+        search_tokens = []
+        nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
+                                            self.view_nasse_bfr.get_end_iter(),True).split()
+        if text == u'': 
+            return
+        else:
+            txt = asm_araby.fuzzy(text)
+            for term in nasse: 
+                if txt in asm_araby.fuzzy(term.decode('utf8')):
+                    search_tokens.append(term)
+        asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1)
             
     def show_page(self, id_page=0):
         self.view_nasse_bfr.handler_block(self.editpg)
@@ -164,12 +183,11 @@ class EditBook(Gtk.VBox):
         self.n_all_page = len(self.all_pages)+1
         self.set_index()
         self.show_page(id_page)
-        self.ent_version.set_text(str(self.db.n_version))
         try: self.store_index.foreach(self.index_highlight, id_page)
         except: pass
     
     def change_font(self, *a):
-        return
+        self.view_search_tag.set_property('background', self.parent.theme.color_fnd)
 
     def populate_popup(self, view, menu):
         for a in menu.get_children():
@@ -377,7 +395,6 @@ class EditBook(Gtk.VBox):
         return
     
     def save_book(self, *a):
-        self.db.change_version(float(self.ent_version.get_text()))
         page_dict = {}
         res = asm_customs.sure(self.parent, 'هل أكملت جميع التغييرات المبتغاة وتريد الحفظ؟')
         if res == Gtk.ResponseType.YES:
@@ -413,40 +430,41 @@ class EditBook(Gtk.VBox):
             os.rename(self.new_book, self.book)
     
     def replace_all(self, *a):
-        dlg = Gtk.Dialog(parent=self.parent)
-        dlg.set_icon_name("asmaa")
-        dlg.set_title('إيجاد واستبدال')
-        text_old = Gtk.Entry()
-        text_old.set_placeholder_text('النص القديم')
-        if self.view_nasse_bfr.get_has_selection():
-            sel = self.view_nasse_bfr.get_selection_bounds()
-            text = self.view_nasse_bfr.get_text(sel[0], sel[1],True).decode('utf8')
-            text_old.set_text(text)
-        text_new = Gtk.Entry()
-        text_new.set_placeholder_text('النص الجديد')
-        use_re = Gtk.CheckButton('استعمل التعبيرات المنتظمة')
-        clo = asm_customs.ButtonClass("إغلاق")
-        clo.connect('clicked',lambda *a: dlg.destroy())
-        rpl = asm_customs.ButtonClass("استبدل الكل")
-        def replace_cb(widget):
-            old_t = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(),
-                            self.view_nasse_bfr.get_end_iter(), False)
-            if use_re.get_active():
-                new_t = re.sub(text_old.get_text(), text_new.get_text(), old_t)
-            else:
-                new_t = old_t.replace(text_old.get_text(), text_new.get_text())
-            self.view_nasse_bfr.set_text(new_t)
-        rpl.connect('clicked', replace_cb)
-        hb = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
-        box = dlg.vbox
-        box.set_border_width(5)
-        hb.pack_start(rpl, False, False, 0)
-        hb.pack_end(clo, False, False, 0)
-        box.pack_start(text_old, False, False, 3)
-        box.pack_start(text_new, False, False, 3)
-        box.pack_start(use_re, False, False, 3)
-        box.pack_end(hb, False, False, 0)
-        dlg.show_all()
+        if self.parent.notebook.get_current_page() == 7:
+            dlg = Gtk.Dialog(parent=self.parent)
+            dlg.set_icon_name("asmaa")
+            dlg.set_title('إيجاد واستبدال')
+            text_old = Gtk.Entry()
+            text_old.set_placeholder_text('النص القديم')
+            if self.view_nasse_bfr.get_has_selection():
+                sel = self.view_nasse_bfr.get_selection_bounds()
+                text = self.view_nasse_bfr.get_text(sel[0], sel[1],True).decode('utf8')
+                text_old.set_text(text)
+            text_new = Gtk.Entry()
+            text_new.set_placeholder_text('النص الجديد')
+            use_re = Gtk.CheckButton('استعمل التعبيرات المنتظمة')
+            clo = asm_customs.ButtonClass("إغلاق")
+            clo.connect('clicked',lambda *a: dlg.destroy())
+            rpl = asm_customs.ButtonClass("استبدل الكل")
+            def replace_cb(widget):
+                old_t = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(),
+                                self.view_nasse_bfr.get_end_iter(), False)
+                if use_re.get_active():
+                    new_t = re.sub(text_old.get_text(), text_new.get_text(), old_t)
+                else:
+                    new_t = old_t.replace(text_old.get_text(), text_new.get_text())
+                self.view_nasse_bfr.set_text(new_t)
+            rpl.connect('clicked', replace_cb)
+            hb = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
+            box = dlg.vbox
+            box.set_border_width(5)
+            hb.pack_start(rpl, False, False, 0)
+            hb.pack_end(clo, False, False, 0)
+            box.pack_start(text_old, False, False, 3)
+            box.pack_start(text_new, False, False, 3)
+            box.pack_start(use_re, False, False, 3)
+            box.pack_end(hb, False, False, 0)
+            dlg.show_all()
        
     def undo_cb(self, *a):
         id_page = self.all_pages[self.current_id][0]
@@ -551,7 +569,7 @@ class EditBook(Gtk.VBox):
         self.view_terms_tag = self.view_nasse_bfr.create_tag("terms")
         self.scroll_nasse = Gtk.ScrolledWindow()
         self.scroll_nasse.set_shadow_type(Gtk.ShadowType.IN)
-        self.scroll_nasse.add_with_viewport(self.view_nasse)
+        self.scroll_nasse.add(self.view_nasse)
         vbox.pack_start(self.scroll_nasse, True, True, 0)
         hbox = Gtk.HBox(False, 3)
         self.page_n = Gtk.Label('الصفحة')
@@ -569,41 +587,10 @@ class EditBook(Gtk.VBox):
         self.move_btn.connect('clicked', self.change_n_page)
         hbox.pack_start(self.move_btn, False, False, 2)
         
-        self.betaka_btn = Gtk.ToolButton(stock_id=Gtk.STOCK_INFO)
-        self.betaka_btn.set_tooltip_text('تغيير معلومات الكتاب')
-        self.betaka_btn.connect('clicked', lambda *a: EditBitaka(self.parent, self.id_book))
-        hbox.pack_start(self.betaka_btn, False, False, 2)
-        
-        self.replace_btn = Gtk.ToolButton(stock_id=Gtk.STOCK_FIND_AND_REPLACE)
-        self.replace_btn.set_tooltip_text('إيجاد واستبدال\nCtrl, F')
-        self.replace_btn.connect('clicked', self.replace_all)
-        hbox.pack_start(self.replace_btn, False, False, 2)
-        
-        self.undo_btn = Gtk.ToolButton(stock_id=Gtk.STOCK_UNDO)
-        self.undo_btn.set_tooltip_text('أرجع النص الأصلي')
-        self.undo_btn.connect('clicked', self.undo_cb)
-        hbox.pack_start(self.undo_btn, False, False, 2)
-        
-        self.save_btn = Gtk.ToolButton(stock_id=Gtk.STOCK_SAVE)
-        self.save_btn.set_tooltip_text('حفظ التغييرات')
-        self.save_btn.connect('clicked', self.save_book)
-        hbox.pack_start(self.save_btn, False, False, 2)
-        
-        self.show_btn = Gtk.ToolButton(stock_id=Gtk.STOCK_FILE)
-        self.show_btn.set_tooltip_text('اعرض الكتاب في الوضع العادي')
-        self.show_btn.connect('clicked', self.show_book)
-        hbox.pack_start(self.show_btn, False, False, 2)
-        
-        self.ent_version = Gtk.Entry()
-        self.ent_version.set_width_chars(5)
-        hbox.pack_end(self.ent_version, False, False, 0)
-        self.version_n = Gtk.Label('الإصدارة')
-        hbox.pack_end(self.version_n, False, False, 0) 
-        
         vbox.pack_start(hbox, False, False, 0)
         
         self.hp.pack2(vbox, True, False)
         self.pack_start(self.hp, True, True, 0)
         self.show_all()
         self.change_font()
-        self.parent.axl.connect(Gdk.KEY_f, self.parent.ACCEL_CTRL_MOD, Gtk.AccelFlags.VISIBLE, self.replace_all)
+        self.parent.axl.connect(Gdk.KEY_f, ACCEL_CTRL_MOD, Gtk.AccelFlags.VISIBLE, self.replace_all)

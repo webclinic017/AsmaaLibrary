@@ -15,7 +15,7 @@ class MyTheme(object):
     
     def apply_preference(self, *a):
         
-        if asm_config.getv('tr') == '1':
+        if asm_config.getn('theme') == 3:
             self.font_tit     = asm_config.getv('font_tit')
             self.font_idx     = asm_config.getv('font_idx')
             self.font_nass    = asm_config.getv('font_nass')
@@ -33,7 +33,7 @@ class MyTheme(object):
             self.color_bg_sel = asm_config.getv('color_bg_sel')
             self.color_bg_qrn = asm_config.getv('color_bg_qrn')
             
-        elif asm_config.getv('tr') == '2':
+        elif asm_config.getn('theme') == 2:
             self.font_tit     = 'KacstOne 32'
             self.font_idx     = 'KacstOne 18'
             self.font_nass    = 'Amiri Quran 32'
@@ -75,7 +75,10 @@ class MyTheme(object):
     def refresh(self, *a):
         self.apply_preference()
         css_data = '''
-        Tree {
+        GtkMenu {
+        font: Sans 12;
+        }
+        Tree, GtkIconView {
         background-color: '''+asm_customs.rgb(self.color_bg)+''';
         background-image: none;
         color: '''+asm_customs.rgb(self.color_bks)+''';
@@ -108,12 +111,34 @@ class MyTheme(object):
         font: KacstOne 13;
         }
         '''
+        
+        css_none = '''
+        GtkMenu {
+        font: Sans 12;
+        }
+        Tree {
+        font:KacstOne 13;
+        }
+        Treeindex {
+        font: KacstOne 13;
+        }
+        View {
+        font: KacstOne 15;
+        }
+        Viewbitaka {
+        font: KacstOne 13;
+        }
+        '''
             
-        screen = Gdk.Screen.get_default()
-        css_provider = Gtk.CssProvider()
-        context = Gtk.StyleContext()
-        try: css_provider.load_from_data(css_data)
+        
+        try: 
+            screen = Gdk.Screen.get_default()
+            css_provider = Gtk.CssProvider()
+            context = Gtk.StyleContext()
+            if asm_config.getn('theme') == 0: css_provider.load_from_data(css_none)
+            else: css_provider.load_from_data(css_data)
+            context.add_provider_for_screen(screen, css_provider,
+                                            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         except: css_provider.load_from_data('')
-        context.add_provider_for_screen(screen, css_provider,
-                                         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        
         

@@ -60,28 +60,26 @@ def load():
         config.set(section, 'color_fnd', '#fe71fab0870b')
     if not config.has_option(section, 'color_bg_qrn'):
         config.set(section, 'color_bg_qrn', '#fcb2eb47aeb5')
-    if not config.has_option(section, 'tr'):
-        config.set(section, 'tr','0') # tr = default|custom 4 color&font
     if not config.has_option(section, 'theme'):
-        config.set(section, 'theme','0')
+        config.set(section, 'theme',1)
     if not config.has_option(section, 'tashkil'):
-        config.set(section, 'tashkil', '1')
-    if not config.has_option(section, 'help'):
-        config.set(section, 'help', '1')
+        config.set(section, 'tashkil', 1)
     if not config.has_option(section, 'marks'):
         config.set(section, 'marks', '[]')
-    if not config.has_option(section, 'n_group'):
-        config.set(section, 'n_group', 0)
-    if not config.has_option(section, 'n_book'):
-        config.set(section, 'n_book', 0)
-    if not config.has_option(section, 'add'):
-        config.set(section, 'add', 4)
-    if not config.has_option(section, 'site'):
-        config.set(section, 'site', 0)
     if not config.has_option(section, 'quran_pos'):
         config.set(section, 'quran_pos', 1)
     if not config.has_option(section, 'view_books'):
         config.set(section, 'view_books', 0)
+    if not config.has_option(section, 'show_side'):
+        config.set(section, 'show_side', 0)
+    if not config.has_option(section, 'mouse_browse'):
+        config.set(section, 'mouse_browse', 1)
+    if not config.has_option(section, 'style_browse'):
+        config.set(section, 'style_browse', 3)
+    if not config.has_option(section, 'time_browse'):
+        config.set(section, 'time_browse', 3)
+    if not config.has_option(section, 'auto_browse'):
+        config.set(section, 'auto_browse', 3)
     with open(myfile, 'wa') as configfile:
         config.write(configfile)
 

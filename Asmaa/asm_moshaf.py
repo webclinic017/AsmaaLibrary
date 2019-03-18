@@ -131,9 +131,11 @@ class ViewerMoshaf(Gtk.HPaned):
         html = html.replace('{sura}', u'سورة '+sura)
         html = html.replace('{joze}', u'الجزء '+ajzaa[self.db.info_page(page)[1]])
         html = html.replace('{page}', str(page))
-        if self.term_0 != []:
-            for a in self.term_0:
-                html = re.sub(a, u'<span style="background-color: rgb(255, 255, 0);">{}</span>'.format(a,), html)
+        if len(self.my_aya.keys()) != 0:
+            if page in self.my_aya.keys():
+                for a in self.my_aya[page]:
+                    aya_txt = self.db.get_aya(a)
+                    html = re.sub(aya_txt, u'<span style="background-color: rgb(255, 245, 177);">{}</span>'.format(aya_txt,), html)
         self.view_quran.load_html_string(html, u'file://{}/'.format(asm_path.MOSHAF_DIR,))
         self.page_id = page
         if len(self.opened_old) == 0: self.opened_old.append(page)
@@ -165,9 +167,9 @@ class ViewerMoshaf(Gtk.HPaned):
         for page in range(1, 605):
             self.store_index.append(None, [page, u'الصفحة {}'.format(page,)])
     
-    def load_index(self, *a):
+    def load_index(self, btn):
         self.tree_index.handler_block(self.changed_index)
-        v = asm_customs.value_active(self.index_by)
+        v = btn.get_active()
         self.store_index.clear()
         if v == 0:
             self.load_sura()
@@ -175,7 +177,7 @@ class ViewerMoshaf(Gtk.HPaned):
             self.load_tahzib()
         elif v == 2:
             self.load_page()
-        self.term_0 = []
+        self.my_aya = {}
         self.show_page(self.page_id)
         self.tree_index.handler_unblock(self.changed_index)
    
@@ -217,42 +219,51 @@ class ViewerMoshaf(Gtk.HPaned):
         menu.append(i)
         menu.show_all()
         return False
-        
-    def search_cd(self, *a):
-        text = self.search_entry.get_text().decode('utf8')
+    
+    def search_on_page(self, text):
+        return
+     
+    def search_on_active(self, text):
         if len(text) >= 3:
             all_ayat = Othman().search(text)
-            self.term_0 = all_ayat[1]
             self.store_index.clear()
-            if len(all_ayat[0]) == 0:
+            if len(all_ayat) == 0:
                 asm_customs.erro(self.parent, 'لا يوجد نتيجة'); return
             else: 
-                for ayat in all_ayat[0]:
+                for ayat in all_ayat:
                     sura = ayat[0]
                     aya = ayat[1]
                     suras_names = Othman().get_suras_names()
                     suranm = suras_names[sura-1]
                     id_page = self.db.aya_page(aya, sura)
-                    self.store_index.append(None, [id_page, suranm[1]])
+                    if id_page != self.id_page_last:
+                        self.my_aya[id_page] = [ayat[5]]
+                        self.id_page_last = id_page
+                        self.store_index.append(None, [id_page, suranm[1]])
+                    else:
+                        self.my_aya[id_page].append(ayat[5])                
         
     def build(self, *a):
+        self.id_page_last = 0
         self.list_sura = cPickle.load(file(join(asm_path.MOSHAF_DIR, u'list_sura.pkl')))
         self.list_ahzab = cPickle.load(file(join(asm_path.MOSHAF_DIR, u'list_ahzab.pkl')))
-        self.term_0 = []
+        self.my_aya = {}
         self.page_id = asm_config.getn('quran_pos')
         Gtk.HPaned.__init__(self)
-        self.set_position(200)
+        self.set_border_width(5)
+        self.set_position(150)
         # a الفهرس-----------------------------------
         vbox = Gtk.VBox(False, 3)
-        ls = [[0, u'السور'], 
-              [1, u'الأجزاء'], 
-              [2, u'الصفحات']]
-        hb, self.index_by = asm_customs.combo(ls, 'حسب', 2)
-        self.index_by.set_active(0)
-        vbox.pack_start(hb, False, False, 0)
+        index_by = Gtk.ComboBoxText()
+        index_by.append_text(u'السور')
+        index_by.append_text(u'الأجزاء')
+        index_by.append_text(u'الصفحات')
+        index_by.set_active(0)
+        vbox.pack_start(index_by, False, False, 0)
         self.tree_index = asm_customs.TreeIndex()
+        self.tree_index.set_headers_visible(False)
         cell = Gtk.CellRendererText()
-        cell.set_property("wrap-width", 200)
+        cell.set_property("wrap-width", 150)
         kal = Gtk.TreeViewColumn('الفهرس', cell, text=1)
         self.tree_index.append_column(kal)
         self.store_index = Gtk.TreeStore(int, str)
@@ -264,12 +275,6 @@ class ViewerMoshaf(Gtk.HPaned):
         scroll.add(self.tree_index)
         scroll.get_hadjustment().set_value(0.0) 
         vbox.pack_start(scroll, True, True, 0)
-        try: self.search_entry = Gtk.SearchEntry()
-        except: self.search_entry = Gtk.Entry()
-        self.search_entry.set_size_request(200, -1)
-        self.search_entry.set_placeholder_text('بحث في القرآن')
-        self.search_entry.connect('activate', self.search_cd)
-        vbox.pack_start(self.search_entry, False, False, 0)
         self.pack1(vbox, True, True)
         
         self.view_quran = WebKit.WebView()
@@ -279,5 +284,5 @@ class ViewerMoshaf(Gtk.HPaned):
         scroll.add(self.view_quran)
         self.view_quran.set_full_content_zoom(True)
         self.pack2(scroll, True, True)
-        self.index_by.connect('changed', self.load_index)
-        self.load_index()
+        index_by.connect('changed', self.load_index)
+        self.load_index(index_by)
