@@ -175,13 +175,13 @@ class listDB(object):
     
     def add_tafsir(self, id_book):
         self.cur.execute('UPDATE books SET tafsir=1 WHERE id_book=?', (id_book, ))
-        tafsir = self.cur.fetchall()
-        return tafsir
+        check = self.con.commit()
+        return check
     
     # a كتب قسم محدد---------------------------------------
     
     def books_part(self, id_part):
-        self.cur.execute('SELECT id_book, tit FROM books WHERE parent=?', (id_part, ))
+        self.cur.execute('SELECT id_book, tit FROM books WHERE parent=? ORDER BY tit', (id_part, ))
         books = self.cur.fetchall()
         return books
     
@@ -270,6 +270,9 @@ class listDB(object):
     # a إضافة قسم--------------------------------------
     
     def add_part(self, nm_part):
+        self.cur.execute('SELECT id_group, tit FROM groups WHERE tit=?', (nm_part,))
+        is_group = self.cur.fetchall()
+        if len(is_group) > 0: return is_group[0][0]
         self.cur.execute('SELECT id_group FROM groups ORDER BY id_group')
         groups = self.cur.fetchall()
         if len(groups) == 0: id_group = 1
@@ -277,11 +280,15 @@ class listDB(object):
         self.cur.execute('INSERT INTO groups VALUES (?, ?, ?, ?)', 
                          (id_group, nm_part, 0, len(groups)))
         check = self.con.commit()
-        return check
+        if check == None:
+            return id_group
     
     # a إضافة كتاب--------------------------------------
     
     def add_book(self, nm_book, id_part, is_tafsir=0, cat=0):
+        self.cur.execute('SELECT tit, parent FROM books WHERE tit=? AND parent=?', (nm_book, id_part))
+        is_book = self.cur.fetchall()
+        if len(is_book) > 0: return True
         self.cur.execute('SELECT id_book FROM books ORDER BY id_book')
         books = self.cur.fetchall()
         if len(books) == 0: id_book = 1
@@ -668,13 +675,13 @@ class Othman(object):
     
     def get_ayat(self, sura, aya1, aya2):
         self.cur.execute("SELECT othmani FROM quran WHERE sura=? and aya BETWEEN ? and ?", (sura, aya1, aya2-1))
-        return map(lambda i: i[0], self.cur.fetchall())
+        return list(map(lambda i: i[0], self.cur.fetchall()))
 
     def search(self, text):
         s = '''fuzzy(imlai) LIKE ? ESCAPE "|"'''
         text=asm_araby.fuzzy(text)
         self.search_tokens=asm_araby.tokenize_search(text)
-        l = map(lambda s: '%'+s.replace('|', '||').replace('%', '|%')+'%', self.search_tokens)
+        l = list(map(lambda s: '%'+s.replace('|', '||').replace('%', '|%')+'%', self.search_tokens))
         if len(l) < 1: return []
         condition = ' AND '.join([s]*len(l))
         self.cur.execute("""SELECT sura, aya, page, othmani, imlai, id_binary  FROM Quran WHERE {} LIMIT 50""".format(condition, ), l)
@@ -759,7 +766,7 @@ class AuthorDB(object):
         s = '''fuzzy(lng) LIKE ? ESCAPE "|"'''
         text = asm_araby.fuzzy(text)
         self.search_tokens = asm_araby.tokenize_search(text)
-        l = map(lambda s: '%'+s.replace('|', '||').replace('%', '|%')+'%', self.search_tokens)
+        l = list(map(lambda s: '%'+s.replace('|', '||').replace('%', '|%')+'%', self.search_tokens))
         if len(l) < 1: return []
         condition = ' AND '.join([s]*len(l))
         self.cur.execute("""SELECT authid, auth FROM auth WHERE {}""".format(condition), l)
@@ -789,7 +796,7 @@ class TarajimDB(object):
         s = '''fuzzy(name) LIKE ? ESCAPE "|"'''
         text = asm_araby.fuzzy(text)
         self.search_tokens = asm_araby.tokenize_search(text)
-        l = map(lambda s: '%'+s.replace('|', '||').replace('%', '|%')+'%', self.search_tokens)
+        l = list(map(lambda s: '%'+s.replace('|', '||').replace('%', '|%')+'%', self.search_tokens))
         if len(l) < 1: return []
         condition = ' AND '.join([s]*len(l))
         self.cur.execute("""SELECT id, name FROM rewat WHERE {}""".format(condition), l)

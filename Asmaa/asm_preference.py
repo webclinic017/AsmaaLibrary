@@ -249,10 +249,10 @@ class Preference(Gtk.Box):
         box.pack_start(hb, False, False, 0)
         box.pack_start(self.frame, True, True, 0)
        
-        list_w1 = [[u'القوائم الجانبية','_idx'], [u'قائمة الكتب','_bks'], [u'نصوص الكتاب','_nass'], 
-                   [u'نصوص أخرى','_oth'], [u'العناوين','_tit'], [u'النص القرآني', '_qrn']]
-        list_w2 = [[u'لون خلفية العرض','_bg'], [u'لون خط التحديد','_sel'], [u'لون خلفية التحديد','_bg_sel'], 
-                   [u'لون تحديد البحث','_fnd'], [u'لون خلفية القوائم','_bgs'], [u'خلفية النص القرآني', '_bg_qrn']]
+        list_w1 = [[u'قائمة الأقسام','_prts'], [u'قائمة الكتب','_bks'], [u'القوائم الجانبية','_idx'], [u'نصوص الكتاب','_nass'], 
+                   [u'النص القرآني', '_qrn'], [u'نصوص أخرى','_oth'], [u'العناوين','_tit']]
+        list_w2 = [[u'لون خلفية العرض','_bg'], [u'خلفية النص القرآني', '_bg_qrn'], [u'لون خلفية القوائم','_bgs', 
+                   [u'لون خط التحديد','_sel'], [u'لون خلفية التحديد','_bg_sel'], [u'لون تحديد البحث','_fnd']]]
         
         for a in list_w1:
             hbox = Gtk.Box(spacing=3,orientation=Gtk.Orientation.HORIZONTAL)
@@ -404,8 +404,13 @@ class Preference(Gtk.Box):
         btn_help.connect('clicked', lambda *a: self.parent.notebook.set_current_page(5))
         box.pack_start(btn_help, False, False, 0)
         
-        db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/",
+        web_page = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/",
                                                 'صفحة البرنامج على الشّبكة')
+        box.pack_start(web_page, False, False, 0)
+        
+        db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/AsmaaLibrary.tar.gz/download",
+                                                'تنزيل قاعدة بيانات للتجربة')
+        
         box.pack_start(db_void, False, False, 0)
         self.notebook.append_page(box, Gtk.Label('المعلومات'))
         

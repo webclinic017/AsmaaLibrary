@@ -10,8 +10,8 @@
 الاعتماديات:
 ------------
 
-أ - python-gobject >= 3.10
-ب - 3.10 =< gir1.2-gtk-3.0
+أ - python-gobject >= 3.0 (وللأفضل أكبر أو يساوي 3.6)
+ب - gir1.2-gtk-3.0
 ج - gir1.2-webkit-3.0
 د - python2.7
 ه - mdbtools

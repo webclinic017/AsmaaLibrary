@@ -13,7 +13,7 @@ class About(Gtk.AboutDialog):
         self.parent = parent
         Gtk.AboutDialog.__init__(self, parent = self.parent, wrap_license = True)
         self.set_program_name("مكتبة أسماء")
-        self.set_version("2.3.0")
+        self.set_version("2.4")
         self.set_icon_name("asmaa")
         self.set_logo_icon_name('asmaa')
         self.set_comments("""بديل للمكتبة الشاملة على لينكس""")

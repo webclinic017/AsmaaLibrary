@@ -58,6 +58,7 @@ class AsmaaApp(Gtk.Window):
     
     def search_on_page(self, *a):
         text = self.entry_search.get_text().decode('utf8') 
+        if len(text) == 1 or text == u"ال": return
         n = self.notebook.get_current_page()
         ch = self.notebook.get_nth_page(n)
         ch.search_on_page(text)
@@ -67,14 +68,6 @@ class AsmaaApp(Gtk.Window):
         n = self.notebook.get_current_page()
         ch = self.notebook.get_nth_page(n)
         ch.search_on_active(text)
-    
-    # a تحرير الكتاب المفتوح----------------------------------
-    
-    def editbk_cb(self, *a):
-        msg = asm_customs.sure(self, 'عملية تعديل الكتاب عملية دقيقة،\nأي خطأ قد يؤدي لتلف الكتاب،\nهل تريد الاستمرار؟')
-        if msg == Gtk.ResponseType.YES:
-            self.notebook.set_current_page(7)
-            self.viewerbook.editbk_cb()
             
     # a تغيير طريقة عرض قائمة الكتب--------------------------
     
@@ -87,6 +80,7 @@ class AsmaaApp(Gtk.Window):
             self.list_books.nb.set_current_page(0)
             asm_config.setv('view_books', 0)
             btn.set_label("عرض بالقائمة")
+        self.go_parts.hide()
     
     # a إظهار وإخفاء اللوح الجانبي--------------------------
     
@@ -139,6 +133,10 @@ class AsmaaApp(Gtk.Window):
         if n == 0:
             self.btn_action_list.show_all()
             self.entry_search.set_placeholder_text('بحث عن كتاب')
+            if self.list_books.nb.get_current_page() in [1, 3]:
+                self.go_parts.show_all()
+            else:
+                self.go_parts.hide()
         elif n == 8:
             self.entry_search.set_placeholder_text('بحث عن كتاب')
         elif n == 1:
@@ -156,6 +154,7 @@ class AsmaaApp(Gtk.Window):
         else:
             self.entry_search.set_placeholder_text('بحث في النّصّ')
         if n in [1,2,4,5,7]: self.btnbox_pages.show_all()
+        if n!= 0: self.go_parts.hide()
         else: self.btnbox_pages.hide()
         self.pref_btn.set_active(False)
     
@@ -232,7 +231,10 @@ class AsmaaApp(Gtk.Window):
     def start_session(self, *a):
         session = eval(asm_config.getv('start_session'))
         if asm_config.getn('saved_session') == 0: return
-        if session[1][-1] in [0L, 1L, 2L, 3L, 4L, 5L, 6L, 8L]:
+        if session[1][-1] == 1L: 
+            if self.viewerbook.get_n_pages() == 0: self.notebook.set_current_page(session[1][-2])
+            else: self.notebook.set_current_page(session[1][-1])
+        elif session[1][-1] in [0L, 2L, 3L, 4L, 5L, 6L, 8L]:
             self.notebook.set_current_page(session[1][-1])
         else:
             self.notebook.set_current_page(session[1][-2])
@@ -245,45 +247,16 @@ class AsmaaApp(Gtk.Window):
             sr.scroll_search.hide()
         self.viewerbook.set_current_page(session[0][1])
     
-    def show_bitaka(self, *a):
-        hb = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
-        box = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
-        n = self.notebook.get_current_page()
-        if n not in [1, 2, 4, 5, 8]: return
-        ch = self.notebook.get_nth_page(n)
-        bitaka_book = ch.show_bitaka()[3]
-        info_book = ch.show_bitaka()[4]
-        dlg = Gtk.Dialog(parent=self)
-        dlg.set_icon_name("asmaa")
-        dlg.set_default_size(450, 300)
-        area = dlg.get_content_area()
-        area.set_spacing(6)
-        dlg.set_title('بطاقة الكتاب')
-        view_info = asm_customs.ViewBitaka()
-        view_info_bfr = view_info.get_buffer()
-        scroll = Gtk.ScrolledWindow()
-        scroll.set_shadow_type(Gtk.ShadowType.IN)
-        scroll.add(view_info)
-        view_info_bfr.set_text(bitaka_book)
-        
-        info_btn = asm_customs.ButtonClass("نبذة")
-        def info_cb(w):
-            if w.get_label().decode('utf8') == u"نبذة":
-                view_info_bfr.set_text(info_book)
-                w.set_label('بطاقة')
-            else:
-                view_info_bfr.set_text(bitaka_book)
-                w.set_label('نبذة')
-        info_btn.connect('clicked', info_cb)
-        hb.pack_start(info_btn, False, False, 0)
-        
-        close_btn = asm_customs.ButtonClass("إغلاق")
-        close_btn.connect('clicked',lambda *a: dlg.destroy())
-        hb.pack_end(close_btn, False, False, 0)
-        box.pack_start(scroll, True, True, 0)
-        box.pack_start(hb, False, False, 0)
-        area.pack_start(box, True, True, 0)
-        dlg.show_all()
+    
+    def set_tashkil(self, *a):
+        if asm_config.getn('tashkil') == 0: 
+            asm_config.setv('tashkil', 1)
+            self.del_tashkil.set_label("حذف التّشكيل")
+        else: 
+            asm_config.setv('tashkil', 0)
+            self.del_tashkil.set_label("إعادة التّشكيل")
+        self.viewerbook.set_tashkil()
+            
         
     def __init__(self,*a):
         self.full = 0
@@ -315,9 +288,9 @@ class AsmaaApp(Gtk.Window):
     def build(self,*a):
         self.set_title("مكتبة أسماء")
         self.set_icon_name('asmaa')
-        self.maximize()
+        #self.maximize()
         self.set_opacity(1.0)
-        #self.set_default_size(800, 600)
+        self.set_default_size(800, 600)
         self.connect("delete_event", self.delete_event_cb)
         self.connect("destroy", self.delete_event_cb)
         self.agr = Gtk.AccelGroup()
@@ -467,21 +440,15 @@ class AsmaaApp(Gtk.Window):
         img = Gtk.Image()
         img.set_from_stock(Gtk.STOCK_PASTE, Gtk.IconSize.MENU)
         sav_mark.set_image(img)
-        menu_action_book.append(sav_mark)
+        menu_action_book.append(sav_mark)     
         menu_action_book.append(Gtk.SeparatorMenuItem())
-        bitaka = Gtk.ImageMenuItem("بطاقة عن الكتاب")
-        bitaka.connect('activate', self.show_bitaka)
+        self.del_tashkil = Gtk.ImageMenuItem("حذف التّشكيل")
+        if asm_config.getn('tashkil') == 0:  self.del_tashkil.set_label("إعادة التّشكيل")
+        self.del_tashkil.connect('activate', self.set_tashkil)
         img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_INFO, Gtk.IconSize.MENU)
-        bitaka.set_image(img)
-        menu_action_book.append(bitaka)  
-        menu_action_book.append(Gtk.SeparatorMenuItem())
-        edit_book = Gtk.ImageMenuItem("تحرير الكتاب الحاليّ")
-        edit_book.connect('activate', self.editbk_cb)
-        img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_EDIT, Gtk.IconSize.MENU)
-        edit_book.set_image(img)
-        menu_action_book.append( edit_book)     
+        img.set_from_stock(Gtk.STOCK_FILE, Gtk.IconSize.MENU)
+        self.del_tashkil.set_image(img)
+        menu_action_book.append(self.del_tashkil)
         self.btn_action_book = Gtk.MenuButton();
         self.btn_action_book.set_popup (menu_action_book);
         img = Gtk.Image()
@@ -493,15 +460,6 @@ class AsmaaApp(Gtk.Window):
         # a أحداث صفحة قائمة الكتب--------------------------------------
         
         menu_action_list = Gtk.Menu()          
-        go_parts = Gtk.ImageMenuItem("الأقسام الرّئيسة")
-        go_parts.connect('activate', lambda *a: self.list_books.back_cb())
-        go_parts.add_accelerator("activate", self.axl, Gdk.KEY_G, ACCEL_CTRL_MOD, 
-                       Gtk.AccelFlags.VISIBLE)
-        img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_GO_BACK, Gtk.IconSize.MENU)
-        go_parts.set_image(img)
-        menu_action_list.append(go_parts)
-        menu_action_list.append(Gtk.SeparatorMenuItem())
         show_icons = Gtk.ImageMenuItem.new_with_label("عرض بالأيقونات")
         show_icons.add_accelerator("activate", self.axl, Gdk.KEY_S, ACCEL_CTRL_MOD, 
                        Gtk.AccelFlags.VISIBLE)
@@ -583,13 +541,29 @@ class AsmaaApp(Gtk.Window):
         self.btn_action_edit.set_image(img)
         menu_action_edit.show_all();
         hb_bar.pack_start(self.btn_action_edit, False, False, 0)
-             
+        
+        #------------------------------------
+        self.go_parts = Gtk.Button()
+        self.go_parts.set_size_request(64, -1)
+        self.go_parts.set_tooltip_text("الرجوع إلى الأقسام الرّئيسة")
+        self.go_parts.connect('clicked', lambda *a: self.list_books.back_cb())
+        img = Gtk.Image()
+        icon_theme = Gtk.IconTheme.get_default ()
+        has = icon_theme.has_icon("gtk-go-back-rtl")
+        if  has: 
+            img.set_from_icon_name('gtk-go-back-rtl', Gtk.IconSize.BUTTON)
+        else:
+            img.set_from_stock(Gtk.STOCK_GO_FORWARD, Gtk.IconSize.BUTTON)
+        self.go_parts.set_image(img)
+        hb_bar.pack_start(self.go_parts, False, False, 10)
+        
+        # a أزرار التصفح---------------------------------------
+            
         self.btnbox_pages = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
         self.btnbox_pages.set_layout (Gtk.ButtonBoxStyle.CENTER)
         #-----------------------------
         first_page = Gtk.Button()
         img = Gtk.Image()
-        icon_theme = Gtk.IconTheme.get_default ()
         has = icon_theme.has_icon("gtk-goto-first-rtl")
         if  has: 
             img.set_from_icon_name('gtk-goto-first-rtl', Gtk.IconSize.BUTTON)
@@ -603,7 +577,6 @@ class AsmaaApp(Gtk.Window):
         #--------------------------------------
         prev_page = Gtk.Button()
         img = Gtk.Image()
-        icon_theme = Gtk.IconTheme.get_default ()
         has = icon_theme.has_icon("gtk-go-back-rtl")
         if  has: 
             img.set_from_icon_name('gtk-go-back-rtl', Gtk.IconSize.BUTTON)
@@ -617,7 +590,6 @@ class AsmaaApp(Gtk.Window):
         #--------------------------------------
         next_page = Gtk.Button()
         img = Gtk.Image()
-        icon_theme = Gtk.IconTheme.get_default ()
         has = icon_theme.has_icon("gtk-go-forward-rtl")
         if  has: 
             img.set_from_icon_name('gtk-go-forward-rtl', Gtk.IconSize.BUTTON)
@@ -631,7 +603,6 @@ class AsmaaApp(Gtk.Window):
         #--------------------------------------
         last_page = Gtk.Button()
         img = Gtk.Image()
-        icon_theme = Gtk.IconTheme.get_default ()
         has = icon_theme.has_icon("gtk-goto-last-rtl")
         if  has: 
             img.set_from_icon_name('gtk-goto-last-rtl', Gtk.IconSize.BUTTON)
@@ -695,6 +666,7 @@ class AsmaaApp(Gtk.Window):
         self.btn_action_book.hide()
         self.btn_action_edit.hide()
         self.preference.hide()
+        self.go_parts.hide()
         self.help_book.scroll_search.hide()
         self.help_book.hp.set_position(120)
         if asm_config.getn('show_side') == 1:

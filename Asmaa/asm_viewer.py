@@ -50,11 +50,6 @@ class ViewerBooks(Gtk.Notebook):
         n = self.get_current_page()
         ch = self.get_nth_page(n)
         ch.advance_to_new()
-        
-    def show_bitaka(self, *a):
-        n = self.get_current_page()
-        ch = self.get_nth_page(n)
-        return ch.show_bitaka()
     
     def hide_index(self, *a):
         n = self.get_current_page()
@@ -62,11 +57,6 @@ class ViewerBooks(Gtk.Notebook):
         if ch.hp.get_position() <= 1:
             ch.hp.set_position(200)
         else: ch.hp.set_position(1)
-    
-    def editbk_cb(self, *a):
-        n = self.get_current_page()
-        ch = self.get_nth_page(n)
-        ch.editbk_cb()
     
     def search_on_page(self, text):
         n = self.get_current_page()
@@ -77,6 +67,11 @@ class ViewerBooks(Gtk.Notebook):
         n = self.get_current_page()
         ch = self.get_nth_page(n)
         ch.search_on_active(text)
+    
+    def set_tashkil(self, *a):
+        for n in range(self.get_n_pages()):
+            ch = self.get_nth_page(n)
+            ch.set_tashkil()
     
     def __init__(self, parent):
         self.session = [[], None]
@@ -120,11 +115,54 @@ class OpenBook(Gtk.VBox):
         self.opened_old = []
         self.build()
     
+    def set_tashkil(self, *a):
+        self.show_page(self.all_in_page[1])
+        if asm_config.getn('tashkil') == 0: now_text = asm_araby.stripHarakat(self.all_in_page[2])
+        else: now_text = self.all_in_page[2]
+        ch = self.stack.get_visible_child_name()
+        if ch == "n1": 
+            self.view_nasse_bfr1.set_text(now_text)
+            self.view_nasse_bfr1.insert(self.view_nasse_bfr1.get_end_iter(), u" \n")
+        else:
+            self.view_nasse_bfr2.set_text(now_text)
+            self.view_nasse_bfr2.insert(self.view_nasse_bfr2.get_end_iter(), u" \n")
+    
     def show_bitaka(self, *a):
-        if self.db.info_book() == None:
-            text_info = self.nm_book
-        else: text_info = self.db.info_book()
-        return text_info
+        hb = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
+        box = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
+        bitaka_book = self.db.info_book()[3]
+        info_book = self.db.info_book()[4]
+        dlg = Gtk.Dialog(parent=self.parent)
+        dlg.set_icon_name("asmaa")
+        dlg.set_default_size(450, 300)
+        area = dlg.get_content_area()
+        area.set_spacing(6)
+        dlg.set_title('بطاقة الكتاب')
+        view_info = asm_customs.ViewBitaka()
+        view_info_bfr = view_info.get_buffer()
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        scroll.add(view_info)
+        view_info_bfr.set_text(bitaka_book)
+        
+        info_btn = asm_customs.ButtonClass("نبذة")
+        def info_cb(w):
+            if w.get_label().decode('utf8') == u"نبذة":
+                view_info_bfr.set_text(info_book)
+                w.set_label('بطاقة')
+            else:
+                view_info_bfr.set_text(bitaka_book)
+                w.set_label('نبذة')
+        info_btn.connect('clicked', info_cb)
+        hb.pack_start(info_btn, False, False, 0)
+        
+        close_btn = asm_customs.ButtonClass("إغلاق")
+        close_btn.connect('clicked',lambda *a: dlg.destroy())
+        hb.pack_end(close_btn, False, False, 0)
+        box.pack_start(scroll, True, True, 0)
+        box.pack_start(hb, False, False, 0)
+        area.pack_start(box, True, True, 0)
+        dlg.show_all()
     
     def change_font(self, *a):
         self.view_title_tag1.set_property('foreground', self.parent.theme.color_tit)
@@ -193,8 +231,8 @@ class OpenBook(Gtk.VBox):
             for term in nasse2: 
                 if txt in asm_araby.fuzzy(term.decode('utf8')):
                     search_tokens.append(term)
-        asm_customs.with_tag(self.view_nasse_bfr1, self.view_search_tag1, search_tokens, 1)
-        asm_customs.with_tag(self.view_nasse_bfr2, self.view_search_tag2, search_tokens, 1)
+        asm_customs.with_tag(self.view_nasse_bfr1, self.view_search_tag1, search_tokens, 1, self.view_nasse1)
+        asm_customs.with_tag(self.view_nasse_bfr2, self.view_search_tag2, search_tokens, 1, self.view_nasse2)
 
 
     # a التصفح--------------------------------------------
@@ -308,7 +346,6 @@ class OpenBook(Gtk.VBox):
             except :
                 pass
             last_level = level
-        self.scroll_index.get_hadjustment().set_value(0.0) 
     
     def ok_index(self, *a):  
         model, i = self.sel_index.get_selected()
@@ -319,7 +356,6 @@ class OpenBook(Gtk.VBox):
                     self.tree_index.collapse_row(p)
                 else: 
                     self.tree_index.expand_row(p, False)
-                    #self.scroll_index.get_hadjustment().set_lower(True)
             id_page = model.get_value(i, 0)
             tit = model.get_value(i, 1).decode('utf8')
 
@@ -330,10 +366,10 @@ class OpenBook(Gtk.VBox):
             ch = self.stack.get_visible_child_name()
             if ch == "n1": 
                 self.stack.set_visible_child_name("n2")
-                asm_customs.with_tag(self.view_nasse_bfr1, self.title_select_tag1, [tit,], 1, self.view_nasse1)
+                asm_customs.with_tag(self.view_nasse_bfr1, self.title_select_tag1, [tit,], 0, self.view_nasse1)
             else: 
                 self.stack.set_visible_child_name("n1")
-                asm_customs.with_tag(self.view_nasse_bfr2, self.title_select_tag2, [tit,], 1, self.view_nasse2)
+                asm_customs.with_tag(self.view_nasse_bfr2, self.title_select_tag2, [tit,], 0, self.view_nasse2)
             GObject.timeout_add(200, self.reset_event)
             
    
@@ -359,16 +395,18 @@ class OpenBook(Gtk.VBox):
     
     def show_page(self, id_page):
         self.all_in_page = self.db.get_text_body(id_page)#rowid, id, text, part, page, hno, sora, aya, na
+        if asm_config.getn('tashkil') == 0: now_text = asm_araby.stripHarakat(self.all_in_page[2])
+        else: now_text = self.all_in_page[2]
         self.has_commment(id_page)
         titles = self.db.titles_page(self.all_in_page[1])
         ch = self.stack.get_visible_child_name()
         if ch == "n1": 
-            self.view_nasse_bfr2.set_text(self.all_in_page[2])
+            self.view_nasse_bfr2.set_text(now_text)
             self.view_nasse_bfr2.insert(self.view_nasse_bfr2.get_end_iter(), u" \n")
             try: asm_customs.with_tag(self.view_nasse_bfr2, self.view_title_tag2, titles)
             except: pass 
         else:
-            self.view_nasse_bfr1.set_text(self.all_in_page[2])
+            self.view_nasse_bfr1.set_text(now_text)
             self.view_nasse_bfr1.insert(self.view_nasse_bfr1.get_end_iter(), u" \n")
             try: asm_customs.with_tag(self.view_nasse_bfr1, self.view_title_tag1, titles)
             except: pass
@@ -377,7 +415,7 @@ class OpenBook(Gtk.VBox):
         self.ent_page.set_text(str(self.all_in_page[4]))
         self.ent_part.set_text(str(self.all_in_page[3]))
         text = self.parent.entry_search.get_text().decode('utf8')
-        if text != u'': 
+        if len(text) >= 2 and text != u"ال": 
             self.search_now(text)
         if len(self.opened_old) == 0: self.opened_old.append(id_page)
         elif id_page != self.opened_old[-1]: self.opened_old.append(id_page)
@@ -392,8 +430,6 @@ class OpenBook(Gtk.VBox):
         self.scroll_nasse2.get_vadjustment().set_value(0.0)
     
     def scroll_event(self, sc, ev):
-#        if ev.type == Gdk.EventType.SCROLL: print "scroll"
-#        if ev.direction == Gdk.ScrollDirection.SMOOTH: print "Up"
         if asm_config.getn('mouse_browse') == 0: return
         vadj = sc.get_vadjustment()
         p = vadj.get_page_size()
@@ -435,9 +471,6 @@ class OpenBook(Gtk.VBox):
         elif asm_config.getn('style_browse') == 3:
             self.style_browse_next = Gtk.StackTransitionType.SLIDE_UP
             self.style_browse_prev = Gtk.StackTransitionType.SLIDE_DOWN 
-#        sz = self.parent.get_size()
-#        self.box_view1.set_size_request(-1, sz[1])
-#        self.box_view2.set_size_request(-1, sz[1])
     
     def has_commment(self, id_page):
         if self.db.show_comment(id_page) != None and self.db.show_comment(id_page) != []:
@@ -554,9 +587,12 @@ class OpenBook(Gtk.VBox):
     # a تحرير الكتاب المفتوح----------------------------------
     
     def editbk_cb(self, *a):
-        self.parent.editbook.close_db()
-        book = self.db_list.file_book(self.id_book)
-        self.parent.editbook.add_book(book, self.id_book, self.all_in_page[1])
+        msg = asm_customs.sure(self.parent, 'عملية تعديل الكتاب عملية دقيقة،\nأي خطأ قد يؤدي لتلف الكتاب،\nهل تريد الاستمرار؟')
+        if msg == Gtk.ResponseType.YES:         
+            self.parent.editbook.close_db()
+            book = self.db_list.file_book(self.id_book)
+            self.parent.editbook.add_book(book, self.id_book, self.all_in_page[1])
+            self.parent.notebook.set_current_page(7)
     
     def comment_cb(self, *a):
         # interface--------------------------------------
@@ -654,7 +690,8 @@ class OpenBook(Gtk.VBox):
         self.tree_search.append_column(raq)
         cell = Gtk.CellRendererText()
         cell.set_property("ellipsize", Pango.EllipsizeMode.END)
-        kal = Gtk.TreeViewColumn('أغلق النتائج', cell, text=2)
+        kal = Gtk.TreeViewColumn('أغلق النتائج', cell, text=3)
+        kal.set_expand(True)
         kal.set_clickable(True)
         kal.connect('clicked', self.hide_search)
         self.tree_search.append_column(kal)
@@ -684,11 +721,9 @@ class OpenBook(Gtk.VBox):
         self.view_nasse_bfr1 = self.view_nasse1.get_buffer()
         self.view_nasse1.connect_after("populate-popup", asm_popup.populate_popup, self.parent)
         self.scroll_nasse1 = Gtk.ScrolledWindow()
-#        self.scroll_nasse1.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        #self.scroll_nasse1.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.scroll_nasse1.set_shadow_type(Gtk.ShadowType.IN)
-#        self.box_view1 = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
         self.scroll_nasse1.add(self.view_nasse1)
-#        self.box_view1.pack_start(self.view_nasse1, True, True, 0)
         self.scroll_event_name1 = self.scroll_nasse1.connect('scroll-event', self.scroll_event)
         self.view_title_tag1 = self.view_nasse_bfr1.create_tag("title1")
         self.view_quran_tag1 = self.view_nasse_bfr1.create_tag("quran1")
@@ -701,11 +736,9 @@ class OpenBook(Gtk.VBox):
         self.view_nasse_bfr2 = self.view_nasse2.get_buffer()
         self.view_nasse2.connect_after("populate-popup", asm_popup.populate_popup, self.parent)
         self.scroll_nasse2 = Gtk.ScrolledWindow()
-#        self.scroll_nasse2.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        #self.scroll_nasse2.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.scroll_nasse2.set_shadow_type(Gtk.ShadowType.IN)
-#        self.box_view2 = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
         self.scroll_nasse2.add(self.view_nasse2)
-#        self.box_view2.pack_start(self.view_nasse2, True, True, 0)
         self.scroll_event_name2 = self.scroll_nasse2.connect('scroll-event', self.scroll_event)
         self.view_title_tag2 = self.view_nasse_bfr2.create_tag("title2")
         self.view_quran_tag2 = self.view_nasse_bfr2.create_tag("quran2")
@@ -745,6 +778,21 @@ class OpenBook(Gtk.VBox):
         self.autoScrolling = False
         self.btn_autoScroll.connect("clicked", self.autoScrollCb)
         self.timeo = GLib.timeout_add(100/((asm_config.getn('auto_browse'))*8), self.autoScroll, None)
+        
+        bitaka = Gtk.Button()
+        bitaka.set_tooltip_text("بطاقة عن الكتاب")
+        bitaka.connect('clicked', self.show_bitaka)
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_INFO, Gtk.IconSize.BUTTON)
+        bitaka.set_image(img)
+        edit_book = Gtk.Button()
+        edit_book.set_tooltip_text("تحرير الكتاب الحاليّ")
+        edit_book.connect('clicked', self.editbk_cb)
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_EDIT, Gtk.IconSize.BUTTON)
+        edit_book.set_image(img)
+        hbox.pack_end(edit_book, False, False, 0 ) 
+        hbox.pack_end(bitaka, False, False, 0 ) 
         
         self.convert_browse()
         self.hp.pack2(vbox, True, False)

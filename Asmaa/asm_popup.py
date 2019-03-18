@@ -5,7 +5,7 @@
 ##############################################################################
 
 from gi.repository import Gtk, Gdk
-from asm_contacts import Othman, TarajimDB
+from asm_contacts import Othman, TarajimDB, AuthorDB
 import asm_customs, asm_stemming, asm_path
 from os.path import join
 import re, os
@@ -122,6 +122,18 @@ def tarjama_rawi(widget, buff, parent):
             parent.winspage.tarjamapage.sel_tarjama.select_path((0,))
             parent.notebook.set_current_page(3)
             parent.winspage.set_current_page(1)
+            
+def tarjama_author(widget, buff, parent):
+    if buff.get_has_selection():
+        sel = buff.get_selection_bounds()
+        text = buff.get_text(sel[0], sel[1],True).decode('utf8')
+        if len(text) >= 3:
+            parent.winspage.authorpage.search_on_page(text)
+            parent.winspage.authorpage.view_author_bfr.set_text('')
+            parent.winspage.authorpage.tree_author.expand_all()
+            parent.winspage.authorpage.sel_author.select_path((0,))
+            parent.notebook.set_current_page(3)
+            parent.winspage.set_current_page(2)
 
 def populate_popup(view, menu, parent):
     for a in menu.get_children():
@@ -141,6 +153,10 @@ def populate_popup(view, menu, parent):
     menu.append(f3)
     f3.set_sensitive(False)
     f3.show()
+    f8 = Gtk.MenuItem('ترجمة مؤلّف')
+    menu.append(f8)
+    f8.set_sensitive(False)
+    f8.show()
     c1 = Gtk.SeparatorMenuItem()
     menu.append(c1)
     c1.show()
@@ -188,9 +204,11 @@ def populate_popup(view, menu, parent):
         f3.set_sensitive(True)
         f4.set_sensitive(True)
         f5.set_sensitive(True)
+        f8.set_sensitive(True)
     f1.connect("activate", explain_term, buff, parent)
     f2.connect("activate", tafsir_ayat, buff, parent)
     f3.connect("activate", tarjama_rawi, buff, parent)
     f4.connect("activate", copy_sel, buff, parent)
     f6.connect("activate", parent.previous_page, buff, parent)
     f7.connect("activate", parent.next_page, buff, parent)
+    f8.connect("activate", tarjama_author, buff, parent)

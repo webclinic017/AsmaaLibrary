@@ -26,9 +26,9 @@ class EditTafsir(Gtk.Dialog):
         
     def no_save_cb(self, *a):
         id_page = self.id_pg.get_value()
-        self.suras.set_active(-1)
-        self.ayas.set_value(0)
-        self.n_ayas.set_value(0)
+        #self.suras.set_active(-1)
+        #self.ayas.set_value(0)
+        #self.n_ayas.set_value(0)
         self.db.edit_tafsir(id_page, 0, 0, 0)
         self.change_id_pg()
     
@@ -48,13 +48,12 @@ class EditTafsir(Gtk.Dialog):
         all_in_page = self.db.get_text_body(page_id)
         self.lab_id_pg.set_text(u'جزء {} ، صفحة {}'.format(all_in_page[3], all_in_page[4]))
         try:
-            self.suras.set_active(int(all_in_page[6])-1)
-            self.ayas.set_value(int(all_in_page[7]))
-            self.n_ayas.set_value(int(all_in_page[8]))
+            if all_in_page[6] != 0:
+                self.suras.set_active(int(all_in_page[6])-1)
+                self.ayas.set_value(int(all_in_page[7]))
+                self.n_ayas.set_value(int(all_in_page[8]))
         except:
-            self.suras.set_active(-1)
-            self.ayas.set_value(0)
-            self.n_ayas.set_value(0)
+            pass
         self.view_nasse_bfr.set_text(all_in_page[2])
         self.is_tafsir(all_in_page)
         self.scroll_nasse.get_vadjustment().set_value(0.0)
@@ -114,7 +113,7 @@ class EditTafsir(Gtk.Dialog):
         
         hb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
         sura_list = self.othman.get_suras_names()
-        hb0, self.suras = asm_customs.combo(sura_list, u'السورة', 0)
+        hb0, self.suras = asm_customs.combo(sura_list, u'السورة')
         hb.pack_start(hb0, False, False, 3)
         self.suras.set_active(-1)
         

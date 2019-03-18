@@ -11,7 +11,7 @@ import re
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.3.0'
+version = '2.4'
 #a--------------------------------------------------
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
@@ -155,26 +155,29 @@ def value_active(combo, n=0):
 
 #a------------------------------------------
 def search_and_mark(text_buff, text_tag, text, start, tt, view):
-    i_min = None
+    iter_min = None
     end = text_buff.get_end_iter()
     match = start.forward_search(text, Gtk.TextSearchFlags.CASE_INSENSITIVE, end)
     if match != None:
         match_start, match_end = match
         text_buff.apply_tag(text_tag, match_start, match_end)
-        if match_start and (not i_min or i_min.compare(match_start) > 0): 
-                i_min = match_start
+        if match_start and (not iter_min or iter_min.compare(match_start) > 0): 
+                iter_min = match_start
         if tt == 1:
             search_and_mark(text_buff, text_tag, text, match_end, 1, view)
-        if i_min and view != None:
-            view.scroll_to_iter(i_min, 0.0, False, 0.5, 0.5)
+    return iter_min
+        
         
 def with_tag(text_buff, text_tag, ls, tt=0, view=None):
+    iter_min = None
     for text in ls:
         cursor_mark = text_buff.get_insert()
         start = text_buff.get_iter_at_mark(cursor_mark)
         if start.get_offset() == text_buff.get_char_count():
             start = text_buff.get_start_iter()
-        search_and_mark(text_buff, text_tag, text, start, tt, view)
+        iter_min = search_and_mark(text_buff, text_tag, text, start, tt, view)
+    if iter_min and view != None:
+        view.scroll_to_iter(iter_min, 0, True, 0.0, 1.0)
 
 #a------------------------------------------
 class ViewClass(Gtk.TextView):
@@ -218,8 +221,14 @@ class TreeIndex(Gtk.TreeView):
         Gtk.TreeView.__init__(self)
         
 #a------------------------------------------
-class TreeClass(Gtk.TreeView):
-    __gtype_name__ = 'Tree'
+class TreeParts(Gtk.TreeView):
+    __gtype_name__ = 'TreeParts'
+    def __init__(self, *a):
+        Gtk.TreeView.__init__(self)
+        
+#a------------------------------------------
+class TreeBooks(Gtk.TreeView):
+    __gtype_name__ = 'TreeBooks'
     def __init__(self, *a):
         Gtk.TreeView.__init__(self)
 

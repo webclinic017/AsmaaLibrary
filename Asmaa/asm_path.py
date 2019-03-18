@@ -14,18 +14,23 @@ import sqlite3
 #a------------------------------------------
 def sure_start():
     dlg = Gtk.MessageDialog(None, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING,
-                             Gtk.ButtonsType.YES_NO)
+                             Gtk.ButtonsType.NONE)
     dlg.set_markup('''
     لم يتمكن البرنامج من الاتصال بقاعدة البيانات،
     إذا كنت قد نزلتها بالفعل فربما لم تربطها بالبرنامج، 
     أو قد يكون القرص الموجود عليه القاعدة غير مضموم،
-    هل تريد تحديد مسار قاعدة البيانات ؟''')
+    ماذا تريد أن تفعل ؟''')
     db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/AsmaaLibrary.tar.gz/download",
                                                 'تنزيل قاعدة بيانات للتجربة')
+    no_lib = Gtk.Button('خروج')
+    dlg.add_action_widget(no_lib, 1)
+    sel_lib = Gtk.Button('تحديد المسار')
+    dlg.add_action_widget(sel_lib, 2)
     new_lib = Gtk.Button('إنشاء مكتبة مفرغة')
     dlg.add_action_widget(new_lib, 3)
     def_lib = Gtk.Button('المسار الافتراضي')
     dlg.add_action_widget(def_lib, 4)
+    
     area = dlg.get_content_area()
     area.set_spacing(7)
     hbox = Gtk.HBox(False, 7)
@@ -123,7 +128,7 @@ if asm_config.getv('path').decode('utf8') != join(LIBRARY_DIR_rw, u'data', u'Lis
     if not exists(asm_config.getv('path')): 
         res = sure_start()
         # a تحديد المسار--------------------------
-        if res == Gtk.ResponseType.YES:
+        if res == 2:
             open_dlg = Gtk.FileChooserDialog(u'تحديد مسار قاعدة البيانات',
                                              None, Gtk.FileChooserAction.OPEN,
                                             (Gtk.STOCK_OK, Gtk.ResponseType.OK,
@@ -144,7 +149,7 @@ if asm_config.getv('path').decode('utf8') != join(LIBRARY_DIR_rw, u'data', u'Lis
                 quit()   
             
         # a إلغاء التحديد-------------------------
-        elif res == Gtk.ResponseType.NO:
+        elif res == 1:
             my_return = 0
             quit()
             

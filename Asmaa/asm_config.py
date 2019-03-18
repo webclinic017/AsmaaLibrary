@@ -26,6 +26,8 @@ def load():
         config.set(section, 'start_session', '[[],0,[]]')
     if not config.has_option(section, 'font_tit'):
         config.set(section, 'font_tit', 'KacstOne 15')
+    if not config.has_option(section, 'font_prts'):
+        config.set(section, 'font_prts', 'KacstOne 18')
     if not config.has_option(section, 'font_bks'):
         config.set(section, 'font_bks', 'KacstOne 15')
     if not config.has_option(section, 'font_nass'):
@@ -39,19 +41,21 @@ def load():
     if not config.has_option(section, 'color_tit'):
         config.set(section, 'color_tit', '#868609091515')
     if not config.has_option(section, 'color_idx'):
-        config.set(section, 'color_idx', '#868609091515')
+        config.set(section, 'color_idx', '#676f0584533d')
     if not config.has_option(section, 'color_nass'):
         config.set(section, 'color_nass', '#202040400000')
     if not config.has_option(section, 'color_oth'):
         config.set(section, 'color_oth', '#202040400000')
     if not config.has_option(section, 'color_qrn'):
         config.set(section, 'color_qrn', '#202040400000')
+    if not config.has_option(section, 'color_prts'):
+        config.set(section, 'color_prts', '#202040400000')
     if not config.has_option(section, 'color_bks'):
         config.set(section, 'color_bks', '#868609091515')
     if not config.has_option(section, 'color_bg'):
         config.set(section, 'color_bg', '#fdfdfdfdd7d7')
     if not config.has_option(section, 'color_bgs'):
-        config.set(section, 'color_bgs', '#fdfdfdfdd7d7')
+        config.set(section, 'color_bgs', '#fca9fca9f231')
     if not config.has_option(section, 'color_sel'):
         config.set(section, 'color_sel', '#ffffffffffff')
     if not config.has_option(section, 'color_bg_sel'):
@@ -69,7 +73,7 @@ def load():
     if not config.has_option(section, 'quran_pos'):
         config.set(section, 'quran_pos', 1)
     if not config.has_option(section, 'view_books'):
-        config.set(section, 'view_books', 0)
+        config.set(section, 'view_books', 1)
     if not config.has_option(section, 'show_side'):
         config.set(section, 'show_side', 0)
     if not config.has_option(section, 'mouse_browse'):

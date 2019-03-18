@@ -6,7 +6,7 @@
 
 from os.path import join, exists
 import os
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, Pango
 import asm_araby, asm_customs, asm_popup, asm_path
 from asm_viewer import OpenBook
 from asm_tablabel import TabLabel
@@ -200,14 +200,20 @@ class ShowResult(Gtk.VPaned):
         self.is_tafsir(self.all_in_page)
         self.current_id = self.all_in_page[0]
         text = self.parent.entry_search.get_text().decode('utf8')
-        if text != u'': 
+        if len(text) >= 2 and text != u"ال": 
             self.search_now(text)
-        self.view_nasse.scroll_to_iter(self.view_nasse_bfr.get_start_iter(), 0.0, True, 0.5, 0.5)
-        if len(self.ls_term) == 0: 
-            return
-        match_start = asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, self.ls_term, 1)
-        if match_start:
-            self.view_nasse.scroll_to_iter(match_start, 0.0, False, 0.5, 0.5)
+        self.show_term_search()
+        
+    def show_term_search(self, *a):
+        search_tokens = []
+        nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
+                                            self.view_nasse_bfr.get_end_iter(),True).split()
+        for text in self.ls_term:
+            txt = asm_araby.fuzzy(text)
+            for term in nasse: 
+                if txt in asm_araby.fuzzy(term.decode('utf8')):
+                    search_tokens.append(term)
+        asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1, self.view_nasse)
     
     def is_tafsir(self, all_in_page):
         try: sora, aya, na = all_in_page[6], all_in_page[7], all_in_page[8]
@@ -271,7 +277,7 @@ class ShowResult(Gtk.VPaned):
         self.hb_stop.hide()
         
     def search_on_active(self, text):
-        return
+        self.search_on_page(text)
     
     def search_on_page(self, text):
         if self.tree_results.get_selection().count_selected_rows() == 1:
@@ -289,7 +295,7 @@ class ShowResult(Gtk.VPaned):
             for term in nasse: 
                 if txt in asm_araby.fuzzy(term.decode('utf8')):
                     search_tokens.append(term)
-        asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1)
+        asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1, self.view_nasse)
         
     def build(self, *a):
         Gtk.VPaned.__init__(self)
@@ -394,20 +400,13 @@ class Searcher(Gtk.Dialog):
             return False
     
     def select_all(self, btn):
-        if btn.get_title() == u"الكل":
-            try: 
-                self.store_books.foreach(self.select_o, True)
-                btn.set_title(u"ألغ")
-            except: pass
+        if btn.get_title().decode("utf8") == u"علّم جميع الكتب":
+            self.store_books.foreach(self.select_o, True)
+            btn.set_title(u"ألغ تعليم الجميع")
         else:
-            try: 
-                self.store_books.foreach(self.select_o, False)
-                btn.set_title(u"الكل")
-            except: pass
-                
-    def deselect_all(self, *a):
-        try: self.store_books.foreach(self.select_o, False)
-        except: pass
+            self.store_books.foreach(self.select_o, False)
+            btn.set_title(u"علّم جميع الكتب")
+
         
     def select_field(self, btn, *a):
         nm = btn.get_name()
@@ -468,13 +467,13 @@ class Searcher(Gtk.Dialog):
         if i != None: 
             nm_group = model.get_value(i, 1).decode('utf8')
             if fixed: 
-                self.columntoggle1.set_title(u"ألغ")
+                self.columntext1.set_title(u"ألغ تعليم الجميع")
                 if [nm_book, nm_group, id_book] not in self.selected_books:
                     self.selected_books.append([nm_book, nm_group, id_book])
             else:
                 if [nm_book, nm_group, id_book] in self.selected_books:
                     self.selected_books.remove([nm_book, nm_group, id_book])
-                if len(self.selected_books) == 0: self.columntoggle1.set_title(u"الكل")
+                if len(self.selected_books) == 0: self.columntext1.set_title(u"علّم جميع الكتب")
     
     def search(self, *a):
         self.add_all_list()
@@ -547,6 +546,14 @@ class Searcher(Gtk.Dialog):
         for a in os.listdir(join(asm_path.LIBRARY_DIR_rw, u'fields-search')):
             a = a.replace(u'.pkl', u'')
             self.store_fields.append([None, a])
+    
+    def del_history(self, *a):
+        self.list_terms = []
+        output = open(join(asm_path.DATA_DIR_rw, u'last-terms.pkl'), 'wb')
+        cPickle.dump(self.list_terms, output)
+        output.close()
+        self.list_ts.clear()
+        asm_customs.info(self.parent, "تمّ مسح الكلمات المبحوث عنها سابقاً")
         
     def build(self, *a):
         Gtk.Dialog.__init__(self, parent=self.parent)
@@ -563,10 +570,10 @@ class Searcher(Gtk.Dialog):
         try: self.list_terms = cPickle.load(file(join(asm_path.DATA_DIR_rw, u'last-terms.pkl')))
         except: self.list_terms = []
         completion = Gtk.EntryCompletion()
-        list_ts = Gtk.ListStore(str)
+        self.list_ts = Gtk.ListStore(str)
         for a in self.list_terms:
-            list_ts.append([a])
-        completion.set_model(list_ts)
+            self.list_ts.append([a])
+        completion.set_model(self.list_ts)
         completion.set_text_column(0)
         self.entry_search.set_completion(completion)
         self.entry_search.connect('activate', self.search)
@@ -595,6 +602,7 @@ class Searcher(Gtk.Dialog):
         self.tree_fields = Gtk.TreeView(self.store_fields)
         self.tree_fields.set_rules_hint(True)
         celltext = Gtk.CellRendererText()
+        celltext.set_property("ellipsize", Pango.EllipsizeMode.END)
         celltoggle = Gtk.CellRendererToggle()
         celltoggle.set_property('activatable', True)
         columntoggle = Gtk.TreeViewColumn("اختر", celltoggle)
@@ -619,17 +627,21 @@ class Searcher(Gtk.Dialog):
         scroll.add(self.tree_books)
         scroll.set_size_request(200, -1)
         celltext = Gtk.CellRendererText()
+        celltext.set_property("ellipsize", Pango.EllipsizeMode.END)
         celltoggle = Gtk.CellRendererToggle()
         celltoggle.set_property('activatable', True)
-        self.columntoggle1 = Gtk.TreeViewColumn("الكل", celltoggle)
-        self.columntoggle1.set_clickable(True)
-        self.columntoggle1.connect('clicked', self.select_all) 
-        columntext = Gtk.TreeViewColumn("الكتب", celltext, text = 1 )
-        columntext.set_expand(True)
-        self.columntoggle1.add_attribute( celltoggle, "active", 0)
+        columntoggle = Gtk.TreeViewColumn("ضمّ", celltoggle)
+        columntoggle.set_clickable(True)
+        columntoggle.connect('clicked', lambda *a:
+                             self.tree_books.collapse_all()) 
+        self.columntext1 = Gtk.TreeViewColumn("علّم جميع الكتب", celltext, text = 1 )
+        self.columntext1.set_clickable(True)
+        self.columntext1.connect('clicked', self.select_all) 
+        self.columntext1.set_expand(True)
+        columntoggle.add_attribute( celltoggle, "active", 0)
         celltoggle.connect('toggled', self.fixed_toggled, self.store_books)
-        self.tree_books.append_column(self.columntoggle1)
-        self.tree_books.append_column(columntext)
+        self.tree_books.append_column(columntoggle)
+        self.tree_books.append_column(self.columntext1)
         hbox.pack_start(scroll, True, True, 0)
         area.pack_start(hbox, True, True, 0)
         #-------------------------------------------------------
@@ -679,7 +691,7 @@ class Searcher(Gtk.Dialog):
         hb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
         rm_field = Gtk.Button('حذف النطاق المحدد')
         hb.pack_start(rm_field,False, False, 0)
-        box.pack_start(hb, False, False, 0)
+        box.pack_start(hb, False, False, 0) 
         def rm_field_cb(widget, *a):
             model, i = self.tree_fields.get_selection().get_selected()
             if i:
@@ -688,5 +700,15 @@ class Searcher(Gtk.Dialog):
                 os.remove(join(asm_path.LIBRARY_DIR_rw, u'fields-search', nm+'.pkl')) 
                 model.remove(i)
         rm_field.connect('clicked', rm_field_cb)
+        
+                
+        box = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
+        box.set_border_width(7)
+        notebk.append_page(box, Gtk.Label('خيارات أخرى'))
+        del_term = Gtk.Button('مسح الكلمات المحفوظة')
+        hb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
+        hb.pack_start(del_term,False, False, 0)
+        del_term.connect('clicked', self.del_history)
+        box.pack_start(hb, False, False, 0)
 
         area.pack_start(expander, False, False, 0)

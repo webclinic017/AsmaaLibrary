@@ -136,7 +136,7 @@ class Organize(Gtk.Box):
         ls = []
         for a in self.db.all_parts():
             ls.append([a[0], a[1]])
-        hb, parts_g = asm_customs.combo(ls, u'', 0)
+        hb, parts_g = asm_customs.combo(ls, u'')
         parts_g.set_active(0)
         self.received_part_name = asm_customs.value_active(parts_g, 1).decode('utf8')
         self.received_part_id = asm_customs.value_active(parts_g)
@@ -191,14 +191,16 @@ class Organize(Gtk.Box):
         self.store_group.clear()
         for a in self.db.all_parts():
             self.store_group.append([a[0], a[1]])
+        self.parent.list_books.load_list()
     
     def new_group(self, *a):
         new_grp = self.entry_group.get_text().decode('utf8')
         if new_grp == '': return
         if exists(join(asm_path.BOOK_DIR_rw, new_grp)): return
         check = self.db.add_part(new_grp)
-        if check == None:
-            mkdir(join(asm_path.BOOK_DIR_rw, new_grp))
+        if type(check) == int:
+            if not exists(join(asm_path.BOOK_DIR_rw, new_grp)):
+                mkdir(join(asm_path.BOOK_DIR_rw, new_grp))
             self.refresh_groups()
         self.entry_group.set_text('')
             
@@ -295,7 +297,7 @@ class Organize(Gtk.Box):
         Gtk.Box.__init__(self,spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
         hp1 = Gtk.HPaned()
         self.pack_start(hp1, True, True, 0)
-        self.tree_group = asm_customs.TreeClass()
+        self.tree_group = asm_customs.TreeParts()
         self.sel_group = self.tree_group.get_selection()
         self.tree_group.connect("cursor-changed", self.ok_group)
         cell = Gtk.CellRendererText()
@@ -313,7 +315,7 @@ class Organize(Gtk.Box):
         hp1.pack1(scroll, True, True)
 
         self.store_books = Gtk.ListStore(int, str)
-        self.tree_books = asm_customs.TreeIndex()
+        self.tree_books = asm_customs.TreeBooks()
         self.tree_books.connect("cursor-changed", self.ok_book)
         self.sel_book = self.tree_books.get_selection()
         self.tree_books.set_grid_lines(Gtk.TreeViewGridLines.HORIZONTAL)

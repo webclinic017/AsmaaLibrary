@@ -32,7 +32,7 @@ class ListBooks(Gtk.HBox):
         groups = self.db.all_parts()
         for a in groups:
             self.store_parts_icon.append([a[1], self.particon, a[0]])
-            self.store_parts_list.append([a[0], a[1]])
+            self.store_parts_list.append([a[0], a[1], self.particon1])
 
         
     def select_row(self, tree, tree_sel): 
@@ -71,7 +71,8 @@ class ListBooks(Gtk.HBox):
                 v += 1
                 if v%200 == 199: 
                     while (Gtk.events_pending()): Gtk.main_iteration()
-                self.store_books_list.append([bk[0], bk[1]]) 
+                self.store_books_list.append([bk[0], bk[1], self.bookicon1]) 
+            self.parent.go_parts.show_all()
             
     def avtive_row_books(self, *a): 
         model, i = self.sel_books.get_selected()
@@ -164,8 +165,9 @@ class ListBooks(Gtk.HBox):
             books = self.db.search_books(text)
             self.store_books_list.clear()
             for a in books:
-                self.store_books_list.append([a[0], a[1]]) 
+                self.store_books_list.append([a[0], a[1], self.bookicon1]) 
             self.nb.set_current_page(3)
+            self.parent.go_parts.show_all()
     
     def search_item_cb(self, text):
         if text == '':
@@ -175,7 +177,8 @@ class ListBooks(Gtk.HBox):
             self.store_books_icon.clear()
             for a in books:
                 self.store_books_icon.append([a[1], self.bookicon, a[0]]) 
-            self.nb.set_current_page(1)        
+            self.nb.set_current_page(1)  
+            self.parent.go_parts.show_all()      
     
     def item_part_active(self, widget, path):
         item = widget.get_selected_items()
@@ -191,6 +194,7 @@ class ListBooks(Gtk.HBox):
             if v%200 == 199: 
                 while (Gtk.events_pending()): Gtk.main_iteration()
             self.store_books_icon.append([bk[1], self.bookicon, bk[0]]) 
+        self.parent.go_parts.show_all()
     
     def item_book_select(self, widget):
         item = widget.get_selected_items() 
@@ -209,10 +213,11 @@ class ListBooks(Gtk.HBox):
             else: self.select_book = nm_book
    
     def back_cb(self, *a):
-        if self.nb.get_current_page() in [0, 1]:
+        if self.nb.get_current_page() == 1:
             self.nb.set_current_page(0)
-        else:      
+        elif self.nb.get_current_page() == 3:   
             self.nb.set_current_page(2)
+        self.parent.go_parts.hide()
     
     def change_icon_spacing(self, iconview):
         return
@@ -265,38 +270,44 @@ class ListBooks(Gtk.HBox):
         self.vbox_iconview.pack_start(self.nb, True, True, 0)
         
         # a قائمة الكتب----------------------------
+        self.particon1 = GdkPixbuf.Pixbuf.new_from_file_at_size(join(asm_path.ICON_DIR, 'Groups-128.png'), 32, 32)
+        self.bookicon1 = GdkPixbuf.Pixbuf.new_from_file_at_size(join(asm_path.ICON_DIR, 'Book-128.png'), 24, 24)
         scroll = Gtk.ScrolledWindow()
-        self.tree_parts = asm_customs.TreeClass()
+        self.tree_parts = asm_customs.TreeParts()
+        self.tree_parts.set_headers_visible(False)
         self.sel_parts = self.tree_parts.get_selection()
         cell = Gtk.CellRendererText()
         cell.set_property("ellipsize", Pango.EllipsizeMode.END)
-        kal = Gtk.TreeViewColumn('الكتب', cell, text=1)    
-#        icon_renderer = Gtk.CellRendererPixbuf();
-#        kal.pack_start(icon_renderer, False);
-#        kal.pack_start(cell, False);
-#        kal.add_attribute(icon_renderer, "pixbuf", 0);
-#        kal.add_attribute(cell, "text", 1);   
+        kal = Gtk.TreeViewColumn('الأقسام')    
+        icon_renderer = Gtk.CellRendererPixbuf();
+        kal.pack_start(icon_renderer, False);
+        kal.pack_start(cell, False);
+        kal.add_attribute(icon_renderer, "pixbuf", 2);
+        kal.add_attribute(cell, "text", 1);   
 
-        
-
-           
         self.tree_parts.connect("row-activated", self.avtive_row_parts)
         self.tree_parts.append_column(kal)
-        self.store_parts_list = Gtk.ListStore(int, str)
+        self.store_parts_list = Gtk.ListStore(int, str, GdkPixbuf.Pixbuf)
         scroll.add(self.tree_parts)
         self.tree_parts.set_model(self.store_parts_list)
         self.load_list()
         self.nb.append_page(scroll, Gtk.Label('2'))
         
         scroll = Gtk.ScrolledWindow()
-        self.tree_books = asm_customs.TreeClass()
+        self.tree_books = asm_customs.TreeBooks()
+        self.tree_books.set_headers_visible(False)
         self.sel_books = self.tree_books.get_selection()
         cell = Gtk.CellRendererText()
         cell.set_property("ellipsize", Pango.EllipsizeMode.END)
-        kal = Gtk.TreeViewColumn('الكتب', cell, text=1)
+        kal = Gtk.TreeViewColumn('الكتب')    
+        icon_renderer = Gtk.CellRendererPixbuf();
+        kal.pack_start(icon_renderer, False);
+        kal.pack_start(cell, False);
+        kal.add_attribute(icon_renderer, "pixbuf", 2);
+        kal.add_attribute(cell, "text", 1);   
         self.tree_books.connect("row-activated", self.avtive_row_books)
         self.tree_books.append_column(kal)
-        self.store_books_list = Gtk.ListStore(int, str)
+        self.store_books_list = Gtk.ListStore(int, str, GdkPixbuf.Pixbuf)
         scroll.add(self.tree_books)
         self.tree_books.set_model(self.store_books_list)
         self.nb.append_page(scroll, Gtk.Label('3'))
@@ -313,8 +324,7 @@ class ListBooks(Gtk.HBox):
         # a ------------------------------------------
         stack = Gtk.Stack()
         stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        stack.set_transition_duration(500)
-        stack.set_homogeneous(True)
+        stack.set_transition_duration(1000)
         
         # a الكتب الأخيرة------------------------------
         vbox = Gtk.Box(spacing=2,orientation=Gtk.Orientation.VERTICAL)

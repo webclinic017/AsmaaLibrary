@@ -13,6 +13,7 @@ from asm_contacts import Othman, listDB, bookDB
 class Tafsir(Gtk.HBox):
     
     def show_tafsir(self, tafsir, sura, aya):
+        self.aya_now = aya
         if self.db != None:
             self.db.close_db()
             del self.db
@@ -26,15 +27,22 @@ class Tafsir(Gtk.HBox):
         self.suras.handler_block(self.change_sura)
         self.ayas.handler_block(self.change_aya)
         self.all_in_page = self.db.get_text_body(id_page)#rowid, id, text, part, page, hno, sora, aya, na
-        if self.notebook.get_current_page() == 0: 
+        if self.all_in_page in [None, "", 0] or self.all_in_page[7] in [None, "", 0]: 
+            self.suras.set_active(-1)
+            self.ayas.set_sensitive(False)
+        elif self.notebook.get_current_page() == 0: 
             if self.all_in_page[6] >= 1 and self.suras.get_active() != self.all_in_page[6]-1:
                 self.suras.set_active(self.all_in_page[6]-1)
+                self.ayas.set_sensitive(True)
                 ayat = asm_customs.value_active(self.suras, 2)
                 adj = self.ayas.get_adjustment()
                 if ayat == None: ayat = 100
                 adj.set_upper(ayat)
                 adj.set_value(1)
-            self.ayas.set_value(self.all_in_page[7])
+            if self.aya_now in range(self.all_in_page[7], self.all_in_page[7]+self.all_in_page[8]):
+                self.ayas.set_value(self.aya_now)
+            else: self.ayas.set_value(self.all_in_page[7])
+                
         self.suras.handler_unblock(self.change_sura)
         self.ayas.handler_unblock(self.change_aya)
         
@@ -45,7 +53,7 @@ class Tafsir(Gtk.HBox):
         self.page_now = self.all_in_page[4]
         self.view_tafsir_bfr.set_text(self.all_in_page[2])
         text = self.parent.entry_search.get_text().decode('utf8')
-        if text != u'': 
+        if len(text) >= 2 and text != u"ال": 
             self.search_now(text)
         try: sora, aya, na = self.all_in_page[6], self.all_in_page[7], self.all_in_page[8]
         except: sora = 0
@@ -85,18 +93,20 @@ class Tafsir(Gtk.HBox):
         self.show_tafsir(tafsir, sura, aya)
     
     def select_sura(self, w):
-        #sura = asm_customs.value_active(w, 0)
+        self.ayas.set_sensitive(True)
+        sura = asm_customs.value_active(w, 0)
         ayat = asm_customs.value_active(w, 2)
         adj = self.ayas.get_adjustment()
-        print str(ayat)
         adj.set_upper(ayat)
         adj.set_value(1)
-        #tafsir = asm_customs.value_active(self.tafsirs, 0)
-        #self.show_tafsir(tafsir, sura, 1)
+        tafsir = asm_customs.value_active(self.tafsirs, 0)
+        self.show_tafsir(tafsir, sura, 1)
         
     def select_aya(self, w):
         sura = asm_customs.value_active(self.suras, 0)
-        aya = w.get_value()
+        aya = int(w.get_text())
+        adj = self.ayas.get_adjustment()
+        if aya > adj.get_upper(): aya = adj.get_upper()
         tafsir = asm_customs.value_active(self.tafsirs, 0)
         self.show_tafsir(tafsir, sura, aya)
     
@@ -159,7 +169,7 @@ class Tafsir(Gtk.HBox):
             for term in nasse: 
                 if txt in asm_araby.fuzzy(term.decode('utf8')):
                     search_tokens.append(term)
-        asm_customs.with_tag(self.view_tafsir_bfr, self.view_search_tag, search_tokens, 1)
+        asm_customs.with_tag(self.view_tafsir_bfr, self.view_search_tag, search_tokens, 1, self.view_tafsir)
                     
     def change_font(self, *a):
         self.view_quran_tag.set_property('foreground', self.parent.theme.color_qrn) 
@@ -200,6 +210,7 @@ class Tafsir(Gtk.HBox):
         adj = Gtk.Adjustment(1, 1, 7, 1, 5.0, 0.0)
         self.ayas = Gtk.SpinButton()
         self.ayas.set_adjustment(adj)
+        self.ayas.set_value(1.0)
         self.ayas.connect('activate', self.select_aya)
         
         hb, self.suras = asm_customs.combo(sura_list, u'السورة')
@@ -237,7 +248,7 @@ class Tafsir(Gtk.HBox):
         vb.pack_start(hbox, False, False, 0)
         
         self.store_search = Gtk.TreeStore(int, int, str)
-        self.tree_search = asm_customs.TreeClass()
+        self.tree_search = asm_customs.TreeIndex()
         self.tree_search.set_model(self.store_search)
         cell = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn('السورة', cell, text=2)
@@ -278,7 +289,7 @@ class Tafsir(Gtk.HBox):
         self.tafsirs.connect('changed', self.select_tafsir)
         self.tafsirs1.connect('changed', self.ok_result)
         self.change_sura = self.suras.connect('changed', self.select_sura)
-        self.change_aya = self.ayas.connect('changed', self.select_aya)
+        self.change_aya = self.ayas.connect('value-changed', self.select_aya)
         self.show_all()
         self.select_aya(self.ayas)
 
