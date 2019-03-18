@@ -7,8 +7,9 @@
 from os.path import join, exists, isdir
 import os
 from gi.repository import Gtk
-import asm_customs, asm_path
-from asm_edit_html import EditHTML
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_edit_html import EditHTML
 
 new_w = '''<head>
 <title>new</title>
@@ -27,7 +28,7 @@ class Warakat(Gtk.HPaned):
         if i:
             msg = asm_customs.sure(self.parent, "هل تريد مسح الورقة المحددة")
             if msg == Gtk.ResponseType.YES:
-                waraka = model.get_value(i,0).decode('utf8')
+                waraka = model.get_value(i,0)
                 os.remove(join(asm_path.LIBRARY_DIR_rw, u'waraka-search', waraka))
                 model.remove(i)
                 self.edit_html.set_sensitive(False)
@@ -45,7 +46,7 @@ class Warakat(Gtk.HPaned):
     def show_waraka(self, *a):
         model, i = self.sel_waraka.get_selected()
         if i:
-            waraka = model.get_value(i,0).decode('utf8')
+            waraka = model.get_value(i,0)
             myfile = join(asm_path.LIBRARY_DIR_rw, u'waraka-search', waraka)
             self.edit_html.open_html(myfile)
             self.myfile = myfile
@@ -68,7 +69,7 @@ class Warakat(Gtk.HPaned):
 #        self.iv.near_waraka(v) 
     
     def new_waraka(self, *a):
-        new_waraka = self.ent_new.get_text().decode('utf8')
+        new_waraka = self.ent_new.get_text()
         if new_waraka == u'': return
         myfile = join(asm_path.LIBRARY_DIR_rw, u'waraka-search', new_waraka)
         if not exists(myfile):

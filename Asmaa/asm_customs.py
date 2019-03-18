@@ -5,13 +5,13 @@
 ##############################################################################
 
 from gi.repository import Gtk, Gdk, Pango
-import asm_araby
+import Asmaa.asm_araby as asm_araby
 import re
 
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.4.2'
+version = '2.5.2'
 #a--------------------------------------------------
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
@@ -50,21 +50,35 @@ def sure(parent, msg):
 
 #a------------------------------------------
 def rgba(value):
-    value = value.lstrip('#')
-    v = len(value)/3
-    R = int(value[0:v], 16)/15.999**v
-    G = int(value[v:2*v], 16)/15.999**v
-    B = int(value[2*v:3*v], 16)/15.999**v
+    if value.startswith('#'):
+        value = value.lstrip('#')
+        v = int(len(value)/3)
+        R = int(value[0:v], 16)/15.999**v
+        G = int(value[v:2*v], 16)/15.999**v
+        B = int(value[2*v:3*v], 16)/15.999**v
+    else:
+        value = value.lstrip('rgb')
+        v = eval(value)
+        R = v[0]/255.0
+        G = v[1]/255.0
+        B = v[2]/255.0
     A = 1.0
     return Gdk.RGBA(R, G, B, A)
 
 #a-------------------------------------------
 def rgb(value):
-    value = value.lstrip('#')
-    v = len(value)/3
-    R = int(value[0:v], 16)/16**(v-2)
-    G = int(value[v:2*v], 16)/16**(v-2)
-    B = int(value[2*v:3*v], 16)/16**(v-2)
+    if value.startswith('#'):
+        value = value.lstrip('#')
+        v = int(len(value)/3)
+        R = int(value[0:v], 16)/16**(v-2)
+        G = int(value[v:2*v], 16)/16**(v-2)
+        B = int(value[2*v:3*v], 16)/16**(v-2)
+    else:
+        value = value.lstrip('rgb')
+        v = eval(value)
+        R = v[0]
+        G = v[1]
+        B = v[2]
     return  'rgb({}, {}, {})'.format(R, G, B)
 
 #a------------------------------------------

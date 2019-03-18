@@ -7,13 +7,14 @@
 from os.path import join, exists
 from os import mkdir, rename, listdir, unlink
 from shutil import rmtree, copyfile
-from asm_contacts import listDB
+from Asmaa.asm_contacts import listDB
 from gi.repository import Gtk, Pango
-import asm_araby, asm_customs, asm_config, asm_path
-from asm_edit_bitaka import EditBitaka
-from asm_edit_tafsir import EditTafsir
-from asm_count import Count
-from asm_edit_html import EditHTML
+import Asmaa.asm_customs as asm_customs
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_araby as asm_araby
+from Asmaa.asm_edit_bitaka import EditBitaka
+from Asmaa.asm_edit_tafsir import EditTafsir
+from Asmaa.asm_count import Count
 
 # class صفحة التعديل--------------------------------------------------
 
@@ -21,7 +22,7 @@ class Organize(Gtk.Box):
     
     def visible_cb(self, model, itr, data):
         if len(self.theword) == 0: return
-        if asm_araby.fuzzy(self.theword[0]) in asm_araby.fuzzy(model.get_value(itr, 1).decode('utf8')):
+        if asm_araby.fuzzy(self.theword[0]) in asm_araby.fuzzy(model.get_value(itr, 1)):
             return True
         else: return False
         
@@ -44,7 +45,7 @@ class Organize(Gtk.Box):
         model, i = self.sel_book.get_selected()
         if i:
             id_book = model.get_value(i, 0)
-            nm_book = model.get_value(i, 1).decode('utf8')
+            nm_book = model.get_value(i, 1)
             check = self.db.to_favorite(id_book)
             if check == None: 
                 asm_customs.info(self.parent, u'تم إضافة كتاب "{}" للمفضلة'.format(nm_book,))
@@ -56,7 +57,7 @@ class Organize(Gtk.Box):
     def remove_group(self,*a):
         model, i = self.sel_group.get_selected()
         id_group = model.get_value(i, 0)
-        nm_group = model.get_value(i, 1).decode('utf8')
+        nm_group = model.get_value(i, 1)
         if self.db.check_books_part(id_group) == True:
             asm_customs.erro(self.parent, 'لا يمكن حذف هذا القسم\nلأن بعض كتبه للقراءة فقط')
             return
@@ -73,11 +74,11 @@ class Organize(Gtk.Box):
        
     def remove_book(self,*a):
         model0, i0 = self.sel_group.get_selected()
-        nm_group = model0.get_value(i0, 1).decode('utf8')
+        nm_group = model0.get_value(i0, 1)
         model, i = self.sel_book.get_selected()
         if i:
             id_book = model.get_value(i, 0)
-            nm_book = model.get_value(i, 1).decode('utf8')
+            nm_book = model.get_value(i, 1)
             msg = asm_customs.sure(self.parent, u'''
             سيتم حذف كتاب "{}"
             هل تريد الاستمرار ؟
@@ -91,7 +92,7 @@ class Organize(Gtk.Box):
     def ok_book(self, *a):
         model, i = self.sel_book.get_selected()
         if i:
-            nm_book = model.get_value(i, 1).decode('utf8')
+            nm_book = model.get_value(i, 1)
             self.entry_book.set_text(nm_book)
             self.id_book = model.get_value(i, 0)
             self.notebk.set_current_page(1)
@@ -138,10 +139,10 @@ class Organize(Gtk.Box):
             ls.append([a[0], a[1]])
         hb, parts_g = asm_customs.combo(ls, u'')
         parts_g.set_active(0)
-        self.received_part_name = asm_customs.value_active(parts_g, 1).decode('utf8')
+        self.received_part_name = asm_customs.value_active(parts_g, 1)
         self.received_part_id = asm_customs.value_active(parts_g)
         def sel_part(w):
-            self.received_part_name = asm_customs.value_active(parts_g, 1).decode('utf8')
+            self.received_part_name = asm_customs.value_active(parts_g, 1)
             self.received_part_id = asm_customs.value_active(parts_g)
         parts_g.connect('changed', sel_part)
         area = dlg.get_content_area()
@@ -157,7 +158,7 @@ class Organize(Gtk.Box):
     def merge_group_cb(self, *a):
         model, i = self.sel_group.get_selected()
         id_old = model.get_value(i, 0)
-        old_group = model.get_value(i, 1).decode('utf8')
+        old_group = model.get_value(i, 1)
         if self.db.check_books_part(id_old) == True:
             asm_customs.erro(self.parent, 'لا يمكن دمج هذا القسم في غيره\nلأن بعض كتبه للقراءة فقط')
             return
@@ -173,13 +174,13 @@ class Organize(Gtk.Box):
     
     def move_book_cb(self, *a):
         model0, i0 = self.sel_group.get_selected()
-        old_group = model0.get_value(i0, 1).decode('utf8')
+        old_group = model0.get_value(i0, 1)
         model, i = self.sel_book.get_selected()
         if i:
             msg = self.choose_part(self.parent, 'هل تريد نقل الكتاب المحدد إلى هذا القسم ؟')
             if msg == Gtk.ResponseType.YES:
                 id_book = model.get_value(i, 0)
-                nm_book = model.get_value(i, 1).decode('utf8')
+                nm_book = model.get_value(i, 1)
                 self.db.change_group(id_book, self.received_part_id)
                 copyfile(join(asm_path.BOOK_DIR_rw, old_group, nm_book+u'.asm'), 
                          join(asm_path.BOOK_DIR_rw, self.received_part_name, nm_book+u'.asm'))
@@ -194,7 +195,7 @@ class Organize(Gtk.Box):
         self.parent.list_books.load_list()
     
     def new_group(self, *a):
-        new_grp = self.entry_group.get_text().decode('utf8')
+        new_grp = self.entry_group.get_text()
         if new_grp == '': return
         if exists(join(asm_path.BOOK_DIR_rw, new_grp)): return
         check = self.db.add_part(new_grp)
@@ -205,7 +206,7 @@ class Organize(Gtk.Box):
         self.entry_group.set_text('')
             
     def rename_group(self, *a):
-        new_grp = self.entry_group.get_text().decode('utf8')
+        new_grp = self.entry_group.get_text()
         if new_grp == '': return
         model, i = self.sel_group.get_selected()
         id_group = model.get_value(i, 0)
@@ -213,7 +214,7 @@ class Organize(Gtk.Box):
             asm_customs.erro(self.parent, 'لا يمكن تغيير اسم هذا القسم\nلأن بعض كتبه للقراءة فقط')
             return
         if i:
-            nm_group = model.get_value(i, 1).decode('utf8')
+            nm_group = model.get_value(i, 1)
         check = self.db.rename_part(new_grp, nm_group)
         if check == None:
             rename(join(asm_path.BOOK_DIR_rw, nm_group), join(asm_path.BOOK_DIR_rw, new_grp))
@@ -232,16 +233,16 @@ class Organize(Gtk.Box):
         b = 0
         for a in self.store_group:
             b += 1
-            ls.append([b, a[1].decode('utf8')])
+            ls.append([b, a[1]])
         self.db.organiz_groups(ls)
       
     def rename_book(self, *a):
         model0, i0 = self.sel_group.get_selected()
-        nm_group = model0.get_value(i0, 1).decode('utf8')
+        nm_group = model0.get_value(i0, 1)
         model, i = self.sel_book.get_selected()
         if i:
-            nm_book = model.get_value(i, 1).decode('utf8')
-            new_bk = self.entry_book.get_text().decode('utf8')
+            nm_book = model.get_value(i, 1)
+            new_bk = self.entry_book.get_text()
             if new_bk == '' or new_bk == nm_book: return
             check = self.db.rename_book(new_bk, nm_book)
             self.db.rename_book_in_main(join(asm_path.BOOK_DIR_rw, nm_group, nm_book+u'.asm'), new_bk)
@@ -279,9 +280,9 @@ class Organize(Gtk.Box):
     def empty_book_cb(self, *a):
         model, i = self.sel_group.get_selected()
         if i:
-            nm_group = model.get_value(i, 1).decode('utf8')
+            nm_group = model.get_value(i, 1)
             id_part = model.get_value(i, 0)
-            new_bk = self.entry_group.get_text().decode('utf8')
+            new_bk = self.entry_group.get_text()
             if new_bk == '' :
                 asm_customs.erro(self.parent, 'أدخل اسم الكتاب أولا')
                 return
@@ -294,7 +295,7 @@ class Organize(Gtk.Box):
             asm_customs.info(self.parent, 'تم إضافة كتاب فارغ')
         
     def build(self,*a): 
-        Gtk.Box.__init__(self,spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
+        Gtk.Box.__init__(self,spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
         hp1 = Gtk.HPaned()
         self.pack_start(hp1, True, True, 0)
         self.tree_group = asm_customs.TreeParts()
@@ -331,7 +332,8 @@ class Organize(Gtk.Box):
             
         self.notebk = Gtk.Notebook()
         self.notebk.set_show_tabs(False)
-        vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
+        vb = Gtk.Box(spacing=3,orientation=Gtk.Orientation.VERTICAL)
+        vb.set_border_width(5)
         self.entry_group = Gtk.Entry()
         self.entry_group.set_placeholder_text('أدخل اسما!')
         vb.pack_start(self.entry_group, False, False, 0)
@@ -365,7 +367,8 @@ class Organize(Gtk.Box):
         vb.pack_start(btn_empty_book, False, False, 0)
         self.notebk.append_page(vb, Gtk.Label('القسم'))
         
-        vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
+        vb = Gtk.Box(spacing=3,orientation=Gtk.Orientation.VERTICAL)
+        vb.set_border_width(5)
         self.entry_book = Gtk.Entry()
         self.entry_book.set_placeholder_text('أدخل اسما!')
         vb.pack_start(self.entry_book, False, False, 0)
@@ -406,6 +409,6 @@ class Organize(Gtk.Box):
         self.notebk.append_page(vb, Gtk.Label('الكتاب'))
         self.notebk.set_size_request(250, -1)
         self.pack_start(self.notebk, False, False, 0)
-        self.set_border_width(5)
+        self.set_border_width(3)
         self.show_all()
         

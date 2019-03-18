@@ -6,7 +6,8 @@
 
 from os.path import join, dirname, realpath, exists, expanduser, getsize
 from gi.repository import Gtk
-import asm_config, asm_customs
+import Asmaa.asm_config as asm_config
+import Asmaa.asm_customs as asm_customs
 from shutil import copyfile
 from os import mkdir
 import sqlite3
@@ -17,7 +18,7 @@ def sure_start():
                              Gtk.ButtonsType.NONE)
     dlg.set_markup('''
     لم يتمكن البرنامج من الاتصال بقاعدة البيانات،
-    إذا كنت قد نزلتها بالفعل فربما لم تربطها بالبرنامج، 
+    إذا كانت موجودة بالفعل فربما لم تربطها بالبرنامج، 
     أو قد يكون القرص الموجود عليه القاعدة غير مضموم،
     ماذا تريد أن تفعل ؟''')
     db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/AsmaaLibrary.tar.gz/download",
@@ -26,7 +27,7 @@ def sure_start():
     dlg.add_action_widget(no_lib, 1)
     sel_lib = Gtk.Button('تحديد المسار')
     dlg.add_action_widget(sel_lib, 2)
-    new_lib = Gtk.Button('إنشاء مكتبة مفرغة')
+    new_lib = Gtk.Button('إنشاء قاعدة بيانات مفرغة')
     dlg.add_action_widget(new_lib, 3)
     def_lib = Gtk.Button('المسار الافتراضي')
     dlg.add_action_widget(def_lib, 4)
@@ -41,80 +42,80 @@ def sure_start():
     dlg.destroy()
     return r
 
-PATH0 = dirname(dirname(realpath(__file__))).decode('utf8')
-PATH1 = join(u'/', u'usr', u'share', u'asmaa')
-PATH2 = join(u'/', u'usr', u'local', u'share', u'asmaa')
+PATH0 = dirname(dirname(realpath(__file__)))
+PATH1 = join('/', 'usr', 'share', 'asmaa')
+PATH2 = join('/', 'usr', 'local', 'share', 'asmaa')
 
 #a------------------------------------------------------
-if exists(join(PATH0, u'asmaa-data', u'icons', u'tab.png')):
+if exists(join(PATH0, 'asmaa-data', 'icons', 'tab.png')):
     PATH = PATH0
     
-elif exists(join(PATH1, u'asmaa-data', u'icons', u'tab.png')):
+elif exists(join(PATH1, 'asmaa-data', 'icons', 'tab.png')):
     PATH = PATH1
     
-elif exists(join(PATH2, u'asmaa-data', u'icons', u'tab.png')):
+elif exists(join(PATH2, 'asmaa-data', 'icons', 'tab.png')):
     PATH = PATH2
     
 #a---------------------------------------------------------
-if exists(join(PATH1, u'asmaa-library', u'data', u'Listbooks.db')):
-    LIBRARY_DIR_r   = join(PATH1, u'asmaa-library')
-    BOOK_DIR_r      = join(LIBRARY_DIR_r, u'books')
-    DATA_DIR_r      = join(LIBRARY_DIR_r, u'data')
-    INDEX_DIR_r     = join(LIBRARY_DIR_r, u'index')
-    LISTBOOK_FILE_r = join(LIBRARY_DIR_r, u'data', u'Listbooks.db')
+if exists(join(PATH1, 'asmaa-library', 'data', 'Listbooks.db')):
+    LIBRARY_DIR_r   = join(PATH1, 'asmaa-library')
+    BOOK_DIR_r      = join(LIBRARY_DIR_r, 'books')
+    DATA_DIR_r      = join(LIBRARY_DIR_r, 'data')
+    INDEX_DIR_r     = join(LIBRARY_DIR_r, 'index')
+    LISTBOOK_FILE_r = join(LIBRARY_DIR_r, 'data', 'Listbooks.db')
     
-elif exists(join(PATH2, u'asmaa-library', u'data', u'Listbooks.db')):
-    LIBRARY_DIR_r   = join(PATH2, u'asmaa-library')
-    BOOK_DIR_r      = join(LIBRARY_DIR_r, u'books')
-    DATA_DIR_r      = join(LIBRARY_DIR_r, u'data')
-    INDEX_DIR_r     = join(LIBRARY_DIR_r, u'index')
-    LISTBOOK_FILE_r = join(LIBRARY_DIR_r, u'data', u'Listbooks.db')
+elif exists(join(PATH2, 'asmaa-library', 'data', 'Listbooks.db')):
+    LIBRARY_DIR_r   = join(PATH2, 'asmaa-library')
+    BOOK_DIR_r      = join(LIBRARY_DIR_r, 'books')
+    DATA_DIR_r      = join(LIBRARY_DIR_r, 'data')
+    INDEX_DIR_r     = join(LIBRARY_DIR_r, 'index')
+    LISTBOOK_FILE_r = join(LIBRARY_DIR_r, 'data', 'Listbooks.db')
     
 else:
-    LIBRARY_DIR_r   = u''
-    BOOK_DIR_r      = u''
-    DATA_DIR_r      = u''
-    INDEX_DIR_r     = u''
-    LISTBOOK_FILE_r = u''
+    LIBRARY_DIR_r   = ''
+    BOOK_DIR_r      = ''
+    DATA_DIR_r      = ''
+    INDEX_DIR_r     = ''
+    LISTBOOK_FILE_r = ''
 
 #a-------------------------------------------------------
 APP_DIR       =   PATH0
-HOME_DIR      =   expanduser(u'~/.asmaa')
-ASMAA_DIR     =   join(PATH, u'asmaa-data')
-ICON_DIR      =   join(ASMAA_DIR, u'icons')
-DB_DIR        =   join(ASMAA_DIR, u'db')
-QURAN_DB      =   join(DB_DIR, u'Quran.db')
-TAFSIR_DB     =   join(DB_DIR, u'Tafsir.db')
-AUTHOR_DB     =   join(DB_DIR, u'Author.db')
-DALIL_DB      =   join(DB_DIR, u'Dalil.db')
-MOEJAM_DB     =   join(DB_DIR, u'Moejam.db')
-TARAJIM_DB    =   join(DB_DIR, u'Tarajim.db')
-MOSHAF_DIR    =   join(ASMAA_DIR, u'moshaf')
+HOME_DIR      =   expanduser('~/.asmaa')
+ASMAA_DIR     =   join(PATH, 'asmaa-data')
+ICON_DIR      =   join(ASMAA_DIR, 'icons')
+DB_DIR        =   join(ASMAA_DIR, 'db')
+QURAN_DB      =   join(DB_DIR, 'Quran.db')
+TAFSIR_DB     =   join(DB_DIR, 'Tafsir.db')
+AUTHOR_DB     =   join(DB_DIR, 'Author.db')
+DALIL_DB      =   join(DB_DIR, 'Dalil.db')
+MOEJAM_DB     =   join(DB_DIR, 'Moejam.db')
+TARAJIM_DB    =   join(DB_DIR, 'Tarajim.db')
+MOSHAF_DIR    =   join(ASMAA_DIR, 'moshaf')
 
 #a-------------------------------------------------------
-LIBRARY_DIR_rw = join(HOME_DIR, u'asmaa-library')
-LISTBOOK_FILE_rw =   join(LIBRARY_DIR_rw, u'data', u'Listbooks.db')  
+LIBRARY_DIR_rw = join(HOME_DIR, 'asmaa-library')
+LISTBOOK_FILE_rw =   join(LIBRARY_DIR_rw, 'data', 'Listbooks.db')  
 
 #a-------------------------------------------------------
 if not exists(LIBRARY_DIR_rw):
     mkdir(LIBRARY_DIR_rw)
-if not exists(join(LIBRARY_DIR_rw, u'data')):
-    mkdir(join(LIBRARY_DIR_rw, u'data'))
-if not exists(join(LIBRARY_DIR_rw, u'books')):
-    mkdir(join(LIBRARY_DIR_rw, u'books'))
-if not exists(join(LIBRARY_DIR_rw, u'index')):
-    mkdir(join(LIBRARY_DIR_rw, u'index'))
+if not exists(join(LIBRARY_DIR_rw, 'data')):
+    mkdir(join(LIBRARY_DIR_rw, 'data'))
+if not exists(join(LIBRARY_DIR_rw, 'books')):
+    mkdir(join(LIBRARY_DIR_rw, 'books'))
+if not exists(join(LIBRARY_DIR_rw, 'index')):
+    mkdir(join(LIBRARY_DIR_rw, 'index'))
 
 #a-------------------------------------------------------    
 if exists(LISTBOOK_FILE_r):
     if not exists(LISTBOOK_FILE_rw) or getsize(LISTBOOK_FILE_rw) < getsize(LISTBOOK_FILE_r):
         copyfile(LISTBOOK_FILE_r, LISTBOOK_FILE_rw)
-        con = sqlite3.connect(join(LIBRARY_DIR_rw, u'data', u'Listbooks.db'))
+        con = sqlite3.connect(join(LIBRARY_DIR_rw, 'data', 'Listbooks.db'))
         cur = con.cursor()
         cur.execute('UPDATE books SET cat=-1')
         con.commit()
 else:
-    con = sqlite3.connect(join(LIBRARY_DIR_rw, u'data', u'Listbooks.db'))
+    con = sqlite3.connect(join(LIBRARY_DIR_rw, 'data', 'Listbooks.db'))
     cur = con.cursor()
     cur.execute('CREATE TABLE IF NOT EXISTS groups (id_group integer primary key, \
     tit varchar(255), sub INTEGER, cat INTEGER)') 
@@ -124,12 +125,12 @@ else:
 
 # a ---------------------------------------------------------------------------------------
 
-if asm_config.getv('path').decode('utf8') != join(LIBRARY_DIR_rw, u'data', u'Listbooks.db'): 
+if asm_config.getv('path') != join(LIBRARY_DIR_rw, 'data', 'Listbooks.db'): 
     if not exists(asm_config.getv('path')): 
         res = sure_start()
         # a تحديد المسار--------------------------
         if res == 2:
-            open_dlg = Gtk.FileChooserDialog(u'تحديد مسار قاعدة البيانات',
+            open_dlg = Gtk.FileChooserDialog('تحديد مسار قاعدة البيانات',
                                              None, Gtk.FileChooserAction.OPEN,
                                             (Gtk.STOCK_OK, Gtk.ResponseType.OK,
                                              Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
@@ -143,7 +144,7 @@ if asm_config.getv('path').decode('utf8') != join(LIBRARY_DIR_rw, u'data', u'Lis
                 asm_config.setv('path', open_dlg.get_filenames()[0])          
                 open_dlg.destroy()
                 library_path  = asm_config.getv('path')
-                LIBRARY_DIR_rw = dirname(dirname(library_path)).decode('utf8')
+                LIBRARY_DIR_rw = dirname(dirname(library_path))
             else:
                 open_dlg.destroy()
                 quit()   
@@ -155,35 +156,35 @@ if asm_config.getv('path').decode('utf8') != join(LIBRARY_DIR_rw, u'data', u'Lis
             
         # a مكتبة مفرغة--------------------------
         elif res == 3:
-            save_dlg = Gtk.FileChooserDialog(u'مسار قاعدة البيانات الجديدة', None,
+            save_dlg = Gtk.FileChooserDialog('مسار قاعدة البيانات الجديدة', None,
                                         Gtk.FileChooserAction.SELECT_FOLDER,
                                         (Gtk.STOCK_OK, Gtk.ResponseType.OK,
                                         Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
             res = save_dlg.run()
             if res == Gtk.ResponseType.OK:
-                new_dir = join(save_dlg.get_filename().decode('utf8'), u'مكتبة أسماء')
-                if exists(join(new_dir, u'data', u'Listbooks.db')):
-                    asm_customs.erro(None, u'يوجد مكتبة في هذا الدليل بالفعل')
+                new_dir = join(save_dlg.get_filename(), 'مكتبة أسماء')
+                if exists(join(new_dir, 'data', 'Listbooks.db')):
+                    asm_customs.erro(None, 'يوجد مكتبة في هذا الدليل بالفعل')
                 else:
                     if not exists(new_dir):
                         mkdir(new_dir)
-                    if not exists(join(new_dir, u'data')):
-                        mkdir(join(new_dir, u'data'))
-                    if not exists(join(new_dir, u'books')):
-                        mkdir(join(new_dir, u'books'))
-                    if not exists(join(new_dir, u'index')):
-                        mkdir(join(new_dir, u'index'))
-                    con = sqlite3.connect(join(new_dir, u'data', u'Listbooks.db'))
+                    if not exists(join(new_dir, 'data')):
+                        mkdir(join(new_dir, 'data'))
+                    if not exists(join(new_dir, 'books')):
+                        mkdir(join(new_dir, 'books'))
+                    if not exists(join(new_dir, 'index')):
+                        mkdir(join(new_dir, 'index'))
+                    con = sqlite3.connect(join(new_dir, 'data', 'Listbooks.db'))
                     cur = con.cursor()
                     cur.execute('CREATE TABLE groups (id_group integer primary key, \
                     tit varchar(255), sub INTEGER, cat INTEGER)') 
                     cur.execute('CREATE TABLE books (id_book integer primary key, tit varchar(255), \
                     parent INTEGER, fav  INTEGER DEFAULT 0, last  INTEGER DEFAULT 1, cat  INTEGER DEFAULT 0,\
                     tafsir  INTEGER DEFAULT 0, indx INTEGER DEFAULT 0)')
-                    asm_config.setv('path', join(new_dir, u'data', u'Listbooks.db'))
+                    asm_config.setv('path', join(new_dir, 'data', 'Listbooks.db'))
                     library_path  = asm_config.getv('path')
-                    LIBRARY_DIR_rw = dirname(dirname(library_path)).decode('utf8')
-                    asm_customs.info(None, u'تم إضافة مكتبة مفرغة جديدة')
+                    LIBRARY_DIR_rw = dirname(dirname(library_path))
+                    asm_customs.info(None, 'تم إضافة مكتبة مفرغة جديدة')
             else:
                 y_return = 0
                 quit()
@@ -199,24 +200,23 @@ if asm_config.getv('path').decode('utf8') != join(LIBRARY_DIR_rw, u'data', u'Lis
             quit()
     else:
         library_path = asm_config.getv('path')
-        LIBRARY_DIR_rw = dirname(dirname(library_path)).decode('utf8')
-    
-BOOK_DIR_rw      =   join(LIBRARY_DIR_rw, u'books')
-DATA_DIR_rw      =   join(LIBRARY_DIR_rw, u'data')
-INDEX_DIR_rw     =   join(LIBRARY_DIR_rw, u'index') 
-LISTBOOK_FILE_rw =   join(LIBRARY_DIR_rw, u'data', u'Listbooks.db')  
+        LIBRARY_DIR_rw = dirname(dirname(library_path))
+BOOK_DIR_rw      =   join(LIBRARY_DIR_rw, 'books')
+DATA_DIR_rw      =   join(LIBRARY_DIR_rw, 'data')
+INDEX_DIR_rw     =   join(LIBRARY_DIR_rw, 'index') 
+LISTBOOK_FILE_rw =   join(LIBRARY_DIR_rw, 'data', 'Listbooks.db')  
     
 # a إصلاحات------------------------------------------
     
-if not exists(join(LIBRARY_DIR_rw, u'books')):
-    mkdir(join(LIBRARY_DIR_rw, u'books'))
+if not exists(join(LIBRARY_DIR_rw, 'books')):
+    mkdir(join(LIBRARY_DIR_rw, 'books'))
     
-if not exists(join(LIBRARY_DIR_rw, u'index')):
-    mkdir(join(LIBRARY_DIR_rw, u'index'))
+if not exists(join(LIBRARY_DIR_rw, 'index')):
+    mkdir(join(LIBRARY_DIR_rw, 'index'))
 
-if not exists(join(LIBRARY_DIR_rw, u'fields-search')):
-    mkdir(join(LIBRARY_DIR_rw, u'fields-search'))
+if not exists(join(LIBRARY_DIR_rw, 'fields-search')):
+    mkdir(join(LIBRARY_DIR_rw, 'fields-search'))
     
-if not exists(join(LIBRARY_DIR_rw, u'waraka-search')):
-    mkdir(join(LIBRARY_DIR_rw, u'waraka-search'))
+if not exists(join(LIBRARY_DIR_rw, 'waraka-search')):
+    mkdir(join(LIBRARY_DIR_rw, 'waraka-search'))
     

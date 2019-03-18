@@ -5,8 +5,10 @@
 ##############################################################################
 
 from gi.repository import Gtk, Gdk
-from asm_contacts import Othman, TarajimDB, AuthorDB
-import asm_customs, asm_stemming, asm_path
+from Asmaa.asm_contacts import Othman, TarajimDB
+import Asmaa.asm_stemming as asm_stemming
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_customs as asm_customs
 from os.path import join
 import re, os
 
@@ -32,7 +34,7 @@ def copy_to(widget, buff, waraka, parent):
     <div style="text-align: right;">ــــــــــــــــــــــــــــــــــــــــــــــــــــــ</div>\n\
     </body>
     '''
-    text_file = myfile.read().decode('utf8')
+    text_file = myfile.read()
     if text_file == '': text_file = new_w
     if not u'ــــــــــــــــــ' in text_file: 
         text_file = re.sub('</body>', 
@@ -44,7 +46,7 @@ def copy_to(widget, buff, waraka, parent):
             index_khat = liens_file.index(l)
             n_hawamech = len(liens_file)-index_khat-2
     liens_file.insert(index_khat, 
-    u'<div style="text-align: right;"><font face="KacstOne" size="6">{} </font><a href="#{}">({})</a></div>'.format(sel_text.decode('utf8'), n_hawamech, n_hawamech))
+    u'<div style="text-align: right;"><font face="KacstOne" size="6">{} </font><a href="#{}">({})</a></div>'.format(sel_text, n_hawamech, n_hawamech))
     liens_file.insert(-2,
     u'<div style="text-align: right;"><font face="KacstOne" size="3"><a name="{}">({})</a> {}</font></div>'.format(n_hawamech, n_hawamech, hamich))
     new_text = '\n'.join(liens_file)
@@ -61,7 +63,7 @@ def copy_sel(widget, buff, parent):
 def explain_term(widget, buff, parent):
     if buff.get_has_selection():
         sel = buff.get_selection_bounds()
-        text = buff.get_text(sel[0], sel[1],True).decode('utf8')
+        text = buff.get_text(sel[0], sel[1],True)
         text = asm_customs.first_term(text)
         if len(text) >= 3:
             all_root, all_term = asm_stemming.get_root(u''+text)
@@ -84,7 +86,7 @@ def explain_term(widget, buff, parent):
 def tafsir_ayat(widget, buff, parent):
     if buff.get_has_selection():
         sel = buff.get_selection_bounds()
-        text = buff.get_text(sel[0], sel[1],True).decode('utf8')
+        text = buff.get_text(sel[0], sel[1],True)
         if len(text) >= 3:
             all_ayat = Othman().search('"'+text+'"')
             parent.tafsirpage.store_search.clear()
@@ -106,7 +108,7 @@ def tafsir_ayat(widget, buff, parent):
 def tarjama_rawi(widget, buff, parent):
     if buff.get_has_selection():
         sel = buff.get_selection_bounds()
-        text = buff.get_text(sel[0], sel[1],True).decode('utf8')
+        text = buff.get_text(sel[0], sel[1],True)
         if len(text) >= 3:
             all_rewat = TarajimDB().tardjma('"'+text+'"')
             parent.winspage.tarjamapage.store_tarjama.clear()
@@ -126,7 +128,7 @@ def tarjama_rawi(widget, buff, parent):
 def tarjama_author(widget, buff, parent):
     if buff.get_has_selection():
         sel = buff.get_selection_bounds()
-        text = buff.get_text(sel[0], sel[1],True).decode('utf8')
+        text = buff.get_text(sel[0], sel[1],True)
         if len(text) >= 3:
             parent.winspage.authorpage.search_on_page(text)
             parent.winspage.authorpage.view_author_bfr.set_text('')

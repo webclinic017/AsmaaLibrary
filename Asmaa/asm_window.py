@@ -4,26 +4,27 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  #########
 ##############################################################################
 
-import asm_customs
 from os.path import join
 from gi.repository import Gtk, Gdk
-import asm_path, asm_config
-from asm_preference import Preference
-from asm_theme import MyTheme
-from asm_viewer import ViewerBooks, OpenBook
-from asm_listbook import ListBooks
-from asm_otherwins import OtherWins
-from asm_tafsir import Tafsir
-from asm_marks import SavedMarks
-from asm_result import SavedResult
-from asm_search import Searcher
-from asm_waraka import Warakat
-from asm_moshaf import ViewerMoshaf
-from asm_tablabel import TabLabel
-from asm_edit_book import EditBook
-from asm_edit_bitaka import EditBitaka
-from asm_contacts import listDB
-from asm_organize import Organize
+import Asmaa.asm_customs as asm_customs
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_config as asm_config
+from Asmaa.asm_preference import Preference
+from Asmaa.asm_theme import MyTheme
+from Asmaa.asm_viewer import ViewerBooks, OpenBook
+from Asmaa.asm_listbook import ListBooks
+from Asmaa.asm_otherwins import OtherWins
+from Asmaa.asm_tafsir import Tafsir
+from Asmaa.asm_marks import SavedMarks
+from Asmaa.asm_result import SavedResult
+from Asmaa.asm_search import Searcher
+from Asmaa.asm_waraka import Warakat
+from Asmaa.asm_moshaf import ViewerMoshaf
+from Asmaa.asm_tablabel import TabLabel
+from Asmaa.asm_edit_book import EditBook
+from Asmaa.asm_edit_bitaka import EditBitaka
+from Asmaa.asm_contacts import listDB
+from Asmaa.asm_organize import Organize
 
 
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
@@ -44,7 +45,7 @@ vb = Gtk.VBox(False, 10)
 img_greet = Gtk.Image()
 img_greet.set_from_file(join(asm_path.ICON_DIR,"greet.png"))
 vb.pack_start(img_greet, False, False, 0)
-vb.pack_start(Gtk.Label('الإصدار {}\nجاري تحميل برنامج مكتبة أسماء....'.format(asm_customs.version, ))
+vb.pack_start(Gtk.Label('الإصدار {}\nجارٍ تحميل برنامج مكتبة أسماء....'.format(asm_customs.version, ))
               , False, False, 0)
 greet.add(vb)
 greet.show_all()
@@ -57,29 +58,29 @@ class AsmaaApp(Gtk.Window):
     # a البحث في النافذة الحالية----------------------------------
     
     def search_on_page(self, *a):
-        text = self.entry_search.get_text().decode('utf8') 
+        text = self.entry_search.get_text() 
         if len(text) == 1 or text == u"ال": return
         n = self.notebook.get_current_page()
         ch = self.notebook.get_nth_page(n)
         ch.search_on_page(text)
     
     def search_on_active(self, *a):
-        text = self.entry_search.get_text().decode('utf8') 
+        text = self.entry_search.get_text() 
         n = self.notebook.get_current_page()
         ch = self.notebook.get_nth_page(n)
         ch.search_on_active(text)
             
     # a تغيير طريقة عرض قائمة الكتب--------------------------
     
-    def change_view(self, btn):
+    def change_view(self, *a):
         if self.list_books.nb.get_current_page() in [0, 1]:
             self.list_books.nb.set_current_page(2)
             asm_config.setv('view_books', 1)
-            btn.set_label("عرض بالأيقونات")
+            self.show_icons.set_label("عرض بالأيقونات")
         elif self.list_books.nb.get_current_page() in [2, 3]:
             self.list_books.nb.set_current_page(0)
             asm_config.setv('view_books', 0)
-            btn.set_label("عرض بالقائمة")
+            self.show_icons.set_label("عرض بالقائمة")
         self.go_parts.hide()
     
     # a إظهار وإخفاء اللوح الجانبي--------------------------
@@ -157,17 +158,8 @@ class AsmaaApp(Gtk.Window):
         else: self.btnbox_pages.hide()
         if n!= 0: self.go_parts.hide()
         else: self.btnbox_pages.hide()
-        self.pref_btn.set_active(False)
+#        self.pref_btn.set_active(False)
     
-    # a إظهار التفضيلات----------------------------------
-    def show_pref(self, btn):
-        if btn.get_active():
-            self.preference.show_all()
-            self.list_books.vbox_side.hide()
-        else:
-            self.preference.hide()
-            if asm_config.getn('show_side') == 0:
-                self.list_books.vbox_side.show_all()
             
     # a التصفح--------------------------------------------
    
@@ -232,10 +224,10 @@ class AsmaaApp(Gtk.Window):
     def start_session(self, *a):
         session = eval(asm_config.getv('start_session'))
         if asm_config.getn('saved_session') == 0: return
-        if session[1][-1] == 1L: 
+        if session[1][-1] == 1: 
             if self.viewerbook.get_n_pages() == 0: self.notebook.set_current_page(session[1][-2])
             else: self.notebook.set_current_page(session[1][-1])
-        elif session[1][-1] in [0L, 2L, 3L, 4L, 5L, 6L, 8L]:
+        elif session[1][-1] in [0, 2, 3, 4, 5, 6, 8]:
             self.notebook.set_current_page(session[1][-1])
         else:
             self.notebook.set_current_page(session[1][-2])
@@ -261,7 +253,7 @@ class AsmaaApp(Gtk.Window):
         
     def __init__(self,*a):
         self.full = 0
-        self.opened = [0L]
+        self.opened = [0]
         self.db = listDB()
         self.entry_search = Gtk.SearchEntry()
         Gtk.Window.__init__(self)
@@ -276,7 +268,7 @@ class AsmaaApp(Gtk.Window):
         self.editbook = EditBook(self)
         self.help_book = OpenBook(self, asm_path.DALIL_DB, -1)
         self.winspage = OtherWins(self)
-        self.help_book.set_border_width(5)
+        self.help_book.set_border_width(3)
         self.help_book.comment_btn.set_sensitive(False)
         self.help_book.set_index()
         self.moshafpage = ViewerMoshaf(self)
@@ -287,79 +279,70 @@ class AsmaaApp(Gtk.Window):
 # a البناء-------------------------------------------------------------------- 
     
     def build(self,*a):
-        self.set_title("مكتبة أسماء")
+        #self.set_title("مكتبة أسماء")
         self.set_icon_name('asmaa')
         self.maximize()
         #self.set_opacity(1.0)
         #self.set_default_size(800, 600)
         self.connect("delete_event", self.delete_event_cb)
         self.connect("destroy", self.delete_event_cb)
-        self.agr = Gtk.AccelGroup()
-        self.add_accel_group(self.agr)
         self.box = Gtk.Box(spacing=5, orientation=Gtk.Orientation.VERTICAL)
-       
-        hb_bar = Gtk.HBox(False, 0)
         
+        hb_bar = Gtk.HeaderBar()
+        hb_bar.set_show_close_button(True)
+        self.set_titlebar(hb_bar)
+
         menu_wins = Gtk.Menu()      
         win_quran = Gtk.ImageMenuItem("القرآن الكريم")
-        win_quran.add_accelerator("activate", self.axl, Gdk.KEY_F1, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        win_quran.add_accelerator("activate", self.axl, Gdk.KEY_F1, 0, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'Quran-16.png'))
         win_quran.set_image(img)
         win_quran.connect('activate', lambda *a: self.notebook.set_current_page(2))
         win_tafsir = Gtk.ImageMenuItem("التفاسير")
-        win_tafsir.add_accelerator("activate", self.axl, Gdk.KEY_F2, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        win_tafsir.add_accelerator("activate", self.axl, Gdk.KEY_F2, 0, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'Tafsir-16.png'))
         win_tafsir.set_image(img)
         win_tafsir.connect('activate', lambda *a: self.notebook.set_current_page(4))
         win_list = Gtk.ImageMenuItem("قائمة الكتب")
-        win_list.add_accelerator("activate", self.axl, Gdk.KEY_F3, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        win_list.add_accelerator("activate", self.axl, Gdk.KEY_F3, 0, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'Books-16.png'))
         win_list.set_image(img)
         win_list.connect('activate', lambda *a: self.notebook.set_current_page(0))
         win_opened = Gtk.ImageMenuItem("الكتب المفتوحة")
-        win_opened.add_accelerator("activate", self.axl, Gdk.KEY_F4, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        win_opened.add_accelerator("activate", self.axl, Gdk.KEY_F4, 0, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'Book-Open-16.png'))
         win_opened.set_image(img)
         win_opened.connect('activate', self.opened_book)
         win_waraka = Gtk.ImageMenuItem("أوراق البحث")
-        win_waraka.add_accelerator("activate", self.axl, Gdk.KEY_F5, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        win_waraka.add_accelerator("activate", self.axl, Gdk.KEY_F5, 0, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'Papers-16.png'))
         win_waraka.set_image(img)
         win_waraka.connect('activate', lambda *a: self.notebook.set_current_page(6))
         win_special = Gtk.ImageMenuItem("نوافذ خاصة")
-        win_special.add_accelerator("activate", self.axl, Gdk.KEY_F6, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        win_special.add_accelerator("activate", self.axl, Gdk.KEY_F6, 0, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'Wins-16.png'))
         win_special.set_image(img)
         win_special.connect('activate', lambda *a: self.notebook.set_current_page(3))
         win_help = Gtk.ImageMenuItem("صفحة المساعدة")
-        win_help.add_accelerator("activate", self.axl, Gdk.KEY_F7, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        win_help.add_accelerator("activate", self.axl, Gdk.KEY_F7, 0, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'Help-16.png'))
         win_help.set_image(img)
         win_help.connect('activate', lambda *a: self.notebook.set_current_page(5))
         full_screen = Gtk.ImageMenuItem("ملء الشاشة")
-        full_screen.add_accelerator("activate", self.axl, Gdk.KEY_F11, 0, 
-                       Gtk.AccelFlags.VISIBLE)
+        full_screen.add_accelerator("activate", self.axl, Gdk.KEY_F11, 0, Gtk.AccelFlags.VISIBLE)
         full_screen.connect('activate', self.full_screen)
         img = Gtk.Image()
         img.set_from_stock(Gtk.STOCK_FULLSCREEN, Gtk.IconSize.MENU)
         full_screen.set_image(img)
         exit1 = Gtk.ImageMenuItem("خروج")
-        exit1.add_accelerator("activate", self.axl, Gdk.KEY_Q, ACCEL_CTRL_MOD, 
-                       Gtk.AccelFlags.VISIBLE)
+        exit1.add_accelerator("activate", self.axl, Gdk.KEY_Q, ACCEL_CTRL_MOD, Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_file(join(asm_path.ICON_DIR, 'exit-16.png'))
         exit1.set_image(img)
@@ -377,21 +360,23 @@ class AsmaaApp(Gtk.Window):
         btn_menu = Gtk.MenuButton();
         btn_menu.set_popup (menu_wins);
         img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_HOME, Gtk.IconSize.LARGE_TOOLBAR)
+        img.set_from_stock(Gtk.STOCK_HOME, Gtk.IconSize.BUTTON)
         btn_menu.set_image(img)
         menu_wins.show_all();
         
-        hb_bar.pack_start(btn_menu, False, False, 5)
+        hb_bar.pack_start(btn_menu)
+
         
-        self.box.pack_start(hb_bar, False, False, 3)
+        btnbox_action = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        Gtk.StyleContext.add_class(btnbox_action.get_style_context(), "linked")
         
         find_btn = Gtk.Button()
         img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_FIND, Gtk.IconSize.LARGE_TOOLBAR)
+        img.set_from_stock(Gtk.STOCK_FIND, Gtk.IconSize.BUTTON)
         find_btn.set_image(img)
         find_btn.set_tooltip_text('نافذة البحث')
         find_btn.connect('clicked', lambda *a: self.search_win.show_all())
-        hb_bar.pack_start(find_btn, False, False, 0)
+        btnbox_action.pack_start(find_btn, False, False, 0)
         
         menu_saveds = Gtk.Menu()   
         win_marks = Gtk.ImageMenuItem("نافذة العلامات المرجعيّة")
@@ -409,10 +394,10 @@ class AsmaaApp(Gtk.Window):
         btn_saveds = Gtk.MenuButton();
         btn_saveds.set_popup (menu_saveds);
         img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_SAVE, Gtk.IconSize.LARGE_TOOLBAR)
+        img.set_from_stock(Gtk.STOCK_SAVE, Gtk.IconSize.BUTTON)
         btn_saveds.set_image(img)
         menu_saveds.show_all();
-        hb_bar.pack_start(btn_saveds, False, False, 0)
+        btnbox_action.pack_start(btn_saveds, False, False, 0)
         
         # a أحداث صفحة الكتاب المفتوح--------------------------------------
         
@@ -450,27 +435,35 @@ class AsmaaApp(Gtk.Window):
         img.set_from_stock(Gtk.STOCK_FILE, Gtk.IconSize.MENU)
         self.del_tashkil.set_image(img)
         menu_action_book.append(self.del_tashkil)
+        
+        menu_action_book.append(Gtk.SeparatorMenuItem())
+        win_prefs = Gtk.ImageMenuItem("التفضيلات")
+        win_prefs.connect("activate", lambda *a: Preference(self))
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_PREFERENCES, Gtk.IconSize.MENU)
+        win_prefs.set_image(img)
+        menu_action_book.append(win_prefs)
         self.btn_action_book = Gtk.MenuButton();
         self.btn_action_book.set_popup (menu_action_book);
         img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.LARGE_TOOLBAR)
+        img.set_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.BUTTON)
         self.btn_action_book.set_image(img)
         menu_action_book.show_all();
-        hb_bar.pack_start(self.btn_action_book, False, False, 0)
+        btnbox_action.pack_start(self.btn_action_book, False, False, 0)
         
         # a أحداث صفحة قائمة الكتب--------------------------------------
         
         menu_action_list = Gtk.Menu()          
-        show_icons = Gtk.ImageMenuItem.new_with_label("عرض بالأيقونات")
-        show_icons.add_accelerator("activate", self.axl, Gdk.KEY_S, ACCEL_CTRL_MOD, 
+        self.show_icons = Gtk.ImageMenuItem.new_with_label("عرض بالأيقونات")
+        self.show_icons.add_accelerator("activate", self.axl, Gdk.KEY_S, ACCEL_CTRL_MOD, 
                        Gtk.AccelFlags.VISIBLE)
         img = Gtk.Image()
         img.set_from_stock(Gtk.STOCK_FILE, Gtk.IconSize.MENU)
-        show_icons.set_image(img)
-        menu_action_list.append(show_icons)
-        if asm_config.getn('view_books') == 0: show_icons.set_label("عرض بالقائمة")
-        else: show_icons.set_label("عرض بالأيقونات")
-        show_icons.connect('activate', self.change_view)
+        self.show_icons.set_image(img)
+        menu_action_list.append(self.show_icons)
+        if asm_config.getn('view_books') == 0: self.show_icons.set_label("عرض بالقائمة")
+        else: self.show_icons.set_label("عرض بالأيقونات")
+        self.show_icons.connect('activate', self.change_view)
         menu_action_list.append(Gtk.SeparatorMenuItem())
         side_panel = Gtk.ImageMenuItem("إخفاء/عرض اللوح الجانبي")
         side_panel.connect('activate', self.show_side)
@@ -485,13 +478,21 @@ class AsmaaApp(Gtk.Window):
         img.set_from_stock(Gtk.STOCK_EDIT, Gtk.IconSize.MENU)
         organize.set_image(img)
         menu_action_list.append(organize)     
+        
+        menu_action_list.append(Gtk.SeparatorMenuItem())
+        win_prefs = Gtk.ImageMenuItem("التفضيلات")
+        win_prefs.connect("activate", lambda *a: Preference(self))
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_PREFERENCES, Gtk.IconSize.MENU)
+        win_prefs.set_image(img)
+        menu_action_list.append(win_prefs)
         self.btn_action_list = Gtk.MenuButton();
         self.btn_action_list.set_popup (menu_action_list);
         img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.LARGE_TOOLBAR)
+        img.set_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.BUTTON)
         self.btn_action_list.set_image(img)
         menu_action_list.show_all();
-        hb_bar.pack_start(self.btn_action_list, False, False, 0)
+        btnbox_action.pack_start(self.btn_action_list, False, False, 0)
         
         # a أحداث صفحة تحرير الكتاب--------------------------------------
         
@@ -538,10 +539,11 @@ class AsmaaApp(Gtk.Window):
         self.btn_action_edit = Gtk.MenuButton();
         self.btn_action_edit.set_popup (menu_action_edit);
         img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.LARGE_TOOLBAR)
+        img.set_from_stock(Gtk.STOCK_EXECUTE, Gtk.IconSize.BUTTON)
         self.btn_action_edit.set_image(img)
         menu_action_edit.show_all();
-        hb_bar.pack_start(self.btn_action_edit, False, False, 0)
+        btnbox_action.pack_start(self.btn_action_edit, False, False, 0)
+        hb_bar.pack_start(btnbox_action)
         
         #------------------------------------
         self.go_parts = Gtk.Button()
@@ -556,12 +558,12 @@ class AsmaaApp(Gtk.Window):
         else:
             img.set_from_stock(Gtk.STOCK_GO_FORWARD, Gtk.IconSize.BUTTON)
         self.go_parts.set_image(img)
-        hb_bar.pack_start(self.go_parts, False, False, 10)
+        hb_bar.pack_start(self.go_parts)
         
         # a أزرار التصفح---------------------------------------
             
-        self.btnbox_pages = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
-        self.btnbox_pages.set_layout (Gtk.ButtonBoxStyle.CENTER)
+        self.btnbox_pages = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        Gtk.StyleContext.add_class(self.btnbox_pages.get_style_context(), "linked")
         #-----------------------------
         first_page = Gtk.Button()
         img = Gtk.Image()
@@ -574,7 +576,7 @@ class AsmaaApp(Gtk.Window):
         first_page.set_tooltip_text('الصفحة الأولى')
         first_page.connect('clicked', self.first_page)
         first_page.add_accelerator("clicked",self.axl, Gdk.KEY_Up, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE)
-        self.btnbox_pages.add(first_page)
+        self.btnbox_pages.pack_start(first_page, False, False, 0)
         #--------------------------------------
         prev_page = Gtk.Button()
         img = Gtk.Image()
@@ -587,7 +589,7 @@ class AsmaaApp(Gtk.Window):
         prev_page.set_tooltip_text('الصفحة السابقة')
         prev_page.connect('clicked', self.previous_page)
         prev_page.add_accelerator("clicked",self.axl, Gdk.KEY_Right, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE)
-        self.btnbox_pages.add(prev_page)
+        self.btnbox_pages.pack_start(prev_page, False, False, 0)
         #--------------------------------------
         next_page = Gtk.Button()
         img = Gtk.Image()
@@ -600,7 +602,7 @@ class AsmaaApp(Gtk.Window):
         next_page.set_tooltip_text('الصفحة التالية')
         next_page.connect('clicked', self.next_page)
         next_page.add_accelerator("clicked",self.axl, Gdk.KEY_Left, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE)
-        self.btnbox_pages.add(next_page)
+        self.btnbox_pages.pack_start(next_page, False, False, 0)
         #--------------------------------------
         last_page = Gtk.Button()
         img = Gtk.Image()
@@ -613,29 +615,14 @@ class AsmaaApp(Gtk.Window):
         last_page.set_tooltip_text('الصفحة الأخيرة')
         last_page.connect('clicked', self.last_page)
         last_page.add_accelerator("clicked",self.axl, Gdk.KEY_Down, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE)
-        self.btnbox_pages.add(last_page)
-        hb_bar.pack_start(self.btnbox_pages, True, True, 15)
+        self.btnbox_pages.pack_start(last_page, False, False, 0)
+        hb_bar.set_custom_title(self.btnbox_pages)
         
         self.entry_search.set_placeholder_text('بحث عن كتاب')
         self.entry_search.connect('changed', self.search_on_page)
         self.entry_search.connect('activate', self.search_on_active)
         
-        self.pref_btn = Gtk.ToggleButton()
-        img = Gtk.Image()
-        img.set_from_stock(Gtk.STOCK_PREFERENCES, Gtk.IconSize.LARGE_TOOLBAR)
-        self.pref_btn.set_image(img)
-        self.pref_btn.set_tooltip_text('تفضيلات')
-        self.pref_btn.connect("clicked", self.show_pref)
-        #self.pref_btn.set_relief (Gtk.ReliefStyle.NONE)
-        hb_bar.pack_end(self.pref_btn, False, False, 5)
-        hb_bar.pack_end(self.entry_search, False, False, 0)
-
-        #self.box.pack_start(Gtk.Separator(), False, False, 0)
-        
-        # a--------------------------------
-        self.hb_main = Gtk.Box(spacing=5, orientation=Gtk.Orientation.HORIZONTAL)
-        self.hb_main.set_size_request(250, -1)
-        self.box.pack_start(self.hb_main, True, True, 0)
+        hb_bar.pack_end(self.entry_search)
         
         # a--------------------------------
         self.notebook = Gtk.Notebook()
@@ -652,21 +639,38 @@ class AsmaaApp(Gtk.Window):
         self.notebook.connect("switch-page", self.switch_page)
         self.notebook.set_scrollable(True)
         self.notebook.set_show_tabs(False)
-        
-        self.preference = Preference(self)
-        self.hb_main.pack_start(self.notebook, True, True, 0)
-        self.hb_main.pack_start(self.preference, False, False, 0)
+
+        self.box.pack_start(self.notebook, True, True, 0)
+
     
-        #self.axl.connect(Gdk.KEY_F11, 0, Gtk.AccelFlags.VISIBLE, self.full_screen)
+        self.axl.connect(Gdk.KEY_F11, 0, Gtk.AccelFlags.VISIBLE, self.full_screen)
         self.axl.connect(Gdk.KEY_F9, 0, Gtk.AccelFlags.VISIBLE, self.viewerbook.hide_index)
         self.axl.connect(Gdk.KEY_BackSpace, ACCEL_CTRL_MOD, Gtk.AccelFlags.VISIBLE, self.back_to_previous_page)
+        
+        self.axl.connect(Gdk.KEY_F1, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(2))
+        self.axl.connect(Gdk.KEY_F2, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(4))
+        self.axl.connect(Gdk.KEY_F3, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(0))
+        self.axl.connect(Gdk.KEY_F4, 0, Gtk.AccelFlags.VISIBLE, self.opened_book)
+        self.axl.connect(Gdk.KEY_F5, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(6))
+        self.axl.connect(Gdk.KEY_F6, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(3))
+        self.axl.connect(Gdk.KEY_F7, 0, Gtk.AccelFlags.VISIBLE, lambda *a: self.notebook.set_current_page(5))
+        self.axl.connect(Gdk.KEY_Q, ACCEL_CTRL_MOD, Gtk.AccelFlags.VISIBLE, self.delete_event_cb)
+        self.axl.connect(Gdk.KEY_S, ACCEL_CTRL_MOD, Gtk.AccelFlags.VISIBLE, self.change_view)
+        self.axl.connect(Gdk.KEY_Up, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE, self.first_page)
+        self.axl.connect(Gdk.KEY_Down, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE, self.last_page)
+        self.axl.connect(Gdk.KEY_Left, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE, self.next_page)
+        self.axl.connect(Gdk.KEY_Right, ACCEL_ALT_MOD, Gtk.AccelFlags.VISIBLE, self.previous_page)
+
         self.add(self.box)
         
         self.show_all()
+        if asm_config.getn('search') == 0:
+            self.search_win.stack.set_visible_child_name("n1")
+        else:
+            self.search_win.stack.set_visible_child_name("n2")
         self.btnbox_pages.hide()
         self.btn_action_book.hide()
         self.btn_action_edit.hide()
-        self.preference.hide()
         self.go_parts.hide()
         self.help_book.scroll_search.hide()
         self.help_book.hp.set_position(120)

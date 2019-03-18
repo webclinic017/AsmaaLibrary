@@ -5,8 +5,9 @@
 #a############################################################################
 
 from gi.repository import Gtk, Pango
-import asm_customs, asm_araby
-from asm_contacts import AuthorDB
+import Asmaa.asm_araby as asm_araby
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_contacts import AuthorDB
 
 # class نافذة المؤلفين---------------------------------------------------------    
 
@@ -14,7 +15,7 @@ class Author(Gtk.HPaned):
     
     def visible_cb(self, model, itr, data):
         if len(self.theword) == 0: return
-        if asm_araby.fuzzy(self.theword[0]) in asm_araby.fuzzy(model.get_value(itr, 2).decode('utf8')):
+        if asm_araby.fuzzy(self.theword[0]) in asm_araby.fuzzy(model.get_value(itr, 2)):
             return True
         else: return False
     

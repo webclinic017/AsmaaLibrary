@@ -5,8 +5,9 @@
 ##############################################################################
 
 from gi.repository import Gtk, Pango, GObject
-import asm_customs, asm_config
-from asm_contacts import bookDB, listDB, Othman
+import Asmaa.asm_config as asm_config
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_contacts import bookDB, listDB, Othman
 
 class EditTafsir(Gtk.Dialog):
     
@@ -70,7 +71,8 @@ class EditTafsir(Gtk.Dialog):
     
     def __init__(self, parent, id_book):
         self.parent = parent
-        book = listDB().file_book(id_book)
+        self.listdb = listDB()
+        book = self.listdb.file_book(id_book)
         self.db = bookDB(book, id_book)
         self.othman = Othman()
         Gtk.Dialog.__init__(self, parent=self.parent)
@@ -204,15 +206,32 @@ class ListTafasir(Gtk.Dialog):
             id_tafsir = model.get_value(i, 0)
             model.remove(i)
             self.store_tafsir_no_added.append(self.parent.db.tit_book(id_tafsir))
+            
+    def out_tafsir(self, *a):
+        model, i = self.sel_tafsir_no_added.get_selected()
+        if i:
+            nm = model.get_value(i, 1)
+            msg = asm_customs.sure(self.parent, 'هل تريد إزالة {} من القائمة؟'.format(nm, ))
+            if msg == Gtk.ResponseType.YES:
+                id_tafsir = model.get_value(i, 0)
+                tafsir = self.db.file_book(id_tafsir)
+                self.db.out_tafsir(tafsir, id_tafsir)
+                model.remove(i)
+        else:
+            asm_customs.info(self.parent, "يجب تعليم التفسير في قائمة التفاسير المهملة\n ليتم إزالته منها")
     
     def build(self, *a):
         Gtk.Dialog.__init__(self, parent=self.parent)
         self.set_border_width(3)
         self.set_icon_name("asmaa")
-        self.set_title("تعديل قائمة التفاسير")
         self.set_size_request(620, 450)
         self.connect('delete-event', lambda *a: self.destroy())
         vbox = self.vbox
+        
+        hb_bar = Gtk.HeaderBar()
+        hb_bar.set_title("تعديل قائمة التفاسير")
+        hb_bar.set_show_close_button(True)
+        self.set_titlebar(hb_bar)
         
         hbox = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
         vbox1 = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
@@ -285,15 +304,14 @@ class ListTafasir(Gtk.Dialog):
         hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         hb.pack_start(Gtk.Label('عدد الأعمدة في قائمة التفاسير'), False, False, 0)
         hb.pack_start(self.col_btn, False, False, 0)
-        vbox.pack_start(hb, False, False, 0)
         
-        hbox = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
+        btn_re = Gtk.Button("إزالة من التفاسير")
+        btn_re.connect("clicked", self.out_tafsir)
+        hb.pack_end(btn_re, False, False, 0)
+        vbox.pack_start(hb, False, False, 5)
+        
         self.btn_save = asm_customs.ButtonClass('حفظ')
         self.btn_save.connect('clicked', self.save_list)
-        hbox.pack_start(self.btn_save, False, False, 0)
-        btn_close = asm_customs.ButtonClass('إغلاق')
-        btn_close.connect('clicked', lambda *a: self.destroy())
-        hbox.pack_end(btn_close, False, False, 0)
-        vbox.pack_start(hbox, False, False, 0)
+        hb_bar.pack_start(self.btn_save)
         self.load_tafasir()
         self.show_all()

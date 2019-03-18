@@ -6,7 +6,7 @@
 
 from os.path import join
 from gi.repository import Gtk, Pango
-import asm_path
+import Asmaa.asm_path as asm_path
 
 
 # class عنوان الصفحة-------------------------------------------------------------------    

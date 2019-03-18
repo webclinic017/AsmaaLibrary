@@ -5,13 +5,11 @@
 #a############################################################################
 
 from os.path import join
-import os, re
+import os
 from gi.repository import Gtk, GObject, Pango
 import Asmaa.asm_path as asm_path
-import Asmaa.asm_config as asm_config
-import Asmaa.asm_popup as asm_popup
-import Asmaa.asm_araby as asm_araby
 import Asmaa.asm_customs as asm_customs
+import Asmaa.asm_araby as asm_araby
 from Asmaa.asm_viewer import OpenBook
 from Asmaa.asm_tablabel import TabLabel
 from Asmaa.asm_contacts import bookDB, Othman, listDB
@@ -87,12 +85,12 @@ class ShowResult(Gtk.VPaned):
         search_in_indexed = SearchIndexed()
         filebook = self.db_list.file_book(id_book)
         db = bookDB(filebook, id_book)
-        results = search_in_indexed.search_in_book(id_book, text, dict_perf, dict_field, limit)        
+        results = search_in_indexed.search_in_book(id_book, text, dict_perf, dict_field, limit)
+        print len(results)
+        for a in results:
+            print db.get_text_body(a["page"])[3], db.get_text_body(a["page"])[4]                
     
     def search_in_book(self, id_book, nm_book, text, dict_perf, dict_field):
-        text = asm_araby.fuzzy_plus(text)
-        for t in text.split(u' '):
-            self.ls_term.append(t)
         self.cursive = dict_perf['cursive']
         text = text.replace('"','')
         text = text.replace("'","")
@@ -104,13 +102,14 @@ class ShowResult(Gtk.VPaned):
             field = 'tit'
             table = 'titles'
         if dict_perf['with_tachkil'] == True: 
-            cond = '{} LIKE ?'.format(field,)
+            cond = '{} MATCH ?'.format(field,)
         else:
-            cond = 'fuzzy({}) LIKE ?'.format(field,)
+            cond = 'fuzzy({}) MATCH ?'.format(field,)
+            text = asm_araby.fuzzy_plus(text)
         if dict_perf['identical'] == True:  pfx, sfx = '% ', ' %'
         else: pfx, sfx = '%', '%'
         if dict_perf['cursive'] == True:
-            condition = 'fuzzy({}) LIKE ?'.format(field,)
+            condition = 'fuzzy({}) MATCH ?'.format(field,)
             ls_term.append(pfx+text+sfx)
         else: 
             for a in text.split(u' '):
@@ -119,48 +118,35 @@ class ShowResult(Gtk.VPaned):
                 condition = ' OR '.join([cond]*len(ls_term))
             else :
                 condition = ' AND '.join([cond]*len(ls_term))
+        for a in ls_term:
+            self.ls_term.append(a.replace('%', ''))
         book = self.db_list.file_book(id_book)
         con = sqlite3.connect(book)
         con.create_function('fuzzy', 1, asm_araby.fuzzy_plus)
         cur = con.cursor()
-        if table == 'pages': len_book = len(cur.execute('SELECT id FROM pages').fetchall())
-        else: len_book = len(cur.execute('SELECT id FROM titles').fetchall())
-        parts = int(len_book/200)
-        remainder = len_book-(200*parts)
-        v = 0
-        while v in range(parts+1):
-            while (Gtk.events_pending()): Gtk.main_iteration()
-            p1 = v*200
-            p2 = (v+1)*200
-            if v < parts:
-                cond = 'id BETWEEN {} and {}'.format(p1, p2)
-            elif v == parts:
-                cond = 'id BETWEEN {} and {}'.format(p1, remainder)
-            elif v > parts:
-                pass  
-            if table == 'pages':
-                cur.execute("""SELECT id, part, page FROM pages WHERE {} AND {}""".format(cond, condition), ls_term)
-                i_pgs = cur.fetchall()
-                for i in i_pgs:
-                    j = i[0]
-                    try: pg = int(i[2])
-                    except: pg = 1
-                    try: pr = int(i[1])
-                    except: pr = 1
-                    cur.execute('SELECT tit FROM titles WHERE id<=?', (j,)) 
-                    try: tit = cur.fetchall()[-1][0]
-                    except: tit = '......'
-                    self.store_results.append([j, self.n_r, nm_book, tit, pr, pg, id_book])
-                    self.n_r += 1
-                    self.lab_n_result.set_text('عدد النتائج : {}'.format(self.n_r-1, ))
-            else:
-                cur.execute("""SELECT id, tit FROM titles WHERE {} AND {}""".format(cond, condition), ls_term)
-                i_tits = cur.fetchall()
-                for i in i_tits:
-                    self.store_results.append([i[0], self.n_r, nm_book, i[1], 0, 0, id_book])
-                    self.n_r += 1
-                    self.lab_n_result.set_text('عدد النتائج : {}'.format(self.n_r-1, ))
-            v += 1
+        if table == 'pages':
+            print "SELECT id, part, page FROM pages WHERE {}".format(condition, )
+            cur.execute("SELECT * FROM pages WHERE nass MATCH 'العدالة'")
+            i_pgs = cur.fetchall()
+            for i in i_pgs:
+                j = i[0]
+                try: pg = int(i[2])
+                except: pg = 1
+                try: pr = int(i[1])
+                except: pr = 1
+                cur.execute('SELECT tit FROM titles WHERE id<=?', (j,)) 
+                try: tit = cur.fetchall()[-1][0]
+                except: tit = '......'
+                self.store_results.append([j, self.n_r, nm_book, tit, pr, pg, id_book])
+                self.n_r += 1
+                self.lab_n_result.set_text('عدد النتائج : {}'.format(self.n_r-1, ))
+        else:
+            cur.execute("""SELECT id, tit FROM titles WHERE {} AND {}""".format(cond, condition), ls_term)
+            i_tits = cur.fetchall()
+            for i in i_tits:
+                self.store_results.append([i[0], self.n_r, nm_book, i[1], 0, 0, id_book])
+                self.n_r += 1
+                self.lab_n_result.set_text('عدد النتائج : {}'.format(self.n_r-1, ))
         cur.close()
         con.close()
    
@@ -207,20 +193,13 @@ class ShowResult(Gtk.VPaned):
         
     def show_term_search(self, *a):
         search_tokens = []
-        nasse0 = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
-                                            self.view_nasse_bfr.get_end_iter(),True)
+        nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
+                                            self.view_nasse_bfr.get_end_iter(),True).split()
         for text in self.ls_term:
-            new_term = u''
-            for l in text:
-                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
-            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
-            new_term = new_term.replace(u'ه', u'[هة]')
-            re_term = re.compile(u'({})'.format(new_term,))
-            r_findall = re_term.findall(nasse0)
-            for r in r_findall:
-                try: 
-                    if r[0] not in search_tokens: search_tokens.append(r[0])
-                except: pass
+            txt = asm_araby.fuzzy(text)
+            for term in nasse: 
+                if txt in asm_araby.fuzzy(term):
+                    search_tokens.append(term)
         asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1, self.view_nasse)
     
     def is_tafsir(self, all_in_page):
@@ -248,11 +227,9 @@ class ShowResult(Gtk.VPaned):
             n += 1
             if self.stop_n == 0: break
             book = self.db_list.file_book(a[6])
-            con = sqlite3.connect(book)
-            con.create_function('fuzzy', 1, asm_araby.fuzzy_plus)
-            cur = con.cursor()
-            cur.execute('SELECT id FROM pages WHERE id=? AND fuzzy(nass) LIKE ?', (a[0], '%'+text+'%'))
-            if len(cur.fetchall()) > 0:
+            db = bookDB(book, a[6])
+            res = db.search_in_page(a[0], text)
+            if res == True:
                 s += 1
                 sr.store_results.append([a[0], s, a[2], a[3], a[4], a[5], a[6]])
             sr.progress.set_fraction(float(n)/(float(len(self.store_results))))
@@ -297,28 +274,19 @@ class ShowResult(Gtk.VPaned):
     def search_now(self, text):
         search_tokens = []
         nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
-                                            self.view_nasse_bfr.get_end_iter(),True)
+                                            self.view_nasse_bfr.get_end_iter(),True).split()
         if text == u'': 
             return
         else:
-            text = text.strip()
-            ls_term = asm_araby.fuzzy(text).split(u' ')
-        for text in ls_term:
-            if len(text) == 1 or text == u"ال": continue
-            new_term = u''
-            for l in text:
-                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
-            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
-            new_term = new_term.replace(u'ه', u'[هة]')
-            re_term = re.compile(u'({})'.format(new_term,))
-            r_findall = re_term.findall(nasse)
-            for r in r_findall:
-                if r[0] not in search_tokens: search_tokens.append(r[0])
+            txt = asm_araby.fuzzy(text)
+            for term in nasse: 
+                if txt in asm_araby.fuzzy(term):
+                    search_tokens.append(term)
         asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1, self.view_nasse)
         
     def build(self, *a):
         Gtk.VPaned.__init__(self)
-        vb = Gtk.VBox(False, 0)
+        vb = Gtk.VBox(False, 7)
         self.view_nasse = asm_customs.ViewClass()
         self.view_nasse_bfr = self.view_nasse.get_buffer()
         self.view_nasse.connect_after("populate-popup", asm_popup.populate_popup, self.parent)
@@ -360,7 +328,7 @@ class ShowResult(Gtk.VPaned):
         self.progress = Gtk.ProgressBar()
         self.hb_stop.pack_start(self.progress, True, True, 0)
         hb.pack_start(self.hb_stop, True, True, 0)
-        vb.pack_start(hb, False, False, 5)
+        vb.pack_start(hb, False, False, 0)
         
         self.store_results = Gtk.ListStore(int,int,str,str,int,int, int)
         self.tree_results = asm_customs.TreeIndex()
@@ -430,18 +398,10 @@ class Searcher(Gtk.Dialog):
     def select_field(self, btn, *a):
         nm = btn.get_name()
         self.dict_field[nm] = btn.get_active()
-        
-    def select_field_index(self, btn, *a):
-        nm = btn.get_name()
-        self.dict_field_index[nm] = btn.get_active()
            
     def select_perf(self, btn):
         nm = btn.get_name()
         self.dict_perf[nm] = btn.get_active()
-        
-    def select_perf_index(self, btn):
-        nm = btn.get_name()
-        self.dict_perf_index[nm] = btn.get_active()
     
     def fixed_toggled_field(self, cell, path, model):
         itr = model.get_iter((path),)
@@ -507,27 +467,23 @@ class Searcher(Gtk.Dialog):
         text = self.entry_search.get_text()
         if text == u'':
             asm_customs.erro(self.parent, 'أدخل النص المراد البحث عنه')
-        if self.stack.get_visible_child_name() == "n1":
-            asm_config.setv('search', 0)
-            if self.selected_books == []:
-                asm_customs.erro(self.parent, 'أنت لم تحدد أين ستبحث')
-            else:
-                try:
-                    if len(self.list_terms) == 50: self.list_terms.pop(0)
-                    if text in self.list_terms: self.list_terms.remove(text)
-                    self.list_terms.append(text)
-                    output = open(join(asm_path.DATA_DIR_rw, u'last-terms.pkl'), 'wb')
-                    pickle.dump(self.list_terms, output)
-                    output.close()
-                except: pass
-                self.hide()
-                self.parent.notebook.set_current_page(1)
-                sr = ShowResult(self.parent)
-                self.parent.viewerbook.append_page(sr,TabLabel(sr, u'بحث عن :'+text))
-                self.parent.viewerbook.set_current_page(-1)
-                sr.search(text, self.dict_perf, self.dict_field, self.selected_books)
+        elif self.selected_books == []:
+            asm_customs.erro(self.parent, 'أنت لم تحدد أين ستبحث')
         else:
-            asm_config.setv('search', 1)
+            try:
+                if len(self.list_terms) == 50: self.list_terms.pop(0)
+                if text in self.list_terms: self.list_terms.remove(text)
+                self.list_terms.append(text)
+                output = open(join(asm_path.DATA_DIR_rw, u'last-terms.pkl'), 'wb')
+                pickle.dump(self.list_terms, output)
+                output.close()
+            except: pass
+            self.hide()
+            self.parent.notebook.set_current_page(1)
+            sr = ShowResult(self.parent)
+            self.parent.viewerbook.append_page(sr,TabLabel(sr, u'بحث عن :'+text))
+            self.parent.viewerbook.set_current_page(-1)
+            sr.search(text, self.dict_perf, self.dict_field, self.selected_books)
     
     # a دوال البحث في قائمة الكتب
     
@@ -589,29 +545,16 @@ class Searcher(Gtk.Dialog):
         
     def build(self, *a):
         Gtk.Dialog.__init__(self, parent=self.parent)
-        self.set_border_width(3)
+        self.set_border_width(7)
         self.set_icon_name("asmaa")
         area = self.get_content_area()
-        area.set_spacing(3)
-        
-        hb_bar = Gtk.HeaderBar()
-        hb_bar.set_show_close_button(True)
-        self.set_titlebar(hb_bar)
-        self.stack = Gtk.Stack()
-        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        self.stack.set_transition_duration(1000)
-        stack_switcher = Gtk.StackSwitcher()
-        stack_switcher.set_stack(self.stack)
-        hb_bar.pack_end(stack_switcher)
-        vbox1 = Gtk.Box(spacing=3,orientation=Gtk.Orientation.VERTICAL)
-        vbox2 = Gtk.Box(spacing=3,orientation=Gtk.Orientation.VERTICAL)
-        
-        self.set_size_request(600,450)
+        area.set_spacing(7)
+        self.set_title("نافذة البحث")
+        self.set_size_request(750,550)
         self.connect('delete-event', lambda w,*a: w.hide() or True)
         #---------------------------------------------------
         hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
         self.entry_search = Gtk.SearchEntry()
-#        self.entry_search.set_size_request(400,-1)
         try: self.list_terms = pickle.load(open(join(asm_path.DATA_DIR_rw, u'last-terms.pkl'), "rb"))
         except: self.list_terms = []
         completion = Gtk.EntryCompletion()
@@ -624,10 +567,13 @@ class Searcher(Gtk.Dialog):
         self.entry_search.connect('activate', self.search)
         self.entry_search.set_placeholder_text('أدخل النص المراد البحث عنه')
         self.btn_search = asm_customs.ButtonClass('بحث')
-        hb_bar.pack_start(self.btn_search)
-        hb_bar.set_custom_title(self.entry_search)
         self.btn_search.connect('clicked', self.search)
-        vbox1.pack_start(hbox, False, False, 0)
+        hbox.pack_start(self.btn_search, False, False, 0)
+        hbox.pack_start(self.entry_search, True, True, 0)
+        self.btn_close = asm_customs.ButtonClass('إغلاق')
+        self.btn_close.connect('clicked', lambda *a: self.hide() or True)
+        hbox.pack_end(self.btn_close, False, False, 0)
+        area.pack_start(hbox, False, False, 0)
         #-------------------------------------------------------
         hbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
         vbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
@@ -685,7 +631,7 @@ class Searcher(Gtk.Dialog):
         self.tree_books.append_column(columntoggle)
         self.tree_books.append_column(self.columntext1)
         hbox.pack_start(scroll, True, True, 0)
-        vbox1.pack_start(hbox, True, True, 0)
+        area.pack_start(hbox, True, True, 0)
         #-------------------------------------------------------
         expander = Gtk.Expander.new("خيارات متقدمة")
         notebk = Gtk.Notebook()
@@ -752,42 +698,5 @@ class Searcher(Gtk.Dialog):
         hb.pack_start(del_term,False, False, 0)
         del_term.connect('clicked', self.del_history)
         box.pack_start(hb, False, False, 0)
-        vbox1.pack_start(expander, False, False, 0)
-        self.stack.add_titled(vbox1, 'n1', 'بحث عادي')
-        
-        hbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
-        box = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
-        box.set_border_width(7)
-        self.dict_field_index = {'nass':True, 'tit':False}
-        self.in_nasse_index = Gtk.RadioButton.new_with_label_from_widget(None, u'في النصوص')
-        self.in_nasse_index.set_name('nass')
-        box.pack_start(self.in_nasse_index, False, False, 0)
-        self.in_nasse_index.connect('toggled', self.select_field_index, 1)
-        self.in_title_index = Gtk.RadioButton.new_with_label_from_widget(self.in_nasse_index, u'في العناوين')
-        self.in_title_index.set_name('tit')
-        box.pack_start(self.in_title_index, False, False, 0)
-        self.in_title_index.connect('toggled', self.select_field_index, 2)
-        hbox.pack_start(box, False, False, 0)
 
-        box = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
-        box.set_border_width(7)
-        self.dict_perf_index = {}
-        for a in [[u'بدون لواصق', u'identical'],
-        [u'عبارة متصلة', u'cursive'], 
-        [u'إحدى الكلمات', u'one_term'],  
-        [u'مع التشكيل', u'with_tachkil']]:
-            btn = Gtk.CheckButton(a[0])
-            btn.set_name(a[1])
-            box.pack_start(btn, False, False, 0)
-            btn.connect('toggled', self.select_perf_index)
-            self.dict_perf_index[a[1]] = False
-        hbox.pack_start(box, False, False, 0)
-        
-        vbox2.pack_start(hbox,True, True, 0)
-        self.stack.add_titled(vbox2, 'n2', 'بحث مفهرس')
-        if asm_config.getn('search') == 0:
-            self.stack.set_visible_child_name("n1")
-        else:
-            self.stack.set_visible_child_name("n2")
-        self.stack.show_all()
-        area.pack_start(self.stack, True, True, 0)
+        area.pack_start(expander, False, False, 0)

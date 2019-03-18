@@ -4,9 +4,11 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  #########
 #a############################################################################
 
-from gi.repository import Gtk, Pango
-import asm_araby, asm_customs, asm_stemming
-from asm_contacts import DictDB
+from gi.repository import Gtk
+import Asmaa.asm_stemming as asm_stemming
+import Asmaa.asm_araby as asm_araby
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_contacts import DictDB
 
 # class نافذة المعجم---------------------------------------------------------    
 
@@ -21,7 +23,7 @@ class Explanatory(Gtk.HBox):
                     self.tree_dict.collapse_row(p)
                 else: self.tree_dict.expand_row(p, False) 
             else:
-                term = model.get_value(i,0).decode('utf-8')
+                term = model.get_value(i,0)
                 charh = self.mydict.show_charh(term)
                 self.view_dict_bfr.set_text(charh[0][0]) 
     
@@ -34,12 +36,12 @@ class Explanatory(Gtk.HBox):
             for a in self.all_term:
                 txt = asm_araby.fuzzy(a)
                 for term in nasse: 
-                    if txt in asm_araby.fuzzy(term.decode('utf8')):
+                    if txt in asm_araby.fuzzy(term):
                         search_tokens.append(term)
         else:
             txt = asm_araby.fuzzy(text)
             for term in nasse: 
-                if txt in asm_araby.fuzzy(term.decode('utf8')):
+                if txt in asm_araby.fuzzy(term):
                     search_tokens.append(term)
         asm_customs.with_tag(self.view_dict_bfr, self.search_tag, search_tokens)
     
@@ -86,7 +88,7 @@ class Explanatory(Gtk.HBox):
                 self.store_dict.append(None, [a[0]])
     
     def select_letter(self, btn):
-        letter = btn.get_active_text().decode('utf-8')
+        letter = btn.get_active_text()
         f_letter = letter[0]
         self.show_index(f_letter)
     
@@ -98,7 +100,7 @@ class Explanatory(Gtk.HBox):
         self.mydict = DictDB()
         #self.size_font = int(self.parent.theme.font_nass[-2:])
         self.all_term = []
-        Gtk.HBox.__init__(self, False, 7)
+        Gtk.HBox.__init__(self, False, 3)
         self.set_border_width(3)
         letters = [u"ألف",u"باء",u'تاء',u'ثاء',u'جيم',u'حاء',u'خاء',u'دال',u'ذال',u'راء',u'زاي',u'سين',u'شين',u'صاد' ,
             u'ضاد',u'طاء',u'ظاء',u'عين',u'غين',u'فاء',u'قاف',u'كاف',u'لام',u'ميم',u'نون',u'هاء',u'واو',u'ياء']

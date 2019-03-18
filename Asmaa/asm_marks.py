@@ -5,10 +5,11 @@
 ##############################################################################
 
 from gi.repository import Gtk
-from asm_viewer import OpenBook
-from asm_tablabel import TabLabel
-import asm_config, asm_customs
-from asm_contacts import listDB
+from Asmaa.asm_viewer import OpenBook
+from Asmaa.asm_tablabel import TabLabel
+import Asmaa.asm_config as asm_config
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_contacts import listDB
 
 class SavedMarks(Gtk.Dialog):
     
@@ -36,14 +37,15 @@ class SavedMarks(Gtk.Dialog):
     
     def remove_iter(self, *a):
         (model, i) = self.tree_sav.get_selection().get_selected()
-        id_poem = model.get_value(i,0)
-        for a in self.list_marks:
-            if a[0] == id_poem :
-                s = self.list_marks.index(a)
-                self.list_marks.pop(s)
-                model.remove(i)
-                marks = repr(self.list_marks)
-                asm_config.setv('marks', marks)
+        if i:
+            id_poem = model.get_value(i,0)
+            for a in self.list_marks:
+                if a[0] == id_poem :
+                    s = self.list_marks.index(a)
+                    self.list_marks.pop(s)
+                    model.remove(i)
+                    marks = repr(self.list_marks)
+                    asm_config.setv('marks', marks)
     
     def remove_iters(self, *a):
         asm_config.setv('marks', '[]')
@@ -55,11 +57,17 @@ class SavedMarks(Gtk.Dialog):
         self.list_marks = eval(asm_config.getv('marks'))
         Gtk.Dialog.__init__(self, parent=self.parent)
         self.set_icon_name("asmaa")
-        self.set_title('المواضع المحفوظة')
+        
+        hb_bar = Gtk.HeaderBar()
+        hb_bar.set_show_close_button(True)
+        self.set_titlebar(hb_bar)
+        hb_bar.set_title('المواضع المحفوظة')
         self.set_default_size(350, 300)
         box = self.vbox
+        box.set_spacing(3)
         self.store_sav = Gtk.ListStore(int, str, int)
-        map(self.store_sav.append, self.list_marks)
+        for a in self.list_marks:
+            self.store_sav.append(a)
         self.tree_sav = asm_customs.TreeIndex()
         self.tree_sav.connect("row-activated", self.ok_m)
         column = Gtk.TreeViewColumn('الكتاب',Gtk.CellRendererText(),text = 1)
@@ -70,16 +78,15 @@ class SavedMarks(Gtk.Dialog):
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.tree_sav)
+        
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        Gtk.StyleContext.add_class(hbox.get_style_context(), "linked")
         remove = asm_customs.ButtonClass("حذف")
         remove.connect('clicked', self.remove_iter)
-        hb = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
-        hb.pack_start(remove, False, False, 0)
+        hbox.pack_start(remove, False, False, 0)
         remove_all = asm_customs.ButtonClass("مسح")
         remove_all.connect('clicked', self.remove_iters)
-        hb.pack_start(remove_all, False, False, 0)
-        clo = asm_customs.ButtonClass("إغلاق")
-        clo.connect('clicked',lambda *a: self.destroy())
-        hb.pack_end(clo, False, False, 0)
+        hbox.pack_start(remove_all, False, False, 0)
+        hb_bar.pack_start(hbox)
         box.pack_start(scroll, True, True, 0)
-        box.pack_start(hb, False, False, 0)
         self.show_all()

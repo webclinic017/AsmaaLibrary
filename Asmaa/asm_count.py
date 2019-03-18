@@ -4,10 +4,10 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  #########
 ##############################################################################
 
-import asm_path
+import Asmaa.asm_path as asm_path
 from os.path import join
 from gi.repository import Gtk
-from asm_contacts import listDB
+from Asmaa.asm_contacts import listDB
 
 class Count(Gtk.Box):
     
@@ -58,7 +58,7 @@ class Count(Gtk.Box):
         file_html = join(asm_path.HOME_DIR, u'count.html')
         file_count = open(file_html, 'w')
         new_template = template0+template1+template2
-        file_count.write(new_template.encode('utf8'))
+        file_count.write(new_template)
         file_count.close()
         return file_html
         
@@ -109,6 +109,6 @@ class Count(Gtk.Box):
         file_html = join(asm_path.HOME_DIR, u'count.html')
         file_count = open(file_html, 'w')
         new_template = template0+template1+template2
-        file_count.write(new_template.encode('utf8'))
+        file_count.write(new_template)
         file_count.close()
         return file_html

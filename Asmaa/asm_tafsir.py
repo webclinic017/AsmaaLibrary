@@ -5,9 +5,13 @@
 #a############################################################################
 
 from gi.repository import Gtk, Pango
-import asm_customs, asm_popup, asm_path, asm_araby, asm_config
-from asm_contacts import Othman, listDB, bookDB
-from asm_edit_tafsir import ListTafasir
+import Asmaa.asm_popup as asm_popup
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_config as asm_config
+import Asmaa.asm_araby as asm_araby
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_contacts import Othman, listDB, bookDB
+from Asmaa.asm_edit_tafsir import ListTafasir
 import re
 
 # class نافذة التفسير---------------------------------------------------------    
@@ -55,7 +59,7 @@ class Tafsir(Gtk.HBox):
         self.part_now = self.all_in_page[3]
         self.page_now = self.all_in_page[4]
         self.view_tafsir_bfr.set_text(self.all_in_page[2])
-        text = self.parent.entry_search.get_text().decode('utf8')
+        text = self.parent.entry_search.get_text()
         if len(text) >= 2 and text != u"ال": 
             self.search_now(text)
         try: sora, aya, na = self.all_in_page[6], self.all_in_page[7], self.all_in_page[8]
@@ -140,7 +144,7 @@ class Tafsir(Gtk.HBox):
         if n != self.opened_old[-1]: self.opened_old.append(n)
     
     def search_on_quran(self, *a):
-        text = self.search_entry.get_text().decode('utf8')
+        text = self.search_entry.get_text()
         if len(text) >= 3:
             all_ayat = Othman().search('"'+text+'"')
             self.store_search.clear()
@@ -165,20 +169,20 @@ class Tafsir(Gtk.HBox):
         search_tokens = []
         nasse = self.view_tafsir_bfr.get_text(self.view_tafsir_bfr.get_start_iter(), 
                                             self.view_tafsir_bfr.get_end_iter(),True)
-        if text == u'': 
+        if text == '': 
             return
         else:
             text = text.strip()
-            ls_term = asm_araby.fuzzy(text).split(u' ')
+            ls_term = asm_araby.fuzzy(text).split(' ')
         for text in ls_term:
             if len(text) == 1 or text == u"ال": continue
-            new_term = u''
+            new_term = ''
             for l in text:
-                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
-            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
-            new_term = new_term.replace(u'ه', u'[هة]')
-            re_term = re.compile(u'({})'.format(new_term,))
-            r_findall = re_term.findall(nasse.decode('utf8'))
+                new_term += '({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
+            new_term = new_term.replace('ا', '[اأإؤءئى]')
+            new_term = new_term.replace('ه', '[هة]')
+            re_term = re.compile('({})'.format(new_term,))
+            r_findall = re_term.findall(nasse)
             for r in r_findall:
                 if r[0] not in search_tokens: search_tokens.append(r[0])
         asm_customs.with_tag(self.view_tafsir_bfr, self.view_search_tag, search_tokens, 1, self.view_tafsir)
@@ -198,8 +202,9 @@ class Tafsir(Gtk.HBox):
                 self.store_tafasir.append(a)
         elif list_tafsir[2] == 1:
             for a in list_tafsir[1]:
-                self.store_tafasir.append([a, self.listbook.tit_book(a)[1]])
-        self.store_tafasir.insert(0, [-1, u'التفسير الميسر'])
+                if self.listbook.tit_book(a) != None and len(self.listbook.tit_book(a)) > 1:
+                    self.store_tafasir.append([a, self.listbook.tit_book(a)[1]])
+        self.store_tafasir.insert(0, [-1, 'التفسير الميسر'])
         self.n_warp = list_tafsir[0]+1
         
     def refresh_list(self, *a):
@@ -208,8 +213,8 @@ class Tafsir(Gtk.HBox):
         model.clear()
         model1.clear()
         list_tafsir = eval(asm_config.getv('list_tafsir'))
-        model.append([-1, u'التفسير الميسر', 0])
-        model1.append([-1, u'التفسير الميسر', 0])
+        model.append([-1, 'التفسير الميسر', 0])
+        model1.append([-1, 'التفسير الميسر', 0])
         for a in list_tafsir[1]:
             model.append([a, self.listbook.tit_book(a)[1], 0])
             model1.append([a, self.listbook.tit_book(a)[1], 0])
@@ -229,7 +234,7 @@ class Tafsir(Gtk.HBox):
         self.current_id = 1
         self.part_now = 1
         self.page_now = 1
-        self.nm_book = u'التفسير الميسر'
+        self.nm_book = 'التفسير الميسر'
         self.parent = parent
         self.othman = Othman()
         self.listbook = listDB()
@@ -237,14 +242,14 @@ class Tafsir(Gtk.HBox):
         self.opened_new = []
         self.opened_old = []
         Gtk.HBox.__init__(self, False, 0)
-        self.set_border_width(5)
         vbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
         
         self.notebook = Gtk.Notebook()
         self.notebook.set_show_tabs(False)
         vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
+        vb.set_border_width(5)
         self.load_list()
-        self.tafsirs = asm_customs.combo(self.store_tafasir, u'التفسير')
+        self.tafsirs = asm_customs.combo(self.store_tafasir, 'التفسير')
         self.tafsirs.set_wrap_width(self.n_warp)
         vb.pack_start(self.tafsirs, False, False, 0)
         self.tafsirs.set_active(0)
@@ -255,7 +260,7 @@ class Tafsir(Gtk.HBox):
         self.ayas.set_value(1.0)
         self.ayas.connect('activate', self.select_aya)
         
-        hb, self.suras = asm_customs.combo(sura_list, u'السورة')
+        hb, self.suras = asm_customs.combo(sura_list, 'السورة')
         self.suras.set_wrap_width(10)
         vb.pack_start(hb, False, False, 0)
         self.suras.set_active(0)
@@ -280,8 +285,9 @@ class Tafsir(Gtk.HBox):
         self.notebook.append_page(vb, Gtk.Label('تصفح'))
         
         vb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
+        vb.set_border_width(5)
         
-        self.tafsirs1 = asm_customs.combo(self.store_tafasir, u'التفسير')
+        self.tafsirs1 = asm_customs.combo(self.store_tafasir, 'التفسير')
         self.tafsirs1.set_wrap_width(self.n_warp)
         vb.pack_start(self.tafsirs1, False, False, 0)
         self.tafsirs1.set_active(0)
@@ -319,7 +325,7 @@ class Tafsir(Gtk.HBox):
         vb.pack_start(scroll, True, True, 0)
         self.notebook.append_page(vb, Gtk.Label('بحث'))
         vbox.pack_start(self.notebook, True, True, 0)
-        self.pack_start(vbox, False, False, 3)
+        self.pack_start(vbox, False, False, 0)
         
         self.view_tafsir = asm_customs.ViewClass()
         self.view_tafsir_bfr = self.view_tafsir.get_buffer()

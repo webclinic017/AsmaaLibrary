@@ -10,13 +10,12 @@
 الاعتماديات:
 ------------
 
-أ - python-gobject >= 3.0 (وللأفضل أكبر أو يساوي 3.6)
-ب - gir1.2-gtk-3.0
+أ   - python-gobject >= 3.12
+ب - gir1.2-gtk-3.0 >= 3.12
 ج - gir1.2-webkit-3.0
-د - python2.7
-ه - mdbtools
-و - catdoc
-ز - python-whoosh
+د  - python >= 3.0
+ه  - mdbtools
+و  - catdoc
 
 
 الرخصة:
@@ -25,14 +24,20 @@
 رخصة «وقف» العامة .
 
 
+التشغيل:
+------------
+
+شغل مخطوط "run.sh" ـ. (ex: ./run.sh).
+
+
 التثبيت:
 ------------
 
-شغل مخطوط "install" وأنت جذر. (ex: sudo ./install).
+شغل مخطوط "install.sh" وأنت جذر. (ex: sudo ./install.sh).
 
 
 الحذف:
 ------------
 
-شغل مخطوط "uninstall" وأنت جذر. (ex: sudo ./uninstall).
+شغل مخطوط "uninstall.sh" وأنت جذر. (ex: sudo ./uninstall.sh).
 

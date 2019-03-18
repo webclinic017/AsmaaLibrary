@@ -50,7 +50,7 @@ def stemArabic(word):
 
 
 def stemfn(word): return asm_stemming.get_root(stem(word))[0][0]
-analyzer = StandardAnalyzer(expression = ur"[\w\u064e\u064b\u064f\u064c\u0650\u064d\u0652\u0651\u0640]+\
+analyzer = StandardAnalyzer(expression = r"[\w\u064e\u064b\u064f\u064c\u0650\u064d\u0652\u0651\u0640]+\
 (?:\.?[\w\u064e\u064b\u064f\u064c\u0650\u064d\u0652\u0651\u0640]+)*") | StemFilter(stemArabic)
 
 schema = Schema(title=TEXT(stored=False, analyzer=analyzer), 
@@ -60,7 +60,7 @@ schema = Schema(title=TEXT(stored=False, analyzer=analyzer),
 if not exists(asm_path.INDEX_DIR_rw):
         os.mkdir(asm_path.INDEX_DIR_rw)
 def indexing(id_book, title, content, page):
-        new_idx = join(asm_path.INDEX_DIR_rw, str(id_book).decode('utf8'))
+        new_idx = join(asm_path.INDEX_DIR_rw, str(id_book))
         if not exists(new_idx):
             os.mkdir(new_idx)
         ix = index.create_in(new_idx, schema)

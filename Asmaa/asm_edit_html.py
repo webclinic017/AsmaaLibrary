@@ -7,7 +7,8 @@
 
 from gi.repository import Gtk, WebKit
 import re
-import asm_customs, asm_path
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_customs as asm_customs
 from os.path import join
 
 head_html = '''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"

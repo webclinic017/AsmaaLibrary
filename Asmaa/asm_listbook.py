@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from gi.repository import Gtk, Pango
 from gi.repository import GdkPixbuf
-from asm_contacts import listDB
-from asm_viewer import OpenBook
-from asm_tablabel import TabLabel
-import asm_customs, asm_araby, asm_config, asm_path
-import cPickle
+from Asmaa.asm_contacts import listDB
+from Asmaa.asm_viewer import OpenBook
+from Asmaa.asm_tablabel import TabLabel
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_config as asm_config
+import Asmaa.asm_customs as asm_customs
+import pickle
 from os.path import join
 from os import remove
 
@@ -22,7 +24,7 @@ class ListBooks(Gtk.HBox):
     def __init__(self, parent):
         self.parent = parent
         self.db = listDB()
-        try: self.last_books = cPickle.load(file((join(asm_path.DATA_DIR_rw, u'last-books.pkl'))))
+        try: self.last_books = pickle.load(open((join(asm_path.DATA_DIR_rw, u'last-books.pkl')), "rb"))
         except: self.last_books = []
         self.build()
    
@@ -39,7 +41,7 @@ class ListBooks(Gtk.HBox):
         model, i = tree_sel.get_selected()
         if i:
             id_book = model.get_value(i, 0)
-            nm_book = model.get_value(i, 1).decode('utf8')
+            nm_book = model.get_value(i, 1)
             book = self.db.file_book(id_book)
             text_info = self.db.info_book(book)[3]
             if text_info == None:
@@ -53,7 +55,7 @@ class ListBooks(Gtk.HBox):
         self.last_books.append(id_book)
         try: 
             output = open(join(asm_path.DATA_DIR_rw, u'last-books.pkl'), 'wb')
-            cPickle.dump(self.last_books, output)
+            pickle.dump(self.last_books, output)
             output.close()
         except: pass
         self.load_last()
@@ -78,7 +80,7 @@ class ListBooks(Gtk.HBox):
         model, i = self.sel_books.get_selected()
         if i:
             id_book = model.get_value(i, 0)
-            nm_book = model.get_value(i, 1).decode('utf8')
+            nm_book = model.get_value(i, 1)
             my_book = self.db.file_book(id_book)
             self.open_book(my_book, nm_book, id_book)
             self.add_to_lasts(id_book)
@@ -113,7 +115,7 @@ class ListBooks(Gtk.HBox):
         model, i = self.sel_favorite.get_selected()
         if i:
             id_book = model.get_value(i,0)
-            nm_book = model.get_value(i,1).decode('utf8')
+            nm_book = model.get_value(i,1)
             my_book = self.db.file_book(id_book)
             self.open_book(my_book, nm_book, id_book)
             self.add_to_lasts(id_book)
@@ -137,7 +139,7 @@ class ListBooks(Gtk.HBox):
         model, i = self.sel_last.get_selected()
         if i:
             id_book = model.get_value(i,0)
-            nm_book = model.get_value(i,1).decode('utf8')
+            nm_book = model.get_value(i,1)
             my_book = self.db.file_book(id_book)
             self.open_book(my_book, nm_book, id_book)
             self.add_to_lasts(id_book)
@@ -201,7 +203,7 @@ class ListBooks(Gtk.HBox):
         if len(item) > 0:
             model = widget.get_model()
             id_book = model[item[0]][COL_ID]
-            nm_book = model[item[0]][COL_NAME].decode('utf8')
+            nm_book = model[item[0]][COL_NAME]
             my_book = self.db.file_book(id_book)
             text_info = self.db.info_book(my_book)[3]
             if text_info == None:
@@ -226,8 +228,8 @@ class ListBooks(Gtk.HBox):
         self.select_part = u''
         self.select_book = u''
         Gtk.HBox.__init__(self, False, 3)
-        self.set_border_width(5)
-        self.vbox_side = Gtk.VBox(False, 3)
+        self.set_border_width(3)
+        self.vbox_side = Gtk.VBox(False, 0)
         
         # a أيقونات الكتب--------------------------
         self.vbox_iconview = Gtk.VBox(False, 5)
@@ -319,7 +321,7 @@ class ListBooks(Gtk.HBox):
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.view_info)
         scroll.set_size_request(250, 200)
-        self.vbox_side.pack_start(scroll, False, False, 3)
+        self.vbox_side.pack_start(scroll, False, False, 0)
         
         # a ------------------------------------------
         stack = Gtk.Stack()
@@ -328,7 +330,7 @@ class ListBooks(Gtk.HBox):
         
         # a الكتب الأخيرة------------------------------
         vbox = Gtk.Box(spacing=2,orientation=Gtk.Orientation.VERTICAL)
-        vbox.set_border_width(3)
+#        vbox.set_border_width(3)
         self.tree_last = asm_customs.TreeIndex()
         self.tree_last.set_headers_visible(False)
         self.tree_last.set_size_request(250, -1)
@@ -352,7 +354,7 @@ class ListBooks(Gtk.HBox):
         
         # a المفضلة-----------------------------------
         vbox = Gtk.Box(spacing=2,orientation=Gtk.Orientation.VERTICAL)
-        vbox.set_border_width(3)
+#        vbox.set_border_width(3)
         self.tree_favorite = asm_customs.TreeIndex()
         self.tree_favorite.set_headers_visible(False)
         self.tree_favorite.set_size_request(250, -1)
@@ -378,9 +380,11 @@ class ListBooks(Gtk.HBox):
         vbox.pack_start(remove_one, False, False, 0)
         stack.add_titled(vbox, 'n1', 'الكتب المفضلة')
         
+        hbox = Gtk.Box(spacing=2,orientation=Gtk.Orientation.HORIZONTAL)
         stack_switcher = Gtk.StackSwitcher()
         stack_switcher.set_stack(stack)
-        self.vbox_side.pack_start(stack_switcher, False, False, 0)
+        hbox.pack_start(stack_switcher, True, False, 0)
+        self.vbox_side.pack_start(hbox, False, False, 3)
         self.vbox_side.pack_start(stack, True, True, 0)
         
         self.pack_start(self.vbox_iconview, True, True, 0)

@@ -5,12 +5,12 @@
 ##############################################################################
 
 from gi.repository import Gtk, WebKit
-from asm_contacts import Othman
-import asm_customs, asm_path
-from asm_contacts import bookDB
+from Asmaa.asm_contacts import Othman
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_customs as asm_customs
 from os.path import join
-import cPickle
-import asm_config
+import pickle
+import Asmaa.asm_config as asm_config
 import re
 
 title_sura = u'''
@@ -245,12 +245,16 @@ class ViewerMoshaf(Gtk.HPaned):
         
     def build(self, *a):
         self.id_page_last = 0
-        self.list_sura = cPickle.load(file(join(asm_path.MOSHAF_DIR, u'list_sura.pkl')))
-        self.list_ahzab = cPickle.load(file(join(asm_path.MOSHAF_DIR, u'list_ahzab.pkl')))
+        try:
+            self.list_sura = pickle.load(open(join(asm_path.MOSHAF_DIR, 'list_sura.pkl'), "rb"))
+            self.list_ahzab =  pickle.load(open(join(asm_path.MOSHAF_DIR, 'list_ahzab.pkl'), "rb"))
+        except:
+            self.list_sura = []
+            self.list_ahzab =  []
         self.my_aya = {}
         self.page_id = asm_config.getn('quran_pos')
         Gtk.HPaned.__init__(self)
-        self.set_border_width(5)
+        self.set_border_width(3)
         self.set_position(150)
         # a الفهرس-----------------------------------
         vbox = Gtk.VBox(False, 3)

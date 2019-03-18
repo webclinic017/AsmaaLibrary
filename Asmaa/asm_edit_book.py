@@ -5,10 +5,12 @@
 ##############################################################################
 
 from gi.repository import Gtk, Gdk, Pango
-from asm_contacts import bookDB, Othman, listDB
-from asm_viewer import OpenBook
-from asm_tablabel import TabLabel
-import asm_customs, asm_path, asm_araby
+from Asmaa.asm_contacts import bookDB, Othman, listDB
+from Asmaa.asm_viewer import OpenBook
+from Asmaa.asm_tablabel import TabLabel
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_araby as asm_araby
+import Asmaa.asm_customs as asm_customs
 from os.path import join, basename
 import os, re
 
@@ -132,7 +134,7 @@ class EditBook(Gtk.VBox):
         else:
             txt = asm_araby.fuzzy(text)
             for term in nasse: 
-                if txt in asm_araby.fuzzy(term.decode('utf8')):
+                if txt in asm_araby.fuzzy(term):
                     search_tokens.append(term)
         asm_customs.with_tag(self.view_nasse_bfr, self.view_search_tag, search_tokens, 1)
             
@@ -414,7 +416,7 @@ class EditBook(Gtk.VBox):
                     text = u''
                     hno, sora, aya, na = [0, 0, 0, 0]
                 if self.all_pages[pg][0] in self.modified_pages.keys():
-                    text = self.modified_pages[self.all_pages[pg][0]].decode('utf8')
+                    text = self.modified_pages[self.all_pages[pg][0]]
                 part, page = self.all_pages[pg][1], self.all_pages[pg][2]
                 self.db.cur.execute('INSERT INTO f.pages VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
                                     (pg+1, text, part, page, hno, sora, aya, na))
@@ -422,7 +424,7 @@ class EditBook(Gtk.VBox):
                 pg += 1
             for ti in self.store_index:
                 try: self.db.cur.execute('INSERT INTO f.titles VALUES (?, ?, ?, ?)', 
-                                         (page_dict[ti[0]], ti[1].strip().decode('utf8'), ti[1].count('      ')+1, 0))
+                                         (page_dict[ti[0]], ti[1].strip(), ti[1].count('      ')+1, 0))
                 except: continue
             self.db.con.commit()
             self.db.cur.execute('DETACH f')
@@ -438,7 +440,7 @@ class EditBook(Gtk.VBox):
             text_old.set_placeholder_text('النص القديم')
             if self.view_nasse_bfr.get_has_selection():
                 sel = self.view_nasse_bfr.get_selection_bounds()
-                text = self.view_nasse_bfr.get_text(sel[0], sel[1],True).decode('utf8')
+                text = self.view_nasse_bfr.get_text(sel[0], sel[1],True)
                 text_old.set_text(text)
             text_new = Gtk.Entry()
             text_new.set_placeholder_text('النص الجديد')

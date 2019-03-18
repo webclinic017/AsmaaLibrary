@@ -4,9 +4,9 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  ########
 ##############################################################################
 
-from asm_dict import Explanatory
-from asm_author import Author
-from asm_tarjama import Tarjama
+from Asmaa.asm_dict import Explanatory
+from Asmaa.asm_author import Author
+from Asmaa.asm_tarjama import Tarjama
 from gi.repository import Gtk
 
 
@@ -25,7 +25,6 @@ class OtherWins(Gtk.Notebook):
     
     def __init__(self, parent):
         Gtk.Notebook.__init__(self)
-        self.set_border_width(5)
         self.parent = parent
         lab = Gtk.Label('مختار الصحاح')
         lab.set_size_request(150, -1)

@@ -6,7 +6,10 @@
 
 import sqlite3
 from gi.repository import Gtk
-import asm_araby, asm_customs, asm_path
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_config as asm_config
+import Asmaa.asm_araby as asm_araby
+import Asmaa.asm_customs as asm_customs
 from os.path import join, exists, getsize, basename
 from os import unlink, listdir, mkdir
 
@@ -39,6 +42,14 @@ class listDB(object):
         cur.execute('UPDATE main SET is_tafseer=1')
         self.add_tafsir(id_book)
         con.commit()
+        
+    def out_tafsir(self, book, id_book):
+        con = sqlite3.connect(book)
+        cur = con.cursor()
+        cur.execute('UPDATE main SET is_tafseer=0')
+        con.commit()
+        self.cur.execute('UPDATE books SET tafsir=0 WHERE id_book=?', (id_book, ))
+        self.con.commit()
     
     def __init__(self, *a):
         self.con = sqlite3.connect(asm_path.LISTBOOK_FILE_rw)
@@ -315,6 +326,13 @@ class listDB(object):
             check = self.con.commit()
         return check
 
+    # a حذف الفهرس------------------------------------------
+    
+    def remove_index(self, *a):
+        self.cur.execute('UPDATE books SET indx=0 WHERE indx=1')
+        check = self.con.commit()
+        return check
+    
     # a حذف كتاب------------------------------------------
     
     def remove_book(self, id_book):
@@ -423,6 +441,11 @@ class bookDB(object):
     altered = [(u'EX', u''), (u'{', u'﴿'), (u'}', u'﴾'), (u'0', u'٠'), (u'1', u'١'), 
                 (u'2', u'٢'), (u'3', u'٣'), (u'4', u'٤'), (u'5', u'٥‌'), (u'6', u'٦'), 
                 (u'7', u'٧'), (u'8', u'٨'), (u'9', u'٩'), (u'+', u'')]
+    
+    altered0 = [(u'EX', u''), (u'{', u'﴿'), (u'}', u'﴾'), ( u'٠',u'0'), ( u'١',u'1'), 
+                (u'٢', u'2'), (u'٣' ,u'3'), (u'٤' ,u'4'), (u'٥‌' ,u'5'), (u'٦' ,u'6'), 
+                (u'٧' ,u'7'), (u'٨' ,u'8'), (u'٩' ,u'9'), (u'+', u'')]
+    
     shorts0 = [(u'A', u'صلى الله عليه وسلم'), (u'B', u'رضي الله عن'), (u'C', u'رحمه الله'), 
              (u'D', u'عز وجل'), (u'E', u'عليه الصلاة و السلام'), (u'Y', u':')]
     
@@ -463,7 +486,10 @@ class bookDB(object):
             self.shorts2.append((a[0], a[1]))
             
     def expand_shorts(self, txt):
-        for i, j in self.altered: txt = txt.replace(i, j)
+        if asm_config.getn('nmbrs') == 0: 
+            for i, j in self.altered: txt = txt.replace(i, j)
+        else: 
+            for i, j in self.altered0: txt = txt.replace(i, j)
         for i, j in self.shorts1: txt = txt.replace(i, j)
         for i, j in self.shorts2: txt = txt.replace(i, j)
         return txt
@@ -478,9 +504,9 @@ class bookDB(object):
         h = {}
         for i, j in rv: h[j[1]] = j # i is used to keep the order only
         self.toc_ids = h.keys() 
-        self.toc_ids.sort()
+#        self.toc_ids.sort()
         self.toc_uniq = h.values()
-        self.toc_uniq.sort()
+#        self.toc_uniq.sort()
         return toc_list
     
     # a عناوين صفحة ممعينة---------------------------------------
@@ -552,7 +578,7 @@ class bookDB(object):
         
     def search(self, text, store, condition, phrase):
         len_book = len(self.list_pages)
-        parts = len_book/200
+        parts = int(len_book/200)
         remainder = len_book-(200*parts)
         s = 0
         v = 0    

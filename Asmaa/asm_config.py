@@ -6,10 +6,10 @@
 
 import os.path
 from os import mkdir
-import ConfigParser
+import configparser
 
 myfile = os.path.expanduser('~/.asmaa/asmaafile.cfg')
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config.read(myfile)
 section = 'settings'
 
@@ -86,12 +86,16 @@ def load():
         config.set(section, 'time_browse', 3)
     if not config.has_option(section, 'auto_browse'):
         config.set(section, 'auto_browse', 3)
-    with open(myfile, 'wa') as configfile:
+    if not config.has_option(section, 'nmbrs'):
+        config.set(section, 'nmbrs', 0)
+    if not config.has_option(section, 'search'):
+        config.set(section, 'search', 0)
+    with open(myfile, 'w') as configfile:
         config.write(configfile)
 
 def setv(option, value):
     config.set(section, option, value)
-    with open(myfile, 'wa') as configfile:
+    with open(myfile, 'w') as configfile:
         config.write(configfile)
    
 def getv(option):

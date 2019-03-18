@@ -4,9 +4,8 @@ import sqlite3
 from gi.repository import Gtk
 from os.path import join, exists
 import re, os, sys
-import Asmaa.asm_path as asm_path
-import Asmaa.asm_customs as asm_customs
-from Asmaa.asm_contacts import listDB
+import asm_customs, asm_path
+from asm_contacts import listDB
 from subprocess import Popen, PIPE
 
 class load_list_books_from_shamela(object):
@@ -24,19 +23,17 @@ class load_list_books_from_shamela(object):
     
     def get_books_part(self, id_part, ss):
         contents = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', self.ifile_main, "0bok"], 
-               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
+               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0]"
         list_contents = contents.split('new_row')
         for a in range(len(list_contents)-1):
             contents0 = re.sub(r'"', '', list_contents[a])
             contents0 = contents0.strip()
             #contents0 = contents0.lower()
+            motif0 = contents0.split('new_col')
             if a == 0: 
-                motif = contents0.split('\n')
-                motif0 = motif[0].split('new_col')
                 motif0 = list(map(lambda i: i.lower(), motif0))
                 cols = self.get_cols("0bok", motif0)
             else:
-                motif0 = contents0.split('new_col')
                 if len(motif0) == 1: continue
                 else:
                     if motif0[cols['cat']] == id_part:
@@ -64,21 +61,19 @@ class load_list_books_from_shamela(object):
     
     def load_list(self):
         for a in [u'0cat',u'com', u'shorts']:
-            if a  == u'0cat': file0 = self.ifile_main
+            if a in [u'0bok', u'0cat']: file0 = self.ifile_main
             else: file0 = self.ifile_spacial
-            contents_main = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', file0, a],   
-                                  0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
+            contents_main = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', file0, a], 
+                           0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0]"
             list_contents_main = contents_main.split('new_row')
             for p in range(len(list_contents_main)):
                 contents0_main = re.sub(r'"', '', list_contents_main[p])
-                #contents0_main = contents0_main.strip()
+                contents0_main = contents0_main.strip()
+                motif0 = contents0_main.split('new_col')
                 if p == 0: 
-                    motif = contents0_main.split('\n')
-                    motif0 = motif[0].split('new_col')
                     motif0 = list(map(lambda i: i.lower(), motif0))
                     cols = self.get_cols(a, motif0)
                 else:
-                    motif0 = contents0_main.split('new_col')
                     if len(motif0) == 1: continue
                     else:
                         if a == '0cat':
@@ -87,13 +82,13 @@ class load_list_books_from_shamela(object):
                                                                u'', u'', u'', u'', 0, 0])
                             self.get_books_part(motif0[cols['id']], ss)
                         elif a == 'com':
-                            if int(motif0[cols['bk']]) in self.comments : 
+                            if self.comments.has_key(int(motif0[cols['bk']])): 
                                 ls = self.comments[int(motif0[cols['bk']])]
                                 ls1 = [[int(motif0[cols['id']]), motif0[cols['com']]]]
                                 self.comments[int(motif0[cols['bk']])] = ls+ls1
                             else: self.comments[int(motif0[cols['bk']])] = [[int(motif0[cols['id']]), motif0[cols['com']]],]
                         elif a == 'shorts':
-                            if int(motif0[cols['bk']]) in self.shorts : 
+                            if self.shorts.has_key(int(motif0[cols['bk']])): 
                                 ls = self.shorts[int(motif0[cols['bk']])]
                                 ls1 = [[motif0[cols['ramz']], motif0[cols['nass']]]]
                                 self.shorts[int(motif0[cols['bk']])] = ls+ls1
@@ -111,7 +106,7 @@ class DB_from_MDB(object):
         self.archive = archive
         #self.table_list = []
         self.list_book = listDB()
-        self.nm_group = nm_group
+        self.nm_group = nm_group"
         self.id_group = self.list_book.add_part(self.nm_group)
         if not exists(join(asm_path.BOOK_DIR_rw, self.nm_group)):
             os.mkdir(join(asm_path.BOOK_DIR_rw, self.nm_group))
@@ -134,25 +129,21 @@ class DB_from_MDB(object):
         else: table = 't'+str(id_book)
         ids_titles = []
         contents = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', self.ifile, table], 
-               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
+               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0]"
         list_contents = contents.split('new_row')
         for a in range(len(list_contents)-1):
             contents0 = re.sub(r'"', '', list_contents[a])
-            #contents0 = contents0.strip()
-            if a == 0:
-                motif = contents0.split('\n')
-                motif0 = motif[0].split('new_col') 
-                motif0 = list(map(lambda i: i.lower(), motif0))
-                cols = self.get_cols(table, motif0, id_book)
+            contents0 = contents0.strip()
+            motif0 = contents0.split('new_col')
+            if a == 0: cols = self.get_cols(table, motif0, id_book)
             else:
-                motif0 = contents0.split('new_col')
                 if len(motif0) == 1: continue
                 else:
                     ids_titles.append(motif0[cols['id']])
         return ids_titles
         
     def get_tables(self):
-        table_names = Popen(["mdb-tables", "-1", self.ifile], stdout=PIPE).communicate()[0].decode("utf8")
+        table_names = Popen(["mdb-tables", "-1", self.ifile], stdout=PIPE).communicate()[0]
         self.table_list = table_names.splitlines()
         sys.stdout.flush()
    
@@ -160,7 +151,7 @@ class DB_from_MDB(object):
         # info_list = 0='BkId', 1='Bk', 2='Betaka', 3='Inf', 4='Auth', 5='TafseerNam', 6='IslamShort'
         self.get_tables()
         id_book = self.info_list[0]
-        nm_book = (self.info_list[1]).replace(u"/", u"-")
+        nm_book = (self.info_list[1]").replace(u"/", u"-")
         ids_titles = self.get_ids_titles(id_book)
         page_dict = {}
         if len(self.info_list[5]) > 2: is_tafsir = 1
@@ -170,52 +161,49 @@ class DB_from_MDB(object):
         con = sqlite3.connect(db, isolation_level=None)
         cur = con.cursor() 
         for tb in asm_customs.schema.keys():
-            cur.execute('CREATE TABLE IF NOT EXISTS {} ({})'.format(tb, asm_customs.schema[tb]))
+            cur.execute('CREATE VIRTUAL TABLE IF NOT EXISTS {}  USING fts4({})'.format(tb, asm_customs.schema[tb]))
         cur.execute("BEGIN;")
-        cur.execute('INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (self.info_list[1], u'',
-                     0, self.info_list[2], self.info_list[3], 
-                     self.info_list[4], 0, self.info_list[6], is_tafsir, 0, 0.1))
+        cur.execute('INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (self.info_list[1]", u'',
+                     0, self.info_list[2]", self.info_list[3]", 
+                     self.info_list[4]", 0, self.info_list[6], is_tafsir, 0, 0.1))
         if self.archive == 0: tables = ['book', 'title']
         else: tables = ['b'+str(id_book), 't'+str(id_book)]
         for table in tables:
             contents = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', self.ifile, table], 
-                   0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
+                   0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0]"
             list_contents = contents.split('new_row')
             for b in range(len(list_contents)-1):
                 contents0 = re.sub(r'"', '', list_contents[b])
-                #contents0 = contents0.strip()
+                contents0 = contents0.strip()
+                motif0 = contents0.split('new_col')
                 if b == 0: 
-                    motif = contents0.split('\n')
-                    motif0 = motif[0].split('new_col')
-                    motif0 = list(map(lambda i: i.lower(), motif0))
                     cols = self.get_cols(table, motif0, id_book)
                 else:
-                    motif0 = contents0.split('new_col')
                     if len(motif0) == 1: continue
                     else:
                         if table == 'b'+str(id_book) or table == 'book':
                             if motif0[cols['id']] in ids_titles: page_dict[motif0[cols['id']]] = b
-                            if 'hno' in cols: hno = motif0[cols['hno']]
+                            if cols.has_key('hno'): hno = motif0[cols['hno']]
                             else: hno = 0
-                            if 'aya' in cols: aya = motif0[cols['aya']]
+                            if cols.has_key('aya'): aya = motif0[cols['aya']]
                             else: aya = 0
-                            if 'sora' in cols: sora = motif0[cols['sora']]
+                            if cols.has_key('sora'): sora = motif0[cols['sora']]
                             else: sora = 0
-                            if 'na' in cols: na = motif0[cols['na']]
+                            if cols.has_key('na'): na = motif0[cols['na']]
                             else: na = 0
-                            if 'part' in cols: part = motif0[cols['part']]
+                            if cols.has_key('part'): part = motif0[cols['part']]
                             else: part = 1
                             cur.execute('INSERT INTO pages VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (b, motif0[cols['nass']],
                                                         part, motif0[cols['page']], hno, sora, aya, na))
                         elif table == 't'+str(id_book) or table == 'title':
-                            if motif0[cols['id']] in page_dict :
+                            if page_dict.has_key(motif0[cols['id']]):
                                 cur.execute('INSERT INTO titles VALUES (?, ?, ?, ?)', (page_dict[motif0[cols['id']]],
                                                              motif0[cols['tit']], motif0[cols['lvl']], motif0[cols['sub']]))
         #------------------------------------------------------------------
-        if int(id_book) in self.comments :
+        if self.comments.has_key(int(id_book)):
             for c in self.comments[int(id_book)]:
                 cur.execute('INSERT INTO com VALUES (?, ?)', (c[0], c[1]))
-        if int(id_book) in self.shorts:        
+        if self.shorts.has_key(int(id_book)):        
             for s in self.shorts[int(id_book)]:
                 cur.execute('INSERT INTO shorts VALUES (?, ?)', (s[0], s[1]))
             
@@ -257,43 +245,39 @@ class DB_from_BOK(object):
     def get_ids_titles(self, id_book):
         ids_titles = []
         contents = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', self.ifile, "t"+str(id_book)], 
-               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
+               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0]"
         list_contents = contents.split('new_row')
         for a in range(len(list_contents)-1):
             contents0 = re.sub(r'"', '', list_contents[a])
-            #contents0 = contents0.strip()
+            contents0 = contents0.strip()
+            motif0 = contents0.split('new_col')
             if a == 0: 
-                motif = contents0.split('\n')
-                motif0 = motif[0].split('new_col')
                 motif0 = list(map(lambda i: i.lower(), motif0))
                 cols = self.get_cols("t"+str(id_book), motif0, id_book)
             else:
-                motif0 = contents0.split('new_col')
                 if len(motif0) == 1: continue
                 else:
                     ids_titles.append(motif0[cols['id']])
         return ids_titles
         
     def get_tables(self):
-        table_names = Popen(["mdb-tables", "-1", self.ifile], stdout=PIPE).communicate()[0].decode("utf8")
+        table_names = Popen(["mdb-tables", "-1", self.ifile], stdout=PIPE).communicate()[0]
         self.table_list = table_names.splitlines()
         sys.stdout.flush()
    
     def creat_newDB(self):
         self.get_tables()
         contents_main = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', self.ifile, 'Main'], 
-                       0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
+                       0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0]"
         list_contents_main = contents_main.split('new_row')
         for a in range(len(list_contents_main)):
             contents0_main = re.sub(r'"', '', list_contents_main[a])
-            #contents0_main = contents0_main.strip()
+            contents0_main = contents0_main.strip()
+            motif_main = contents0_main.split('new_col')
             if a == 0: 
-                motif = contents0_main.split('\n')
-                motif_main = motif[0].split('new_col')
                 motif_main = list(map(lambda i: i.lower(), motif_main))
                 cols_main = self.get_cols('Main', motif_main)
             else:
-                motif_main = contents0_main.split('new_col')
                 if len(motif_main) == 1: continue
                 else:
                     id_book = motif_main[cols_main['bkid']]
@@ -307,7 +291,7 @@ class DB_from_BOK(object):
                     con = sqlite3.connect(db, isolation_level=None)
                     cur = con.cursor() 
                     for tb in asm_customs.schema.keys():
-                        cur.execute('CREATE TABLE IF NOT EXISTS {} ({})'.format(tb, asm_customs.schema[tb]))
+                        cur.execute('CREATE VIRTUAL TABLE IF NOT EXISTS {}  USING fts4({})'.format(tb, asm_customs.schema[tb]))
                     cur.execute("BEGIN;")
                     cur.execute('INSERT INTO main VALUES (?,?,?,?,?,?,?,?,?,?,?)', (motif_main[cols_main['bk']], '',
                                  0, motif_main[cols_main['betaka']], motif_main[cols_main['inf']], 
@@ -315,18 +299,16 @@ class DB_from_BOK(object):
                                  motif_main[cols_main['islamshort']], is_tafsir, 0, 0.1))
                     for table in ['Shorts', 'b'+str(id_book), 't'+str(id_book), 'com']:
                         contents = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', self.ifile, table], 
-                               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
+                               0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0]
                         list_contents = contents.split('new_row')
                         for b in range(len(list_contents)-1):
                             contents0 = re.sub(r'"', '', list_contents[b])
-                            #contents0 = contents0.strip()
+                            contents0 = contents0.strip()
+                            motif0 = contents0.split('new_col')
                             if b == 0: 
-                                motif = contents0.split('\n')
-                                motif0 = motif[0].split('new_col')
                                 motif0 = list(map(lambda i: i.lower(), motif0))
                                 cols = self.get_cols(table, motif0, id_book)
                             else:
-                                motif0 = contents0.split('new_col')
                                 if len(motif0) == 1: continue
                                 else:
                                     if table == 'Shorts':
@@ -336,20 +318,20 @@ class DB_from_BOK(object):
                                         except: pass
                                     elif table == 'b'+str(id_book):
                                         if motif0[cols['id']] in ids_titles: page_dict[motif0[cols['id']]] = b
-                                        if 'hno' in cols: hno = motif0[cols['hno']]
+                                        if cols.has_key('hno'): hno = motif0[cols['hno']]
                                         else: hno = 0
-                                        if 'aya' in cols: aya = motif0[cols['aya']]
+                                        if cols.has_key('aya'): aya = motif0[cols['aya']]
                                         else: aya = 0
-                                        if 'sora' in cols: sora = motif0[cols['sora']]
+                                        if cols.has_key('sora'): sora = motif0[cols['sora']]
                                         else: sora = 0
-                                        if 'na' in cols: na = motif0[cols['na']]
+                                        if cols.has_key('na'): na = motif0[cols['na']]
                                         else: na = 0
-                                        if 'part' in cols: part = motif0[cols['part']]
+                                        if cols.has_key('part'): part = motif0[cols['part']]
                                         else: part = 1
                                         cur.execute('INSERT INTO pages VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (b, motif0[cols['nass']],
                                                                     part, motif0[cols['page']], hno, sora, aya, na))
                                     elif table == 't'+str(id_book):
-                                        if motif0[cols['id']] in page_dict :
+                                        if page_dict.has_key(motif0[cols['id']]):
                                             cur.execute('INSERT INTO titles VALUES (?, ?, ?, ?)', (page_dict[motif0[cols['id']]],
                                                                          motif0[cols['tit']], motif0[cols['lvl']], motif0[cols['sub']]))
                                     elif table == 'com':
@@ -366,7 +348,7 @@ def DB_from_doc(nm_book, id_group, nm_group, list_page, list_title):
     con = sqlite3.connect(db, isolation_level=None)
     cur = con.cursor() 
     for tb in asm_customs.schema.keys():
-        cur.execute('CREATE TABLE IF NOT EXISTS {} ({})'.format(tb, asm_customs.schema[tb]))
+        cur.execute('CREATE VIRTUAL TABLE IF NOT EXISTS {}  USING fts4({})'.format(tb, asm_customs.schema[tb]))
     cur.execute("BEGIN;")
     cur.execute('INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 
                 (nm_book,'', 0, nm_book, nm_book, 0, 0, 0, 0, 0, 0.1))

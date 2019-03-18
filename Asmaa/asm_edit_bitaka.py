@@ -5,8 +5,8 @@
 ##############################################################################
 
 from gi.repository import Gtk
-import asm_customs
-from asm_contacts import listDB
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_contacts import listDB
 
 class EditBitaka(Gtk.Dialog):
     
@@ -16,11 +16,11 @@ class EditBitaka(Gtk.Dialog):
     
     def save_cb(self, *a):
         txt_bitaka = self.view_bitaka_bfr.get_text(self.view_bitaka_bfr.get_start_iter(),
-                            self.view_bitaka_bfr.get_end_iter(), False).decode('utf8')
+                            self.view_bitaka_bfr.get_end_iter(), False)
         txt_info = self.view_info_bfr.get_text(self.view_info_bfr.get_start_iter(),
-                            self.view_info_bfr.get_end_iter(), False).decode('utf8')
-        name = self.ent_name.get_text().decode('utf8')
-        short_name = self.ent_name_sh.get_text().decode('utf8')
+                            self.view_info_bfr.get_end_iter(), False)
+        name = self.ent_name.get_text()
+        short_name = self.ent_name_sh.get_text()
         if self.has_shorts.get_active(): is_short = 1
         else: is_short = 0
         self.db.save_info(self.book, name, short_name, txt_bitaka, txt_info, is_short)
@@ -36,11 +36,20 @@ class EditBitaka(Gtk.Dialog):
         area = self.get_content_area()
         area.set_spacing(5)
         self.set_border_width(5)
-        self.set_title('تعديل معلومات الكتاب')
-        self.set_default_size(500, 600)
-        box = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
         
-        self.notebook = Gtk.Notebook()
+        hb_bar = Gtk.HeaderBar()
+        hb_bar.set_show_close_button(True)
+        self.set_titlebar(hb_bar)
+        stack = Gtk.Stack()
+        stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        stack.set_transition_duration(1000)
+        stack_switcher = Gtk.StackSwitcher()
+        stack_switcher.set_stack(stack)
+        hb_bar.set_custom_title(stack_switcher)
+
+        self.set_default_size(600, 450)
+        box = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
+
         box1 = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
         box2 = Gtk.Box(spacing=6,orientation=Gtk.Orientation.VERTICAL)
         
@@ -78,7 +87,7 @@ class EditBitaka(Gtk.Dialog):
         def sample_cb(w):
             if sample_btn.get_active():
                 self.bitaka_book = self.view_bitaka_bfr.get_text(self.view_bitaka_bfr.get_start_iter(),
-                            self.view_bitaka_bfr.get_end_iter(), False).decode('utf8')
+                            self.view_bitaka_bfr.get_end_iter(), False)
                 self.view_bitaka_bfr.set_text('اسم الكتاب :\nالمؤلف :\nالناشر :\nالطبعة :\n\
 التحقيق :\nعدد الأجزاء :\nمصدر الكتاب :\nترقيم الكتاب :')
             else:
@@ -104,7 +113,7 @@ class EditBitaka(Gtk.Dialog):
         def sample_cb1(w):
             if sample_btn1.get_active():
                 self.info_book = self.view_info_bfr.get_text(self.view_info_bfr.get_start_iter(),
-                            self.view_info_bfr.get_end_iter(), False).decode('utf8')
+                            self.view_info_bfr.get_end_iter(), False)
                 self.view_info_bfr.set_text('موضوع الكتاب\nسبب التأليف\nمكانة الكتاب العلمية\nكلام العلماء في تقريضه')
             else:
                 self.view_info_bfr.set_text(self.info_book)
@@ -112,7 +121,7 @@ class EditBitaka(Gtk.Dialog):
         hbox.pack_end(sample_btn1, False, False, 0)
         box1.pack_start(hbox, False, False, 0)
         box1.pack_start(scroll, True, True, 0)
-        self.notebook.append_page(box1, Gtk.Label("بطاقة ونبذة"))
+        stack.add_titled(box1, 'n1', "بطاقة ونبذة")
         
         hbox = Gtk.HBox(False, 3)
         self.has_shorts = Gtk.CheckButton('هل به اختصارات قياسية')
@@ -120,18 +129,13 @@ class EditBitaka(Gtk.Dialog):
         hbox.pack_start(self.has_shorts, False, False, 0) 
         if self.db.info_book(self.book)[7] == 1: self.has_shorts.set_active(True)
         box2.pack_start(hbox, False, False, 0)
-        self.notebook.append_page(box2, Gtk.Label("معلومات أخرى"))
-        
-        hbox = Gtk.Box(spacing=5,orientation=Gtk.Orientation.HORIZONTAL)
-        save_btn = asm_customs.ButtonClass("حفظ")
+        stack.add_titled(box2, 'n1', "معلومات أخرى")
+
+        save_btn = Gtk.Button("حفظ")
         save_btn.connect('clicked', self.save_cb)
-        hbox.pack_start(save_btn, False, False, 0)
-        clo = asm_customs.ButtonClass("إغلاق")
-        clo.connect('clicked', self.quit_dlg)
-        hbox.pack_end(clo, False, False, 0)
+        hb_bar.pack_start(save_btn)
         
-        box.pack_start(self.notebook, True, True, 0)
-        box.pack_start(hbox, False, False, 0)
+        box.pack_start(stack, True, True, 0)
         
         area.pack_start(box, True, True, 0)
         self.show_all()

@@ -6,7 +6,8 @@
 
 
 from gi.repository import Gtk, Gdk
-import asm_config, asm_customs
+import Asmaa.asm_config as asm_config
+import Asmaa.asm_customs as asm_customs
 
 #a----------------------------------------------------------------------       
 
@@ -149,8 +150,8 @@ class MyTheme(object):
             screen = Gdk.Screen.get_default()
             css_provider = Gtk.CssProvider()
             context = Gtk.StyleContext()
-            if asm_config.getn('theme') == 0: css_provider.load_from_data(css_none)
-            else: css_provider.load_from_data(css_data)
+            if asm_config.getn('theme') == 0: css_provider.load_from_data(css_none.encode('utf8'))
+            else: css_provider.load_from_data(css_data.encode('utf8'))
             context.add_provider_for_screen(screen, css_provider,
                                             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         except: css_provider.load_from_data('')

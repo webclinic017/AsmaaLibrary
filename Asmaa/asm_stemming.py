@@ -48,7 +48,8 @@
 #a============================================================================
 
 import re, sqlite3
-import  asm_araby, asm_path
+import Asmaa.asm_path as asm_path
+import Asmaa.asm_araby as asm_araby
 
 duality_term = [u'يد', u'دم', u'فم', u'أب', u'أخ', u'حم', u'هن']
 
@@ -306,10 +307,10 @@ def get_root(text):
                                 roots.append(c)
     return roots, all_term
 
-#f = 1
-#if f == 0:
-#    for a in get_stem(u'بالوخذان'):
-#        print a
-#else:
-#    for a in get_root(u'دلهم')[0]['taje']:
-#        print a
+f = 0
+if f == 0:
+    for a in get_stem(u'التربية'):
+        print (a)
+else:
+    for a in get_root('التربية'):
+        print (a[0])

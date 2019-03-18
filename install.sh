@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $UID -eq 0 ]; then
-	python setup.py install --root=/ --record=installed-files.txt
+	python3 setup.py install --root=/ --record=installed-files.txt
 else
 	echo "Run this file as root (ex: sudo $0)."
 fi

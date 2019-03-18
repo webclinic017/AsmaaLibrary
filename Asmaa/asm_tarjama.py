@@ -5,8 +5,8 @@
 #a############################################################################
 
 from gi.repository import Gtk, Pango
-import asm_customs
-from asm_contacts import TarajimDB
+import Asmaa.asm_customs as asm_customs
+from Asmaa.asm_contacts import TarajimDB
 import re
 
 # class نافذة الرواة---------------------------------------------------------    
