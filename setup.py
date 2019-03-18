@@ -10,7 +10,7 @@ data_files = [('share/applications/', ['asmaa.desktop']),
               ('share/doc/asmaa', doc_files),
 	      	  ('share/asmaa/asmaa-data/icons', glob('asmaa-data/icons/*.*')),
               ('share/asmaa/asmaa-data/moshaf', glob('asmaa-data/moshaf/*.*')),
-              ('share/asmaa/asmaa-data/data/', glob('asmaa-data/data/*.db')),
+              ('share/asmaa/asmaa-data/db', glob('asmaa-data/db/*.db')),
 	          ('share/fonts/asmaa', glob('asmaa-data/fonts/*.*')),
               ]
 

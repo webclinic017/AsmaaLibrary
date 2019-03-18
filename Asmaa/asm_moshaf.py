@@ -128,7 +128,7 @@ class ViewerMoshaf(Gtk.HPaned):
         if self.term_0 != []:
             for a in self.term_0:
                 html = re.sub(a, u'<span style="background-color: rgb(255, 255, 0);">{}</span>'.format(a,), html)
-        self.view_quran.load_html_string(html, 'file://{}/'.format(asm_path.MOSHAF_DIR,))
+        self.view_quran.load_html_string(html, u'file://{}/'.format(asm_path.MOSHAF_DIR,))
         self.page_id = page
         if len(self.opened_old) == 0: self.opened_old.append(page)
         elif page != self.opened_old[-1]: self.opened_old.append(page)
