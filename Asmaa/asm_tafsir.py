@@ -222,10 +222,11 @@ class Tafsir(Gtk.HBox):
         self.tree_search = asm_customs.TreeClass()
         self.tree_search.set_model(self.store_search)
         cell = Gtk.CellRendererText()
-        cell.set_property("wrap-mode", Pango.WrapMode.WORD_CHAR)
-        cell.set_property("wrap-width", 220)
-        kal = Gtk.TreeViewColumn('نتائج البحث', cell, text=2)
-        self.tree_search.append_column(kal)
+        column = Gtk.TreeViewColumn('السورة', cell, text=2)
+        self.tree_search.append_column(column)
+        cell = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn('الآية', cell, text=1)
+        self.tree_search.append_column(column)
         self.sel_search = self.tree_search.get_selection()
         self.tree_search.connect("cursor-changed", self.ok_result)
         scroll = Gtk.ScrolledWindow()
@@ -260,7 +261,7 @@ class Tafsir(Gtk.HBox):
         self.change_sura = self.suras.connect('changed', self.select_sura)
         self.change_aya = self.ayas.connect('changed', self.select_aya)
         self.show_all()
-        
+        self.select_aya(self.ayas)
 
 
 

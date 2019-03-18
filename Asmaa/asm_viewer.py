@@ -114,6 +114,7 @@ class OpenBook(Gtk.VBox):
     
     def search_in_book(self, *a):
         text = self.entry_search.get_text().decode('utf8')
+        if text == u'': return
         self.store_search.clear()
         self.scroll_index.hide()
         self.scroll_search.show_all()
@@ -261,6 +262,9 @@ class OpenBook(Gtk.VBox):
             self.show_page(id_page)
             
     def show_page(self, id_page):
+        try: 
+            if id_page == self.all_in_page[1]: return
+        except: pass
         self.has_commment(id_page)
         self.all_in_page = self.db.get_text_body(id_page)#rowid, id, text, part, page, hno, sora, aya, na
         self.view_nasse_bfr.set_text(self.all_in_page[2])
@@ -492,6 +496,8 @@ class OpenBook(Gtk.VBox):
         self.ent_page.set_width_chars(5)
         hbox.pack_start(self.ent_page, False, False, 0)
         self.pages_all = Gtk.Label()
+        self.pages_all.set_width_chars(6) 
+        self.pages_all.set_alignment(0.0, 0.5)
         hbox.pack_start(self.pages_all, False, False, 0) 
         self.part_n = Gtk.Label('جـ:') 
         self.ent_part = Gtk.Entry()
@@ -499,6 +505,7 @@ class OpenBook(Gtk.VBox):
         hbox.pack_start(self.part_n, False, False, 0)
         hbox.pack_start(self.ent_part, False, False, 0) 
         self.parts_all = Gtk.Label()
+        self.parts_all.set_width_chars(3) 
         hbox.pack_start(self.parts_all, False, False, 0) 
         move_btn = Gtk.ToolButton(stock_id=Gtk.STOCK_JUMP_TO)
         move_btn.set_tooltip_text('الانتقال إلى الصفحة المحددة')

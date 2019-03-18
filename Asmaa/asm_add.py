@@ -13,6 +13,8 @@ from asm_contacts import listDB
 from asm_import_bok import DB_from_MDB
 import asm_import_bok
 import sqlite3
+import zipfile
+import xml.etree.ElementTree
 
 # class إضافة كتاب--------------------------------------------------------------
 
@@ -59,8 +61,11 @@ class AddBooks(Gtk.Dialog):
         ff.set_name('الملفات المدعومة')
         ff.add_pattern('*.[Dd][Oo][Cc][Xx]')
         ff.add_pattern('*.[Hh][Tt][Mm][Ll]')
+        ff.add_pattern('*.[Hh][Tt][Mm]')
         ff.add_pattern('*.[Tt][Xx][Tt]')
         ff.add_pattern('*.[Oo][Dd][Tt]')
+        ff.add_pattern('*.[Rr][Tt][Ff]')
+        ff.add_pattern('*.[Dd][Oo][Cc]')
         add_dlg.add_filter(ff)
         ff = Gtk.FileFilter()
         ff.set_name('جميع الملفات')
@@ -76,12 +81,12 @@ class AddBooks(Gtk.Dialog):
             self.btn_stop.set_sensitive(True)
             self.stop_n = 0
             self.import_book()
-#        elif self.notebook.get_current_page() == 1:
-#            self.btn_convert.set_sensitive(False)
-#            self.btn_stop.set_sensitive(True)
-#            self.stop_n = 0
-#            self.import_docs()
         elif self.notebook.get_current_page() == 1:
+            self.btn_convert.set_sensitive(False)
+            self.btn_stop.set_sensitive(True)
+            self.stop_n = 0
+            self.import_docs()
+        elif self.notebook.get_current_page() == 2:
             if len(self.store_books) == 0:
                 asm_customs.erro(self.parent, 'يجب إظهار قائمة الكتب أولا!')
                 return
@@ -92,36 +97,181 @@ class AddBooks(Gtk.Dialog):
         self.parent.list_books.load_list()
     
     def get_text_from_file(self, myfile, name_file):
-        return
+        # HTML----------------------------
+        if re.search(re.compile(u'\.[Hh][Tt][Mm][Ll]?$'), name_file) != None:
+            try:
+                text = file(myfile).read().decode('utf8')
+                text = re.sub(u'\n', u' ', text)
+                text = re.sub(u'<script.*?>.*?</script>', u'', text)
+                text = re.sub(u'<style.*?>.*?</style>', u'', text)
+                text = re.sub(u'<(.|\n)*?>', u'\n', text)
+                text = re.sub(u'\n\s+\n', u'\n', text)
+                return re.sub(u'&.*?;', u' ', text)
+            except: self.no_add += u'\n'+name_file
+        # DOCX----------------------------
+        elif re.search(re.compile(u'\.[Dd][Oo][Cc][Xx]$'), name_file) != None:
+            try:
+                myFile = zipfile.ZipFile(myfile)
+                share = xml.etree.ElementTree.fromstring(myFile.read('word/document.xml'))
+                text_nodes = []
+                for elt in share.iter():
+                    if elt.text != None:
+                        text_nodes.append(elt.text.strip())
+                text = u"\n".join(text_nodes)
+                return re.sub(u'\n\s+\n', u'\n', text)
+            except: self.no_add += u'\n'+name_file
+        # ODT----------------------------
+        elif re.search(re.compile(u'\.[Oo][Dd][Tt]$'), name_file) != None:
+            try:
+                myFile = zipfile.ZipFile(myfile)
+                share = xml.etree.ElementTree.fromstring(myFile.read('content.xml'))
+                text_nodes = []
+                for elt in share.iter():
+                    if elt.text != None:
+                        text_nodes.append(elt.text.strip())
+                text = u"\n".join(text_nodes)
+                return re.sub(u'\n\s+\n', u'\n', text)
+            except: self.no_add += u'\n'+name_file
+        # TXT----------------------------
+        elif re.search(re.compile(u'\.[Tt][Xx][Tt]$'), name_file) != None:
+            try: 
+                text = file(myfile).read().decode('utf8')
+                return re.sub(u'\n\s+\n', u'\n', text)
+            except: self.no_add += '\n'+name_file
+        # DOC & RTF----------------------
+        elif re.search(re.compile(u'\.[Dd][Oo][Cc]$'), name_file) != None or \
+        re.search(re.compile(u'\.[Rr][Tt][Ff]$'), name_file) != None:
+            try: 
+                (fi, fo, fe) = os.popen3(u'catdoc -w "{}"'.format(myfile, ))
+                fi.close()
+                retval = fo.read()
+                erroroutput = fe.read()
+                fo.close()
+                fe.close()
+                if not erroroutput:
+                    text = retval.decode('utf8')
+                    return re.sub(u'\n\s+\n', u'\n', text)
+                else:
+                    raise OSError("Executing the command caused an error: %s" % erroroutput)
+            except OSError: self.no_add += u'\n'+name_file+u'  -يرجى التحقق من تثبيت حزمة "catdoc"'
+            except: self.no_add += u'\n'+name_file
+        # OTHER----------------------------
+        else:
+            try: 
+                text = file(myfile).read().decode('utf8')
+                return re.sub(u'\n\s+\n', u'\n', text)
+            except: pass
+    
+    def split_text_to_pages(self, text):
+        text = text.strip()
+        pages = []
+        if self.letters.get_active():
+            n = self.n_letters.get_value()
+            n_page = len(text)/int(n)
+            list_term = text.split(' ')
+            if n_page > 0: 
+                n_term_page = len(list_term)/(n_page)
+                baki = len(list_term)%(n_page)
+                for a in range(n_page):
+                    pages.append(u' '.join(list_term[a*n_term_page:(a+1)*n_term_page]))
+                if baki > 0: pages.append(u' '.join(list_term[(n_page+1)*n_term_page:]))
+            else:
+                pages = [text]
+        elif self.fasil.get_active():
+            nass = self.separative.get_text()
+            pages = text.split(nass)
+        else:
+            pages = [text]
+        return pages           
+    
+    def make_book(self, nm_book, nm_group, inf_page, inf_title):
+        con_ls = self.db.con
+        cur_ls = self.db.cur
+        inf_book = [0, nm_book, 0, nm_book, nm_book, 0, 0, 0, 0]
+        inf_group = [0, nm_group.decode('utf8')]
+        shorts_book = []
+        shrooh_book = []
+        com_book = []
+        sharh = []
+        tafsir = []
+        is_tafsir = 0
+        is_sharh = 0
+        version = 0.5
+        asm_import_bok.create_asmaa_bok(con_ls, cur_ls, inf_book, inf_group, shorts_book, shrooh_book, com_book,
+                                         inf_page, inf_title, sharh, tafsir, is_tafsir, is_sharh, version)
     
     def import_docs(self, *a):
-        con_ls = sqlite3.connect(asm_path.LISTBOOK_FILE_rw, isolation_level=None)
-        cur_ls = con_ls.cursor() 
+        self.no_add = u''
         if len(self.store_add_doc) == 0: return
         id_group = asm_customs.value_active(self.groups_doc)
         nm_group = asm_customs.value_active(self.groups_doc, 1)
         if id_group == None:
-            asm_customs.info(self.parent, "اختر القسم المراد ضم الكتب إليه")
+            if len(self.db.all_parts()) > 0: asm_customs.info(self.parent, "اختر القسم المراد ضم الكتب إليه")
+            else: asm_customs.info(self.parent, "اذهب إلى صفحة تنظيم المكتبة وأضف قسما استيراد الملفات إليه")
         else:
             self.progress.set_fraction(0.0)
-            self.btn_clear.set_sensitive(False)
+            self.btn_clear_doc.set_sensitive(False)
             self.btn_convert.set_sensitive(False)
-            self.btn_remove.set_sensitive(False)
-            self.btn_add.set_sensitive(False)
+            self.btn_remove_doc.set_sensitive(False)
+            self.btn_add_doc.set_sensitive(False)
             if not self.is_book_radio.get_active():
                 new_book = self.name_book_entry.get_text().decode('utf8')
+                if new_book == u'': 
+                    asm_customs.info(self.parent, "ضع اسما للكتاب المراد استيراده")
+                    return
+                inf_page = []
+                inf_title = []
+                id_page = 1
             n_docs = len(self.store_add_doc)
             f = 0
-            no_add = u''
+            self.no_add = u''
             while len(self.store_add_doc) > 0:
+                f += 1
+                self.progress.set_fraction(float(f)/float(n_docs))
                 while (Gtk.events_pending()): Gtk.main_iteration()
                 if self.is_book_radio.get_active():
-                    new_book = re.sub(u'\..*', u'', self.store_add_doc[0][1])
-                    text_book = self.get_text_from_file(self.store_add_doc[0][0], self.store_add_doc[0][1])
+                    new_book = re.sub(u'\....?.?$', u'', self.store_add_doc[0][1].decode('utf8'))
+                    text_book = self.get_text_from_file(self.store_add_doc[0][0].decode('utf8'), 
+                                                        self.store_add_doc[0][1].decode('utf8'))
+                    if text_book != None and len(text_book) != 0:
+                        pages = self.split_text_to_pages(text_book)
+                        inf_page = []
+                        for a in range(len(pages)):
+                            inf_page.append([a+1, pages[a], 1, a+1])
+                        inf_title = [[1, new_book, 1, 0]]
+                        self.make_book(new_book, nm_group, inf_page, inf_title)
                 elif self.is_part_radio.get_active():
-                    return
+                    text_book = self.get_text_from_file(self.store_add_doc[0][0].decode('utf8'), 
+                                                        self.store_add_doc[0][1].decode('utf8'))
+                    if text_book != None and len(text_book) != 0:
+                        pages = self.split_text_to_pages(text_book)
+                        for a in range(len(pages)):
+                            inf_page.append([id_page, pages[a].decode('utf8'), f, a+1])
+                            id_page += 1
+                        inf_title.append([id_page-len(pages), u'الجزء {}'.format(f), 1, 0])
                 else:
-                    return
+                    text_book = self.get_text_from_file(self.store_add_doc[0][0].decode('utf8'), 
+                                                        self.store_add_doc[0][1].decode('utf8'))
+                    if text_book != None and len(text_book) != 0:
+                        inf_page.append([f, text_book, 1, f])
+                i = self.store_add_doc.get_iter_first()
+                self.store_add_doc.remove(i)
+            if not self.is_book_radio.get_active():
+                if inf_title == []: inf_title = [[1, new_book, 1, 0]]
+                if self.no_add != u'': 
+                    msg = asm_customs.sure(self.parent, u'''
+                    عدد الملفات التي لم يتمكن من إضافتها هو {}
+                    هل تريد الاستمرار في تكوين الكتاب ؟
+                    '''.format(len(self.no_add.split('\n')),))
+                    if msg == Gtk.ResponseType.YES:
+                        self.make_book(new_book, nm_group, inf_page, inf_title)
+            self.progress.set_text('انتهى !!')
+            self.progress.set_fraction(1.0)
+            self.btn_clear_doc.set_sensitive(True)
+            self.btn_convert.set_sensitive(True)
+            self.btn_remove_doc.set_sensitive(True)
+            self.btn_add_doc.set_sensitive(True)
+            if self.no_add != u'': asm_customs.erro(self.parent, u'الملفات التي لم يتم إضافتها {}'.format(self.no_add,))
     
     def import_shamela(self, *a):
         con_ls = sqlite3.connect(asm_path.LISTBOOK_FILE_rw, isolation_level=None)
@@ -133,7 +283,7 @@ class AddBooks(Gtk.Dialog):
         self.add_to_listbooks()
         n_books = len(self.selected_books)
         cur_sp = self.db_sp.con.cursor()
-        no_add = ''
+        self.no_add = ''
         v = 0
         for c in self.selected_books:
             while (Gtk.events_pending()): Gtk.main_iteration()
@@ -151,9 +301,9 @@ class AddBooks(Gtk.Dialog):
             self.lab_status.set_text('({} \ {})  يجري تحويل كتاب {} '.format(v, n_books, c[0]))
             try: asm_import_bok.export_mdb(self.path_shamila, con_ls, cur_ls, cur_main, cur_sp, self.db_bok.cur, c[2])
             except OSError: asm_customs.erro(self.parent, "حزمة mdbtools \nيرجى تثبيتها لأجل استيراد الكتب غير مثبتة"); raise
-            except: no_add += '\n'+c[0]; print ('not add {}'.format(str(c[2])+'.mdb',))
+            except: self.no_add += '\n'+c[0]; print ('not add {}'.format(str(c[2])+'.mdb',))
             self.progress.set_fraction(float(v)/float(n_books))
-        if no_add != u'': asm_customs.erro(self.parent, u'الكتب التي لم يتم إضافتها {}'.format(no_add,))
+        if self.no_add != u'': asm_customs.erro(self.parent, u'الكتب التي لم يتم إضافتها {}'.format(self.no_add,))
         self.lab_status.set_text('({} \ {})  لقد انتهت عملية التحويل '.format(v, n_books))
     
     def import_book(self, *a):
@@ -162,7 +312,8 @@ class AddBooks(Gtk.Dialog):
         if len(self.store_add) == 0: return
         id_group = asm_customs.value_active(self.groups)
         if id_group == None:
-            asm_customs.info(self.parent, "اختر القسم المراد ضم الكتب إليه")
+            if len(self.db.all_parts()) > 0: asm_customs.info(self.parent, "اختر القسم المراد ضم الكتب إليه")
+            else: asm_customs.info(self.parent, "اذهب إلى صفحة تنظيم المكتبة وأضف قسما استيراد الملفات إليه")
         else:
             nm_group = asm_customs.value_active(self.groups, 1).decode('utf8')
             self.progress.set_fraction(0.0)
@@ -172,7 +323,7 @@ class AddBooks(Gtk.Dialog):
             self.btn_add.set_sensitive(False)
             n_books = len(self.store_add)
             f = 0
-            no_add = u''
+            self.no_add = u''
             while len(self.store_add) > 0:
                 while (Gtk.events_pending()): Gtk.main_iteration()
                 book = self.store_add[0][0]
@@ -188,7 +339,7 @@ class AddBooks(Gtk.Dialog):
                         new_book = join(asm_path.BOOK_DIR_rw, nm_group, nm_file) 
                         copyfile(book, new_book)
                         self.db.add_book(nm_book, id_group, is_tafsir)
-                    except: no_add += u'\n'+nm_file[:-4]; print ('not add {}'.format(book,))
+                    except: self.no_add += u'\n'+nm_file[:-4]; print ('not add {}'.format(book,))
                 else:
                     nm_book = nm_file[:-4]
                     if self.db_bok != None: 
@@ -198,7 +349,7 @@ class AddBooks(Gtk.Dialog):
                     self.progress.set_fraction(float(f)/float(n_books))
                     try: asm_import_bok.export_bok(book, nm_group, con_ls, cur_ls, self.db_bok.cur)
                     except OSError: asm_customs.erro(self.parent, "حزمة mdbtools \nيرجى تثبيتها لأجل استيراد الكتب غير مثبتة"); raise
-                    except: no_add += u'\n'+nm_book; print ('not add {}'.format(book,))
+                    except: self.no_add += u'\n'+nm_book; print ('not add {}'.format(book,))
                 i = self.store_add.get_iter_first()
                 self.store_add.remove(i)
                 f +=1
@@ -208,7 +359,7 @@ class AddBooks(Gtk.Dialog):
             self.btn_convert.set_sensitive(True)
             self.btn_remove.set_sensitive(True)
             self.btn_add.set_sensitive(True)
-            if no_add != u'': asm_customs.erro(self.parent, u'الكتب التي لم يتم إضافتها {}'.format(no_add,)) 
+            if self.no_add != u'': asm_customs.erro(self.parent, u'الكتب التي لم يتم إضافتها {}'.format(self.no_add,)) 
     
     def select_path(self, *a): 
         save_dlg = Gtk.FileChooserDialog(u'تحديد مجلد', self.parent,
@@ -243,7 +394,10 @@ class AddBooks(Gtk.Dialog):
         self.all_books.set_active(True)
     
     def remove_iter(self, *a):
-        (model, i) = self.sel_add.get_selected()
+        if self.notebook.get_current_page() == 0:
+            (model, i) = self.sel_add.get_selected()
+        else:
+            (model, i) = self.sel_add_doc.get_selected()
         if i :
             model.remove(i)
     
@@ -365,9 +519,9 @@ class AddBooks(Gtk.Dialog):
         self.btn_add_doc = Gtk.Button("جديد")
         self.btn_add_doc.connect('clicked', self.add_doc)
         hb.pack_start(self.btn_add_doc, False, False, 0)
-        hb.pack_start(Gtk.Label('«odt, docx, txt, html»'), True, True, 0)
+        hb.pack_start(Gtk.Label('«odt, docx, doc, rtf, txt, html»'), True, True, 0)
         self.btn_clear_doc = Gtk.Button("مسح")
-        self.btn_clear_doc.connect('clicked', lambda *a: self.store_add.clear())
+        self.btn_clear_doc.connect('clicked', lambda *a: self.store_add_doc.clear())
         hb.pack_end(self.btn_clear_doc, False, False, 0)
         self.btn_remove_doc = Gtk.Button("حذف")
         self.btn_remove_doc.connect('clicked', self.remove_iter)
@@ -415,23 +569,26 @@ class AddBooks(Gtk.Dialog):
         self.n_letters.set_sensitive(False)
         hb.pack_start(self.n_letters, False, False, 0)
         box.pack_start(hb, False, False, 0)
-        def letters_cb(widget, *a):
-            if self.letters.get_active():
-                self.n_letters.set_sensitive(True)
-            else:
-                self.n_letters.set_sensitive(False)
-        self.letters.connect('toggled', letters_cb)
         
         hb = Gtk.HBox(False, 7)
         self.fasil = Gtk.CheckButton('رمز فاصل بين الصفحات')
         hb.pack_start(self.fasil, False, False, 0)
         self.separative = Gtk.Entry()
+        self.separative.set_placeholder_text("الفاصل يتم حذفه من الكتاب")
         self.separative.set_sensitive(False)
-        hb.pack_start(self.separative, False, False, 0)
+        hb.pack_start(self.separative, True, True, 0)
         box.pack_start(hb, False, False, 0)
+        def letters_cb(widget, *a):
+            if self.letters.get_active():
+                self.n_letters.set_sensitive(True)
+                self.fasil.set_active(False)
+            else:
+                self.n_letters.set_sensitive(False)
+        self.letters.connect('toggled', letters_cb)
         def fasil_cb(widget, *a):
             if self.fasil.get_active():
                 self.separative.set_sensitive(True)
+                self.letters.set_active(False)
             else:
                 self.separative.set_sensitive(False)
         self.fasil.connect('toggled', fasil_cb)
@@ -440,7 +597,7 @@ class AddBooks(Gtk.Dialog):
         
         hbox, self.groups_doc = asm_customs.combo(ls, 'ضع هذه الكتب في قسم :', 3)
         box.pack_start(hbox, False, False, 0)
-        #self.notebook.append_page(box, Gtk.Label('ملفات نصية'))
+        self.notebook.append_page(box, Gtk.Label('ملفات نصية'))
         
         # a استيراد الشاملة----------------------------
         box = Gtk.Box(spacing=3,orientation=Gtk.Orientation.VERTICAL)

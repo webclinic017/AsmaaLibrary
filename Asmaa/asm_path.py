@@ -20,7 +20,7 @@ def sure_start():
     إذا كنت قد نزلتها بالفعل فربما لم تربطها بالبرنامج، 
     أو قد يكون القرص الموجود عليه القاعدة غير مضموم،
     هل تريد تحديد مسار قاعدة البيانات ؟''')
-    db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaa/files/AsmaaLibrary.tar.gz/download",
+    db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/AsmaaLibrary.tar.gz/download",
                                                 'تنزيل قاعدة بيانات للتجربة')
     new_lib = Gtk.Button('إنشاء مكتبة مفرغة')
     dlg.add_action_widget(new_lib, 3)

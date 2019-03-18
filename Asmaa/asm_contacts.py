@@ -683,6 +683,10 @@ class Othman(object):
         self.cur.execute("SELECT page FROM quran WHERE aya=? AND sura=? LIMIT 1;", (aya, sura))
         return self.cur.fetchone()[0]
     
+    def ayat_in_page(self, page):
+        self.cur.execute("SELECT sura, aya FROM quran WHERE page=?", (page,))
+        return self.cur.fetchall()
+    
     def info_page(self, page):
         self.cur.execute("SELECT sura, joze FROM quran WHERE page=? LIMIT 1;", (page,))
         p = self.cur.fetchone()

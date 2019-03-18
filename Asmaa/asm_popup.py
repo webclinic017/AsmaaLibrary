@@ -99,6 +99,7 @@ def tafsir_ayat(widget, buff, parent):
             parent.tafsirpage.view_tafsir_bfr.set_text('')
             parent.tafsirpage.sel_search.select_path((0,))
             parent.notebook.set_current_page(4)
+            parent.tafsirpage.ok_result()
             
 def tarjama_rawi(widget, buff, parent):
     if buff.get_has_selection():

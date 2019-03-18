@@ -196,6 +196,7 @@ class AsmaaApp(Gtk.Window):
         asm_config.setv('quran_pos', self.moshafpage.page_id)
         session = []
         session.append(self.viewerbook.session)
+        session.append(self.opened)
         saved = repr(session)
         asm_config.setv('start_session', saved)
         n = self.viewerbook.get_n_pages()
@@ -216,10 +217,10 @@ class AsmaaApp(Gtk.Window):
             self.opened_book()
             sr.set_index()
         self.viewerbook.set_current_page(session[0][1])
-        if session[1][-1] in [0, 1, 2, 4]:
-            self.notebook.set_current_page(session[1][-1][0])
+        if session[1][-1] in [0, 1, 2, 3, 4, 5, 6, 7]:
+            self.notebook.set_current_page(session[1][-1])
         else:
-            self.notebook.set_current_page(session[1][-2][0])
+            self.notebook.set_current_page(session[1][-2])
     
     def show_menu(self, *a):
         self.menu_wins.show_all()

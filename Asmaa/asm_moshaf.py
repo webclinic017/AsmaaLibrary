@@ -62,7 +62,13 @@ class ViewerMoshaf(Gtk.HPaned):
     
     def show_bitaka(self, *a):
         return [u'',u'',u'',u'''
-        كلام رب العالمين على الحقيقة 
+كلام رب العالمين على الحقيقة بألفاظه ومعانيه 
+محفوظ في الصدور ، مقروء بالألسنة مكتوب في المصاحف
+تكلم به الله تعالى فسمعه جبريل منه 
+وتكلم به جبريل فسمعه النبي - صلى الله عليه وسلم - منه ، 
+وتكلم به النبي - صلى الله عليه وسلم - فسمعته منه أمته وحفظته عنه ، 
+فالكلام كلام الباري والصوت صوت القارئ . 
+قال الله تعالى : فأجره حتى يسمع كلام الله  الآية 
         ''', u'''''']
     
     def first_page(self, *a):
@@ -174,36 +180,29 @@ class ViewerMoshaf(Gtk.HPaned):
         self.tree_index.handler_unblock(self.changed_index)
    
     def tafsir_ayat(self, *a):
-        if self.view_nasse_bfr.get_has_selection():
-            sel = self.view_nasse_bfr.get_selection_bounds()
-            text = self.view_nasse_bfr.get_text(sel[0], sel[1],True).decode('utf8')
-            if len(text) >= 3:
-                all_ayat = Othman().search('"'+text+'"')
-                self.parent.tafsirpage.store_tafsir.clear()
-                if len(all_ayat) == 0:
-                    asm_customs.erro(self.parent, 'لا يوجد نتيجة'); return
-                else: 
-                    for ayat in all_ayat:
-                        n = ayat[0]
-                        i_sura = (n/512)+1
-                        i_ayat = n-((i_sura-1)*512)
-                        quran = bookDB(asm_path.TAFSIR_DB)
-                        page= quran.page_ayat(i_sura, i_ayat+1)
-                        suras_names = Othman().get_suras_names()
-                        sura = suras_names[i_sura-1]
-                        self.parent.tafsirpage.store_tafsir.append(None, [page, sura])
-                self.parent.tafsirpage.tree_tafsir.collapse_all()
-                self.parent.tafsirpage.view_tafsir_bfr.set_text('')
-                self.parent.tafsirpage.tree_tafsir.expand_all()
-                self.parent.tafsirpage.sel_tafsir.select_path((0,))
-                self.parent.notebook.set_current_page(4)
+        all_ayat = self.db.ayat_in_page(self.page_id)
+        self.parent.tafsirpage.store_search.clear()
+        if len(all_ayat[0]) == 0:
+            asm_customs.erro(self.parent, 'لا يوجد نتيجة'); return
+        else: 
+            for ayat in all_ayat:
+                i_sura = ayat[0]
+                i_ayat = ayat[1]
+                suras_names = Othman().get_suras_names()
+                sura = suras_names[i_sura-1]
+                self.parent.tafsirpage.store_search.append(None, [i_sura, i_ayat, sura[1]])
+                self.parent.tafsirpage.notebook.set_current_page(1)
+        self.parent.tafsirpage.view_tafsir_bfr.set_text('')
+        self.parent.tafsirpage.sel_search.select_path((0,))
+        self.parent.notebook.set_current_page(4)
+        self.parent.tafsirpage.ok_result()
    
     def populate_page_popup_cb(self, view, menu):
         for a in menu.get_children():
             a.destroy()
-        f1 = Gtk.MenuItem('تفسير الآية')
+        f1 = Gtk.MenuItem('تفسير الآيات')
+        f1.connect('activate', self.tafsir_ayat) 
         menu.append(f1)
-        f1.set_sensitive(False)
         c1 = Gtk.SeparatorMenuItem()
         menu.append(c1)
         c1.show()
