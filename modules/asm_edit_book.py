@@ -129,7 +129,7 @@ class EditBook(Gtk.VBox):
         search_tokens = []
         nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
                                             self.view_nasse_bfr.get_end_iter(),True).split()
-        if text == u'': 
+        if text == '': 
             return
         else:
             txt = asm_araby.fuzzy(text)
@@ -414,7 +414,7 @@ class EditBook(Gtk.VBox):
                     text = all_in_page[2]
                     hno, sora, aya, na = all_in_page[5:]
                 else: 
-                    text = u''
+                    text = ''
                     hno, sora, aya, na = [0, 0, 0, 0]
                 if self.all_pages[pg][0] in self.modified_pages.keys():
                     text = self.modified_pages[self.all_pages[pg][0]]

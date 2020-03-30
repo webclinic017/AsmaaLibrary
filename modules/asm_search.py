@@ -132,7 +132,7 @@ class ShowResult(Gtk.VPaned):
         if len(self.store_results)>0:
             for a in self.store_results:
                 self.results_books.append([a[0], a[1], a[2], a[3], a[4], a[5], a[6]])
-            output = open(join(asm_path.HOME_DIR, 'searchs', u'آخر بحث.pkl'), 'wb')
+            output = open(join(asm_path.HOME_DIR, 'searchs', 'آخر بحث.pkl'), 'wb')
             pickle.dump((self.text, self.cursive, self.results_books), output)
             output.close()
     
@@ -265,11 +265,11 @@ class ShowResult(Gtk.VPaned):
         if self.cursive: ls_terms = [self.text,]
         else: ls_terms = self.text.split(' ')
         for text in ls_terms:
-            new_term = u''
+            new_term = ''
             for l in text:
-                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
-            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
-            new_term = new_term.replace(u'ه', u'[هة]')
+                new_term += '({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
+            new_term = new_term.replace(u'ا', '[اأإؤءئى]')
+            new_term = new_term.replace(u'ه', '[هة]')
             re_term = re.compile(u'({})'.format(new_term,))
             r_findall = re_term.findall(nasse0)
             for r in r_findall:
@@ -294,7 +294,7 @@ class ShowResult(Gtk.VPaned):
             asm_customs.erro(self.parent, "أدخل كلمة للبحث أولا.")
             return
         sr = ShowResult(self.parent)
-        self.parent.viewerbook.append_page(sr,TabLabel(sr, u'بحث عن :'+text))
+        self.parent.viewerbook.append_page(sr,TabLabel(sr, 'بحث عن :'+text))
         self.parent.viewerbook.set_current_page(-1)
         n = 0
         s = 0
@@ -317,7 +317,7 @@ class ShowResult(Gtk.VPaned):
         if len(sr.store_results)>0:
             for a in sr.store_results:
                 sr.results_books.append([a[0], a[1], a[2], a[3], a[4], a[5], a[6]])
-            output = open(join(asm_path.HOME_DIR, 'searchs', u'آخر بحث.pkl'), 'wb')
+            output = open(join(asm_path.HOME_DIR, 'searchs', 'آخر بحث.pkl'), 'wb')
             pickle.dump((self.text, self.cursive, self.results_books), output)
             output.close()
     
@@ -414,18 +414,18 @@ class ShowResult(Gtk.VPaned):
         search_tokens = []
         nasse = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
                                             self.view_nasse_bfr.get_end_iter(),True)
-        if text == u'': 
+        if text == '': 
             return
         else:
             text = text.strip()
             ls_term = asm_araby.fuzzy(text).split(u' ')
         for text in ls_term:
             if len(text) == 1 or text == u"ال": continue
-            new_term = u''
+            new_term = ''
             for l in text:
-                new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
-            new_term = new_term.replace(u'ا', u'[اأإؤءئى]')
-            new_term = new_term.replace(u'ه', u'[هة]')
+                new_term += '({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
+            new_term = new_term.replace(u'ا', '[اأإؤءئى]')
+            new_term = new_term.replace(u'ه', '[هة]')
             re_term = re.compile(u'({})'.format(new_term,))
             r_findall = re_term.findall(nasse)
             for r in r_findall:
@@ -468,7 +468,7 @@ class ShowResult(Gtk.VPaned):
         self.lab_n_result = Gtk.Label('عدد النتائج : 0')
         hb.pack_start(self.lab_n_result, False, False, 0)
         self.hb_stop = Gtk.HBox(False, 7)
-        btn_stop = asm_customs.tool_button(join(asm_path.ICON_DIR, u'stp.png'), 'أوقف عملية البحث', self.stop_search)
+        btn_stop = asm_customs.tool_button(join(asm_path.ICON_DIR, 'stp.png'), 'أوقف عملية البحث', self.stop_search)
         self.hb_stop.pack_start(btn_stop, False, False, 0)
         self.progress = Gtk.ProgressBar()
         self.hb_stop.pack_start(self.progress, True, True, 0)
@@ -595,7 +595,7 @@ class Searcher(Gtk.Dialog):
                             nm_group = listDB().group_book(a[0])
                             self.selected_books.append([nm_book, nm_group, id_book])
                 else:
-                    store = pickle.load(open(join(asm_path.LIBRARY_DIR, u'fields-search', nm_field+u'.pkl'), "rb"))
+                    store = pickle.load(open(join(asm_path.LIBRARY_DIR, 'fields-search', nm_field+u'.pkl'), "rb"))
                     for a in store:
                         if a not in self.selected_books:
                             nm_book = a[0]
@@ -621,7 +621,7 @@ class Searcher(Gtk.Dialog):
     def search(self, *a):
         self.add_all_list()
         text = self.entry_search.get_text()
-        if text == u'':
+        if text == '':
             asm_customs.erro(self.parent, 'أدخل النص المراد البحث عنه')
         if self.stack.get_visible_child_name() == "n1":
             asm_config.setv('search', 0)
@@ -632,14 +632,14 @@ class Searcher(Gtk.Dialog):
                     if len(self.list_terms) == 50: self.list_terms.pop(0)
                     if text in self.list_terms: self.list_terms.remove(text)
                     self.list_terms.append(text)
-                    output = open(join(asm_path.HOME_DIR, u'last-terms.pkl'), 'wb')
+                    output = open(join(asm_path.HOME_DIR, 'last-terms.pkl'), 'wb')
                     pickle.dump(self.list_terms, output)
                     output.close()
                 except: pass
                 self.hide()
                 self.parent.notebook.set_current_page(1)
                 sr = ShowResult(self.parent)
-                self.parent.viewerbook.append_page(sr,TabLabel(sr, u'بحث عن :'+text))
+                self.parent.viewerbook.append_page(sr,TabLabel(sr, 'بحث عن :'+text))
                 self.parent.viewerbook.set_current_page(-1)
                 sr.search(text, self.dict_perf, self.dict_field, self.selected_books)
         else:
@@ -672,7 +672,7 @@ class Searcher(Gtk.Dialog):
             i = model.get_iter_first()
         path = model.get_path(i)
         text = self.ent_search.get_text()
-        if text == u'': return
+        if text == '': return
         try: self.store_books.foreach(self.search_in_index, [text, model, path, i])
         except: pass
     
@@ -681,7 +681,7 @@ class Searcher(Gtk.Dialog):
             asm_customs.erro(self.parent, "لا يوجد أي كتاب محدد!")
             return
         nm = self.ent_field.get_text()
-        output = open(join(asm_path.LIBRARY_DIR, u'fields-search', nm+u'.pkl'), 'wb')
+        output = open(join(asm_path.LIBRARY_DIR, 'fields-search', nm+u'.pkl'), 'wb')
         pickle.dump(self.selected_books, output)
         output.close()
         self.ent_field.set_text('')
@@ -690,14 +690,14 @@ class Searcher(Gtk.Dialog):
     def load_fields(self, *a):
         self.store_fields.clear()
         self.store_fields.append([None, u"المفضلة"])
-        for a in os.listdir(join(asm_path.LIBRARY_DIR, u'fields-search')):
-            if a[-4:] == u'.pkl':
-                a = a.replace(u'.pkl', u'')
+        for a in os.listdir(join(asm_path.LIBRARY_DIR, 'fields-search')):
+            if a[-4:] == '.pkl':
+                a = a.replace(u'.pkl', '')
                 self.store_fields.append([None, a])
     
     def del_history(self, *a):
         self.list_terms = []
-        output = open(join(asm_path.HOME_DIR, u'last-terms.pkl'), 'wb')
+        output = open(join(asm_path.HOME_DIR, 'last-terms.pkl'), 'wb')
         pickle.dump(self.list_terms, output)
         output.close()
         self.list_ts.clear()
@@ -728,7 +728,7 @@ class Searcher(Gtk.Dialog):
         hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
         self.entry_search = Gtk.SearchEntry()
 #        self.entry_search.set_size_request(400,-1)
-        try: self.list_terms = pickle.load(open(join(asm_path.HOME_DIR, u'last-terms.pkl'), "rb"))
+        try: self.list_terms = pickle.load(open(join(asm_path.HOME_DIR, 'last-terms.pkl'), "rb"))
         except: self.list_terms = []
         completion = Gtk.EntryCompletion()
         self.list_ts = Gtk.ListStore(str)
@@ -811,11 +811,11 @@ class Searcher(Gtk.Dialog):
         box.set_border_width(7)
         notebk.append_page(box, Gtk.Label('مجالات البحث'))
         self.dict_field = {'nass':True, 'tit':False}
-        self.in_nasse = Gtk.RadioButton.new_with_label_from_widget(None, u'في النصوص')
+        self.in_nasse = Gtk.RadioButton.new_with_label_from_widget(None, 'في النصوص')
         self.in_nasse.set_name('nass')
         box.pack_start(self.in_nasse, False, False, 0)
         self.in_nasse.connect('toggled', self.select_field, 1)
-        self.in_title = Gtk.RadioButton.new_with_label_from_widget(self.in_nasse, u'في العناوين')
+        self.in_title = Gtk.RadioButton.new_with_label_from_widget(self.in_nasse, 'في العناوين')
         self.in_title.set_name('tit')
         box.pack_start(self.in_title, False, False, 0)
         self.in_title.connect('toggled', self.select_field, 2)
@@ -824,10 +824,10 @@ class Searcher(Gtk.Dialog):
         box.set_border_width(7)
         notebk.append_page(box, Gtk.Label('خيارات البحث'))
         self.dict_perf = {}
-        for a in [[u'بدون لواصق', u'identical'],
-        [u'عبارة متصلة', u'cursive'], 
-        [u'إحدى الكلمات', u'one_term'],  
-        [u'مع التشكيل', u'with_tachkil']]:
+        for a in [[u'بدون لواصق', 'identical'],
+        [u'عبارة متصلة', 'cursive'], 
+        [u'إحدى الكلمات', 'one_term'],  
+        [u'مع التشكيل', 'with_tachkil']]:
             btn = Gtk.CheckButton(a[0])
             btn.set_name(a[1])
             box.pack_start(btn, False, False, 0)
@@ -856,7 +856,7 @@ class Searcher(Gtk.Dialog):
             if i:
                 nm = model.get_value(i, 1)
                 if nm == u"المفضلة": return
-                os.remove(join(asm_path.LIBRARY_DIR, u'fields-search', nm+'.pkl')) 
+                os.remove(join(asm_path.LIBRARY_DIR, 'fields-search', nm+'.pkl')) 
                 model.remove(i)
         rm_field.connect('clicked', rm_field_cb)
         
@@ -876,11 +876,11 @@ class Searcher(Gtk.Dialog):
         box = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
         box.set_border_width(7)
         self.dict_field_index = {'nass':True, 'tit':False}
-        self.in_nasse_index = Gtk.RadioButton.new_with_label_from_widget(None, u'في النصوص')
+        self.in_nasse_index = Gtk.RadioButton.new_with_label_from_widget(None, 'في النصوص')
         self.in_nasse_index.set_name('nass')
         box.pack_start(self.in_nasse_index, False, False, 0)
         self.in_nasse_index.connect('toggled', self.select_field_index, 1)
-        self.in_title_index = Gtk.RadioButton.new_with_label_from_widget(self.in_nasse_index, u'في العناوين')
+        self.in_title_index = Gtk.RadioButton.new_with_label_from_widget(self.in_nasse_index, 'في العناوين')
         self.in_title_index.set_name('tit')
         box.pack_start(self.in_title_index, False, False, 0)
         self.in_title_index.connect('toggled', self.select_field_index, 2)
@@ -889,10 +889,10 @@ class Searcher(Gtk.Dialog):
         box = Gtk.Box(spacing=7,orientation=Gtk.Orientation.VERTICAL)
         box.set_border_width(7)
         self.dict_perf_index = {}
-        for a in [[u'بدون لواصق', u'identical'],
-        [u'عبارة متصلة', u'cursive'], 
-        [u'إحدى الكلمات', u'one_term'],  
-        [u'مع التشكيل', u'with_tachkil']]:
+        for a in [[u'بدون لواصق', 'identical'],
+        [u'عبارة متصلة', 'cursive'], 
+        [u'إحدى الكلمات', 'one_term'],  
+        [u'مع التشكيل', 'with_tachkil']]:
             btn = Gtk.CheckButton(a[0])
             btn.set_name(a[1])
             box.pack_start(btn, False, False, 0)

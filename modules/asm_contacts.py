@@ -130,7 +130,7 @@ class listDB(object):
                 progress.set_fraction(j1)
         #a الكتب والأقسام الموجودة في دليل المكتبة المقروءة--------------------        
         path = asm_path.BOOK_DIR
-        if asm_path.HOME_DIR in asm_path.BOOK_DIR and asm_path.LIBRARY_DIR_r != u'':
+        if asm_path.HOME_DIR in asm_path.BOOK_DIR and asm_path.LIBRARY_DIR_r != '':
             list_g = listdir(path)
             b = 0
             for a in list_g:
@@ -422,16 +422,16 @@ class listDB(object):
 
 class bookDB(object):
     
-    altered = [(u'EX', u''), (u'{', u'﴿'), (u'}', u'﴾'), (u'0', u'٠'), (u'1', u'١'), 
-                (u'2', u'٢'), (u'3', u'٣'), (u'4', u'٤'), (u'5', u'٥‌'), (u'6', u'٦'), 
-                (u'7', u'٧'), (u'8', u'٨'), (u'9', u'٩'), (u'+', u'')]
+    altered = [(u'EX', ''), (u'{', '﴿'), (u'}', '﴾'), (u'0', '٠'), (u'1', '١'), 
+                (u'2', '٢'), (u'3', '٣'), (u'4', '٤'), (u'5', '٥‌'), (u'6', '٦'), 
+                (u'7', '٧'), (u'8', '٨'), (u'9', '٩'), (u'+', '')]
     
-    altered0 = [(u'EX', u''), (u'{', u'﴿'), (u'}', u'﴾'), ( u'٠',u'0'), ( u'١',u'1'), 
-                (u'٢', u'2'), (u'٣' ,u'3'), (u'٤' ,u'4'), (u'٥‌' ,u'5'), (u'٦' ,u'6'), 
-                (u'٧' ,u'7'), (u'٨' ,u'8'), (u'٩' ,u'9'), (u'+', u'')]
+    altered0 = [(u'EX', ''), (u'{', '﴿'), (u'}', '﴾'), ( '٠',u'0'), ( '١',u'1'), 
+                (u'٢', '2'), (u'٣' ,u'3'), (u'٤' ,u'4'), (u'٥‌' ,u'5'), (u'٦' ,u'6'), 
+                (u'٧' ,u'7'), (u'٨' ,u'8'), (u'٩' ,u'9'), (u'+', '')]
     
-    shorts0 = [(u'A', u'صلى الله عليه وسلم'), (u'B', u'رضي الله عن'), (u'C', u'رحمه الله'), 
-             (u'D', u'عز وجل'), (u'E', u'عليه الصلاة و السلام'), (u'Y', u':')]
+    shorts0 = [(u'A', 'صلى الله عليه وسلم'), (u'B', 'رضي الله عن'), (u'C', 'رحمه الله'), 
+             (u'D', 'عز وجل'), (u'E', 'عليه الصلاة و السلام'), (u'Y', ':')]
     
     def __init__(self, book, id_book):
         self.book = book

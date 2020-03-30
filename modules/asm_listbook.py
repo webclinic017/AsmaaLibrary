@@ -131,7 +131,7 @@ class ListBooks(Gtk.HBox):
     def rm_last_all(self, *a):
         msg = asm_customs.sure(self.parent, "هل تريد مسح قائمة الكتب المفتوحة أخيرا")
         if msg == Gtk.ResponseType.YES:
-            remove(join(asm_path.DATA_DIR, u'last-books.pkl'))
+            remove(join(asm_path.DATA_DIR, 'last-books.pkl'))
             self.last_books = []
             self.store_last.clear()
     
@@ -225,8 +225,8 @@ class ListBooks(Gtk.HBox):
         return
       
     def build(self, *a):
-        self.select_part = u''
-        self.select_book = u''
+        self.select_part = ''
+        self.select_book = ''
         Gtk.HBox.__init__(self, False, 3)
         self.set_border_width(3)
         self.vbox_side = Gtk.VBox(False, 0)

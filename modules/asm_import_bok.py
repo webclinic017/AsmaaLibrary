@@ -49,22 +49,22 @@ class load_list_books_from_shamela(object):
     def get_cols(self, table, motif):
         cols_dict = {}
         if table == '0bok':
-            for a in [u'bkid', u'bk', u'cat', u'betaka', u'inf',u'auth',u'tafseernam', u'islamshort', u'archive']:
+            for a in [u'bkid', 'bk', 'cat', 'betaka', 'inf',u'auth',u'tafseernam', 'islamshort', 'archive']:
                 cols_dict[a] = motif.index(a)
         elif table == '0cat':
-            for a in [u'id', u'name']:
+            for a in [u'id', 'name']:
                 cols_dict[a] = motif.index(a)
         elif table == 'com':
-            for a in [u'com', u'bk', u'id']:
+            for a in [u'com', 'bk', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 'shorts':
-            for a in [u'bk', u'ramz', u'nass']:
+            for a in [u'bk', 'ramz', 'nass']:
                 cols_dict[a] = motif.index(a)
         return cols_dict
     
     def load_list(self):
-        for a in [u'0cat',u'com', u'shorts']:
-            if a  == u'0cat': file0 = self.ifile_main
+        for a in [u'0cat',u'com', 'shorts']:
+            if a  == '0cat': file0 = self.ifile_main
             else: file0 = self.ifile_spacial
             contents_main = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', file0, a],   
                                   0, stdout=PIPE, env={'MDB_JET3_CHARSET':'cp1256'}).communicate()[0].decode("utf8")
@@ -84,7 +84,7 @@ class load_list_books_from_shamela(object):
                         if a == '0cat':
                             while (Gtk.events_pending()): Gtk.main_iteration()
                             ss = self.store_books.append(None, [True, int(motif0[cols['id']]), motif0[cols['name']],0, 
-                                                               u'', u'', u'', u'', 0, 0])
+                                                               '', '', '', '', 0, 0])
                             self.get_books_part(motif0[cols['id']], ss)
                         elif a == 'com':
                             if int(motif0[cols['bk']]) in self.comments : 
@@ -121,10 +121,10 @@ class DB_from_MDB(object):
     def get_cols(self, table, motif, id_book=0):
         cols_dict = {}
         if table == 't'+str(id_book) or table == 'title':
-            for a in [u'tit', u'lvl', u'sub', u'id']:
+            for a in [u'tit', 'lvl', 'sub', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 'b'+str(id_book) or table == 'book':
-            for a in [u'id', u'nass', u'part', u'page', u'hno', u'sora', u'aya', u'na']:
+            for a in [u'id', 'nass', 'part', 'page', 'hno', 'sora', 'aya', 'na']:
                 try: cols_dict[a] = motif.index(a)
                 except: pass
         return cols_dict
@@ -172,7 +172,7 @@ class DB_from_MDB(object):
         for tb in asm_customs.schema.keys():
             cur.execute('CREATE TABLE IF NOT EXISTS {} ({})'.format(tb, asm_customs.schema[tb]))
         cur.execute("BEGIN;")
-        cur.execute('INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (self.info_list[1], u'',
+        cur.execute('INSERT INTO main VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (self.info_list[1], '',
                      0, self.info_list[2], self.info_list[3], 
                      self.info_list[4], 0, self.info_list[6], is_tafsir, 0, 0.1))
         if self.archive == 0: tables = ['book', 'title']
@@ -237,19 +237,19 @@ class DB_from_BOK(object):
     def get_cols(self, table, motif, id_book=0):
         cols_dict = {}
         if table == 'Main':
-            for a in [u'bkid', u'bk', u'betaka', u'inf',u'auth',u'tafseernam', u'islamshort', u'ad']:
+            for a in [u'bkid', 'bk', 'betaka', 'inf',u'auth',u'tafseernam', 'islamshort', 'ad']:
                 cols_dict[a] = motif.index(a)
         elif table == 'Shorts':
-            for a in [u'bk', u'ramz', u'nass']:
+            for a in [u'bk', 'ramz', 'nass']:
                 cols_dict[a] = motif.index(a)
         elif table == 'com':
-            for a in [u'com', u'bk', u'id']:
+            for a in [u'com', 'bk', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 't'+str(id_book):
-            for a in [u'tit', u'lvl', u'sub', u'id']:
+            for a in [u'tit', 'lvl', 'sub', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 'b'+str(id_book):
-            for a in [u'id', u'nass', u'part', u'page', u'hno', u'sora', u'aya', u'na']:
+            for a in [u'id', 'nass', 'part', 'page', 'hno', 'sora', 'aya', 'na']:
                 try: cols_dict[a] = motif.index(a)
                 except: pass
         return cols_dict

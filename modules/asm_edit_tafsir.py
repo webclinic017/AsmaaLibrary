@@ -116,7 +116,7 @@ class EditTafsir(Gtk.Dialog):
         
         hb = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
         sura_list = self.othman.get_suras_names()
-        hb0, self.suras = asm_customs.combo(sura_list, u'السورة')
+        hb0, self.suras = asm_customs.combo(sura_list, 'السورة')
         hb.pack_start(hb0, False, False, 3)
         self.suras.set_active(-1)
         

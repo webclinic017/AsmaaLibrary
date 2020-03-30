@@ -350,7 +350,7 @@ class AsmaaApp(Gtk.Window):
             list_marks.append([ch.all_in_page[1], ch.nm_book, ch.id_book])
             marks = repr(list_marks)
             asm_config.setv('marks', marks)
-            asm_customs.info(self, u'تم تعليم هذا الموضع')
+            asm_customs.info(self, 'تم تعليم هذا الموضع')
     
     # a  إضافة الكتاب المفتوح إلى المفضلة--------------------
     
@@ -360,7 +360,7 @@ class AsmaaApp(Gtk.Window):
                 n = self.viewerbook.get_current_page()
                 ch = self.viewerbook.get_nth_page(n)
                 check = ch.db_list.to_favorite(ch.id_book)
-                if check == None: asm_customs.info(self, u'تم إضافة كتاب "{}" للمفضلة'.format(ch.nm_book,))
+                if check == None: asm_customs.info(self, 'تم إضافة كتاب "{}" للمفضلة'.format(ch.nm_book,))
                 self.list_books.load_fav()
     
     # a عند التبديل بين نوافذ المكتبة-------------------------------

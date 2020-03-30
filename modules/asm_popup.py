@@ -23,32 +23,32 @@ def copy_to(widget, buff, waraka, parent):
     if parent.notebook.get_current_page() == 1:
         n = parent.viewerbook.get_current_page()
         ch = parent.viewerbook.get_nth_page(n)
-        hamich = u'{} (ج{} - ص{})'.format(ch.nm_book, ch.all_in_page[3], ch.all_in_page[4])
+        hamich = '{} (ج{} - ص{})'.format(ch.nm_book, ch.all_in_page[3], ch.all_in_page[4])
     elif parent.notebook.get_current_page() == 4:
         part = parent.tafsirpage.part_now
         page = parent.tafsirpage.page_now
         nm_book = parent.tafsirpage.nm_book
-        hamich = u'{} (ج{} - ص{})'.format(nm_book, part, page)
+        hamich = '{} (ج{} - ص{})'.format(nm_book, part, page)
     myfile = open(join(asm_path.LIBRARY_DIR, 'waraka-search', waraka), 'r')
-    new_w = u'''<head>\n<title>new</title>\n</head>\n<body dir="rtl">\n\
+    new_w = '''<head>\n<title>new</title>\n</head>\n<body dir="rtl">\n\
     <div style="text-align: right;">ــــــــــــــــــــــــــــــــــــــــــــــــــــــ</div>\n\
     </body>
     '''
     text_file = myfile.read()
     if text_file == '': text_file = new_w
-    if not u'ــــــــــــــــــ' in text_file: 
+    if not 'ــــــــــــــــــ' in text_file: 
         text_file = re.sub('</body>', 
         '<div style="text-align: right;">ــــــــــــــــــــــــــــــــــــــــــــــــــــــ</div>\n</body>',
         text_file)
     liens_file = text_file.split('\n')
     for l in liens_file:
-        if u'ــــــــــــــــــ' in l:
+        if 'ــــــــــــــــــ' in l:
             index_khat = liens_file.index(l)
             n_hawamech = len(liens_file)-index_khat-2
     liens_file.insert(index_khat, 
-    u'<div style="text-align: right;"><font face="KacstOne" size="6">{} </font><a href="#{}">({})</a></div>'.format(sel_text, n_hawamech, n_hawamech))
+    '<div style="text-align: right;"><font face="KacstOne" size="6">{} </font><a href="#{}">({})</a></div>'.format(sel_text, n_hawamech, n_hawamech))
     liens_file.insert(-2,
-    u'<div style="text-align: right;"><font face="KacstOne" size="3"><a name="{}">({})</a> {}</font></div>'.format(n_hawamech, n_hawamech, hamich))
+    '<div style="text-align: right;"><font face="KacstOne" size="3"><a name="{}">({})</a> {}</font></div>'.format(n_hawamech, n_hawamech, hamich))
     new_text = '\n'.join(liens_file)
     y = open(join(asm_path.LIBRARY_DIR, 'waraka-search', waraka) , 'wb')
     y.write(new_text.encode('utf8'))

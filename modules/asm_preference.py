@@ -136,7 +136,7 @@ class Preference(Gtk.Stack):
         res = open_dlg.run()
         if res == Gtk.ResponseType.OK:
             asm_config.setv('path', open_dlg.get_filenames()[0])          
-            asm_customs.info(self.parent, u'يرجى إعادة تشغيل المكتبة ليتغير المسار فعليا!')
+            asm_customs.info(self.parent, 'يرجى إعادة تشغيل المكتبة ليتغير المسار فعليا!')
         open_dlg.destroy()
     
     def new_db(self,*a): 
@@ -146,20 +146,20 @@ class Preference(Gtk.Stack):
                                     Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
         res = save_dlg.run()
         if res == Gtk.ResponseType.OK:
-            new_dir = join(save_dlg.get_filename(), u'مكتبة أسماء')
-            if os.path.exists(join(new_dir, u'data', u'Listbooks.db')):
-                asm_customs.erro(self.parent, u'يوجد مكتبة في هذا الدليل بالفعل')
+            new_dir = join(save_dlg.get_filename(), 'مكتبة أسماء')
+            if os.path.exists(join(new_dir, 'data', 'Listbooks.db')):
+                asm_customs.erro(self.parent, 'يوجد مكتبة في هذا الدليل بالفعل')
             else: 
                 if not os.path.exists(new_dir):
                     os.mkdir(new_dir)
-                if not os.path.exists(join(new_dir, u'data')):
-                    os.mkdir(join(new_dir, u'data'))
-                if not os.path.exists(join(new_dir, u'books')):
-                    os.mkdir(join(new_dir, u'books'))
-                if not os.path.exists(join(new_dir, u'index')):
-                    os.mkdir(join(new_dir, u'index'))
+                if not os.path.exists(join(new_dir, 'data')):
+                    os.mkdir(join(new_dir, 'data'))
+                if not os.path.exists(join(new_dir, 'books')):
+                    os.mkdir(join(new_dir, 'books'))
+                if not os.path.exists(join(new_dir, 'index')):
+                    os.mkdir(join(new_dir, 'index'))
                 self.db.new_db(join(new_dir, 'data', 'Listbooks.db'))
-                asm_customs.info(self.parent, u'تم إضافة مكتبة مفرغة جديدة')
+                asm_customs.info(self.parent, 'تم إضافة مكتبة مفرغة جديدة')
         save_dlg.destroy()
     
     def saved_session_cb(self, *a):
@@ -502,7 +502,7 @@ class Preference(Gtk.Stack):
         else: self.active_mouse_browse.set_active(  False)
         self.active_mouse_browse.connect("toggled", self.active_mouse_browse_cb)
         
-        ls = [u'بدون', u'اختفاء وظهور', u'زحلقة أفقية', u'زحلقة عمودية']
+        ls = [u'بدون', 'اختفاء وظهور', 'زحلقة أفقية', 'زحلقة عمودية']
         style_browse = Gtk.ComboBoxText()
         for a in ls:
             style_browse.append_text(a)
@@ -513,7 +513,7 @@ class Preference(Gtk.Stack):
         hb.pack_end(style_browse, False, False, 0)
         vb.pack_start(hb, False, False, 0)
         
-        ls = [u'0.1', u'0.2', u'0.5', u'1', u'1.5', u'2', u'3']
+        ls = [u'0.1', '0.2', '0.5', '1', '1.5', '2', '3']
         time_browse = Gtk.ComboBoxText()
         for a in ls:
             time_browse.append_text(a)
@@ -524,7 +524,7 @@ class Preference(Gtk.Stack):
         hb.pack_end(time_browse, False, False, 0)
         vb.pack_start(hb, False, False, 0)
         
-        ls = [u'1', u'2', u'3', u'4', u'5', u'10']
+        ls = [u'1', '2', '3', '4', '5', '10']
         auto_browse = Gtk.ComboBoxText()
         for a in ls:
             auto_browse.append_text(a)

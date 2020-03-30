@@ -524,10 +524,15 @@ class OpenBook(Gtk.VBox):
         v = vadj.get_value()
         if self.vadj_last == v:
             if self.vadj_list == [v]*5:
-                if ev.direction == Gdk.ScrollDirection.DOWN:
+                if ev.direction == 1:
                     self.next_page()
-                if ev.direction == Gdk.ScrollDirection.UP:
+                if ev.direction == 0:
                     self.previous_page()
+                if ev.direction == 4:
+                    if ev.delta_y > 0:
+                        self.next_page()
+                    if ev.delta_y < 0:
+                        self.previous_page()
                 self.vadj_list.clear()
             else:
                 self.vadj_list.append(v)

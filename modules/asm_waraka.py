@@ -29,16 +29,16 @@ class Warakat(Gtk.HPaned):
             msg = asm_customs.sure(self.parent, "هل تريد مسح الورقة المحددة")
             if msg == Gtk.ResponseType.YES:
                 waraka = model.get_value(i,0)
-                os.remove(join(asm_path.LIBRARY_DIR, u'waraka-search', waraka))
+                os.remove(join(asm_path.LIBRARY_DIR, 'waraka-search', waraka))
                 model.remove(i)
                 self.edit_html.set_sensitive(False)
                 
     def remove_all(self, *a):
         msg = asm_customs.sure(self.parent, "هل تريد مسح جميع أوراق البحث")
         if msg == Gtk.ResponseType.YES:
-            list_n = os.listdir(join(asm_path.LIBRARY_DIR, u'waraka-search'))
+            list_n = os.listdir(join(asm_path.LIBRARY_DIR, 'waraka-search'))
             for v in list_n:
-                os.remove(join(asm_path.LIBRARY_DIR, u'waraka-search', v))
+                os.remove(join(asm_path.LIBRARY_DIR, 'waraka-search', v))
             self.store_waraka.clear()
             self.edit_html.set_sensitive(False)
             self.edit_html.clear_page()
@@ -47,16 +47,16 @@ class Warakat(Gtk.HPaned):
         model, i = self.sel_waraka.get_selected()
         if i:
             waraka = model.get_value(i,0)
-            myfile = join(asm_path.LIBRARY_DIR, u'waraka-search', waraka)
+            myfile = join(asm_path.LIBRARY_DIR, 'waraka-search', waraka)
             self.edit_html.open_html(myfile)
             self.myfile = myfile
             self.edit_html.set_sensitive(True)
     
     def load_warakat(self, *a):
         self.store_waraka.clear()
-        list_n = os.listdir(join(asm_path.LIBRARY_DIR, u'waraka-search'))
+        list_n = os.listdir(join(asm_path.LIBRARY_DIR, 'waraka-search'))
         for v in list_n:
-            if isdir(join(asm_path.LIBRARY_DIR, u'waraka-search', v)): continue
+            if isdir(join(asm_path.LIBRARY_DIR, 'waraka-search', v)): continue
             self.store_waraka.append([v])
     
     def search_on_active(self, text):
@@ -71,8 +71,8 @@ class Warakat(Gtk.HPaned):
     def new_waraka(self, *a):
         if asm_path.can_modify(self.parent):
             new_waraka = self.ent_new.get_text()
-            if new_waraka == u'': return
-            myfile = join(asm_path.LIBRARY_DIR, u'waraka-search', new_waraka)
+            if new_waraka == '': return
+            myfile = join(asm_path.LIBRARY_DIR, 'waraka-search', new_waraka)
             if not exists(myfile):
                 try:
                     f = open(myfile,'w+')

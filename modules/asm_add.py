@@ -110,10 +110,10 @@ class AddBooks(Gtk.Dialog):
             self.btn_stop.set_sensitive(True)
             self.stop_n = 0
             self.no_book = 1
-            self.no_add = u''
+            self.no_add = ''
             self.btn_convert.set_sensitive(False)
             self.store_books.foreach(self.import_shamela, True)
-            if self.no_add != u'': asm_customs.erro(self, u'الكتب التي لم يتم إضافتها {}'.format(self.no_add,))
+            if self.no_add != '': asm_customs.erro(self, 'الكتب التي لم يتم إضافتها {}'.format(self.no_add,))
             self.lab_status.set_text(' لقد انتهت عملية التحويل ')
             self.btn_convert.set_sensitive(True)
         elif self.stack.get_visible_child_name() == 'n1':
@@ -150,7 +150,7 @@ class AddBooks(Gtk.Dialog):
                 text = re.sub('\n\s+\n', '\n', text)
                 text = re.sub('&.*?;', ' ', text)
                 return text
-            except: self.no_add += u'\n'+name_file
+            except: self.no_add += '\n'+name_file
         # DOCX----------------------------
         elif re.search(re.compile(u'\.[Dd][Oo][Cc][Xx]$'), name_file) != None:
             try:
@@ -161,8 +161,8 @@ class AddBooks(Gtk.Dialog):
                     if elt.text != None:
                         text_nodes.append(elt.text.strip())
                 text = u"\n".join(text_nodes)
-                return re.sub(u'\n\s+\n', u'\n', text)
-            except: self.no_add += u'\n'+name_file
+                return re.sub(u'\n\s+\n', '\n', text)
+            except: self.no_add += '\n'+name_file
         # ODT----------------------------
         elif re.search(re.compile(u'\.[Oo][Dd][Tt]$'), name_file) != None:
             try:
@@ -173,14 +173,14 @@ class AddBooks(Gtk.Dialog):
                     if elt.text != None:
                         text_nodes.append(elt.text.strip())
                 text = u"\n".join(text_nodes)
-                return re.sub(u'\n\s+\n', u'\n', text)
-            except: self.no_add += u'\n'+name_file
+                return re.sub(u'\n\s+\n', '\n', text)
+            except: self.no_add += '\n'+name_file
         # TXT----------------------------
         elif re.search(re.compile(u'\.[Tt][Xx][Tt]$'), name_file) != None:
             try: 
                 file = open(myfile)
                 text =file.read()
-                return re.sub(u'\n\s+\n', u'\n', text)
+                return re.sub(u'\n\s+\n', '\n', text)
             except: self.no_add += '\n'+name_file
         # DOC & RTF----------------------
         elif re.search(re.compile(u'\.[Dd][Oo][Cc]$'), name_file) != None or \
@@ -194,16 +194,16 @@ class AddBooks(Gtk.Dialog):
                 fe.close()
                 if not erroroutput:
                     text = retval
-                    return re.sub(u'\n\s+\n', u'\n', text)
+                    return re.sub(u'\n\s+\n', '\n', text)
                 else:
                     raise OSError("Executing the command caused an error: %s" % erroroutput)
-            except OSError: self.no_add += u'\n'+name_file+u'  -يرجى التحقق من تثبيت حزمة "catdoc"'
-            except: self.no_add += u'\n'+name_file
+            except OSError: self.no_add += '\n'+name_file+u'  -يرجى التحقق من تثبيت حزمة "catdoc"'
+            except: self.no_add += '\n'+name_file
         #OTHER----------------------------
         else:
             try: 
                 text = open(myfile).read()
-                return re.sub(u'\n\s+\n', u'\n', text)
+                return re.sub(u'\n\s+\n', '\n', text)
             except: pass
     
     def split_text_to_pages(self, text):
@@ -232,7 +232,7 @@ class AddBooks(Gtk.Dialog):
         DB_from_doc(nm_book, id_group, nm_group, list_page, list_title)
     
     def import_docs(self, *a):
-        self.no_add = u''
+        self.no_add = ''
         if len(self.store_add_doc) == 0: return
         id_group = asm_customs.value_active(self.groups_doc)
         nm_group = asm_customs.value_active(self.groups_doc, 1)
@@ -243,7 +243,7 @@ class AddBooks(Gtk.Dialog):
         self.btn_add_doc.set_sensitive(False)
         if not self.is_book_radio.get_active():
             new_book = self.name_book_entry.get_text()
-            if new_book == u'': 
+            if new_book == '': 
                 asm_customs.info(self, "ضع اسما للكتاب المراد استيراده")
                 return
             list_page = []
@@ -251,13 +251,13 @@ class AddBooks(Gtk.Dialog):
             id_page = 1
         n_docs = len(self.store_add_doc)
         f = 0
-        self.no_add = u''
+        self.no_add = ''
         while len(self.store_add_doc) > 0:
             f += 1
             self.progress.set_fraction(float(f)/float(n_docs))
             while (Gtk.events_pending()): Gtk.main_iteration()
             if self.is_book_radio.get_active():
-                new_book = re.sub(u'\....?.?$', u'', self.store_add_doc[0][1])
+                new_book = re.sub(u'\....?.?$', '', self.store_add_doc[0][1])
                 text_book = self.get_text_from_file(self.store_add_doc[0][0], 
                                                     self.store_add_doc[0][1])
                 if text_book != None and len(text_book) != 0:
@@ -275,7 +275,7 @@ class AddBooks(Gtk.Dialog):
                     for a in range(len(pages)):
                         list_page.append([id_page, pages[a], f, a+1])
                         id_page += 1
-                    list_title.append([id_page-len(pages), u'الجزء {}'.format(f), 1, 0])
+                    list_title.append([id_page-len(pages), 'الجزء {}'.format(f), 1, 0])
             else:
                 text_book = self.get_text_from_file(self.store_add_doc[0][0], 
                                                     self.store_add_doc[0][1])
@@ -285,8 +285,8 @@ class AddBooks(Gtk.Dialog):
             self.store_add_doc.remove(i)
         if not self.is_book_radio.get_active():
             if list_title == []: list_title = [[1, new_book, 1, 0]]
-            if self.no_add != u'': 
-                msg = asm_customs.sure(self, u'''
+            if self.no_add != '': 
+                msg = asm_customs.sure(self, '''
                 عدد الملفات التي لم يتمكن من إضافتها هو {}
                 هل تريد الاستمرار في تكوين الكتاب ؟
                 '''.format(len(self.no_add.split('\n')),))
@@ -298,7 +298,7 @@ class AddBooks(Gtk.Dialog):
         self.btn_convert.set_sensitive(True)
         self.btn_remove_doc.set_sensitive(True)
         self.btn_add_doc.set_sensitive(True)
-        if self.no_add != u'': asm_customs.erro(self, u'الملفات التي لم يتم إضافتها {}'.format(self.no_add,))
+        if self.no_add != '': asm_customs.erro(self, 'الملفات التي لم يتم إضافتها {}'.format(self.no_add,))
     
     def import_shamela(self, model, path, i, fixed):
         # model = 0=bool, 1='BkId', 2='Bk', 3='cat', 4='Betaka', 5='Inf', 6='Auth', 7='TafseerNam', 8='IslamShort', 9='Archive'
@@ -340,13 +340,13 @@ class AddBooks(Gtk.Dialog):
         self.btn_add.set_sensitive(False)
         n_books = len(self.store_add)
         f = 0
-        self.no_add = u''
+        self.no_add = ''
         while len(self.store_add) > 0:
             if self.stop_n == 1: break
             while (Gtk.events_pending()): Gtk.main_iteration()
             book = self.store_add[0][0]
             nm_file = self.store_add[0][1]
-            if nm_file[-4:] == u'.asm':
+            if nm_file[-4:] == '.asm':
                 try: 
                     con = sqlite3.connect(book)
                     cur = con.cursor()
@@ -357,14 +357,14 @@ class AddBooks(Gtk.Dialog):
                     new_book = join(asm_path.BOOK_DIR, nm_group, nm_file) 
                     copyfile(book, new_book)
                     self.db.add_book(nm_book, id_group, is_tafsir)
-                except: self.no_add += u'\n- '+nm_file[:-4]; print ('not add {}'.format(book,))
+                except: self.no_add += '\n- '+nm_file[:-4]; print ('not add {}'.format(book,))
             else:
                 nm_book = nm_file[:-4]
                 #try:
                 DB_from_BOK(book, nm_group, id_group)
                 self.progress.set_fraction(float(f)/float(n_books))
 #                except OSError: asm_customs.erro(self, "حزمة mdbtools \nيرجى تثبيتها لأجل استيراد الكتب غير مثبتة"); raise
-#                except: self.no_add += u'\n- '+nm_book; print ('not add {}'.format(book,))
+#                except: self.no_add += '\n- '+nm_book; print ('not add {}'.format(book,))
             i = self.store_add.get_iter_first()
             self.store_add.remove(i)
             f +=1
@@ -374,7 +374,7 @@ class AddBooks(Gtk.Dialog):
         self.btn_convert.set_sensitive(True)
         self.btn_remove.set_sensitive(True)
         self.btn_add.set_sensitive(True)
-        if self.no_add != u'': asm_customs.erro(self, u'الكتب التي لم يتم إضافتها {}'.format(self.no_add,)) 
+        if self.no_add != '': asm_customs.erro(self, 'الكتب التي لم يتم إضافتها {}'.format(self.no_add,)) 
     
     def select_path(self, *a): 
         save_dlg = Gtk.FileChooserDialog(u'تحديد مجلد', self.parent,
@@ -391,20 +391,20 @@ class AddBooks(Gtk.Dialog):
         self.comments = {}
         self.shorts = {}
         self.path_shamila = self.entry_shamila.get_text()
-        if self.path_shamila == u'': 
+        if self.path_shamila == '': 
             asm_customs.erro(self, "لم تحدد موقع المكتبة الشاملة")
             return
         else:
-            if not exists(join(self.path_shamila, u'Files')) or not exists(join(self.path_shamila, u'Books')):
+            if not exists(join(self.path_shamila, 'Files')) or not exists(join(self.path_shamila, 'Books')):
                 asm_customs.erro(self, "موقع الشاملة المحدد غير صحيح")
                 return
-            elif not exists(join(self.path_shamila, u'Files', u'main.mdb')) or \
-            not exists(join(self.path_shamila, u'Files', u'special.mdb')):
+            elif not exists(join(self.path_shamila, 'Files', 'main.mdb')) or \
+            not exists(join(self.path_shamila, 'Files', 'special.mdb')):
                 asm_customs.erro(self, "بعض الملفات الضرورية غير موجودة في هذا الدليل")
                 return
         self.btn_convert.set_sensitive(False)
-        load_list_books = load_list_books_from_shamela(join(self.path_shamila, u'Files', u'main.mdb'),
-                                     join(self.path_shamila, u'Files', u'special.mdb'), 
+        load_list_books = load_list_books_from_shamela(join(self.path_shamila, 'Files', 'main.mdb'),
+                                     join(self.path_shamila, 'Files', 'special.mdb'), 
                                      self.store_books, self.comments, self.shorts)
         self.no_all_book = load_list_books.no_all_book
         self.all_books.set_active(True)

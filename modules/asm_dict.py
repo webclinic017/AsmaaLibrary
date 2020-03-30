@@ -32,7 +32,7 @@ class Explanatory(Gtk.HBox):
         search_tokens = []
         nasse = self.view_dict_bfr.get_text(self.view_dict_bfr.get_start_iter(), 
                                             self.view_dict_bfr.get_end_iter(),True).split()
-        if text == u'': 
+        if text == '': 
             for a in self.all_term:
                 txt = asm_araby.fuzzy(a)
                 for term in nasse: 
@@ -46,7 +46,7 @@ class Explanatory(Gtk.HBox):
         asm_customs.with_tag(self.view_dict_bfr, self.search_tag, search_tokens)
     
     def search_on_active(self, text):
-        if text == u'': return
+        if text == '': return
         elif len(text) < 3: 
             asm_customs.erro(self.parent, 'أدخل كلمة بها أكثر من حرفين للبحث عنها')
             return
@@ -100,7 +100,7 @@ class Explanatory(Gtk.HBox):
         Gtk.HBox.__init__(self, False, 3)
         self.set_border_width(3)
         letters = [u"ألف",u"باء",u'تاء',u'ثاء',u'جيم',u'حاء',u'خاء',u'دال',u'ذال',u'راء',u'زاي',u'سين',u'شين',u'صاد' ,
-            u'ضاد',u'طاء',u'ظاء',u'عين',u'غين',u'فاء',u'قاف',u'كاف',u'لام',u'ميم',u'نون',u'هاء',u'واو',u'ياء']
+            'ضاد',u'طاء',u'ظاء',u'عين',u'غين',u'فاء',u'قاف',u'كاف',u'لام',u'ميم',u'نون',u'هاء',u'واو',u'ياء']
         vbox = Gtk.VBox(False, 3)
         btn_letters = Gtk.ComboBoxText()
         btn_letters.set_wrap_width(5)

@@ -48,7 +48,7 @@ class Organize(Gtk.Box):
             nm_book = model.get_value(i, 1)
             check = self.db.to_favorite(id_book)
             if check == None: 
-                asm_customs.info(self.parent, u'تم إضافة كتاب "{}" للمفضلة'.format(nm_book,))
+                asm_customs.info(self.parent, 'تم إضافة كتاب "{}" للمفضلة'.format(nm_book,))
             self.parent.list_books.load_fav()
     
     def modify_data(self, *a):
@@ -59,7 +59,7 @@ class Organize(Gtk.Box):
         id_group = model.get_value(i, 0)
         nm_group = model.get_value(i, 1)
         if i:
-            msg = asm_customs.sure(self.parent, u'''
+            msg = asm_customs.sure(self.parent, '''
             سيتم حذف قسم "{}"
             مع جميع كتبه، هل تريد الاستمرار ؟
             '''.format(nm_group,))
@@ -76,7 +76,7 @@ class Organize(Gtk.Box):
         if i:
             id_book = model.get_value(i, 0)
             nm_book = model.get_value(i, 1)
-            msg = asm_customs.sure(self.parent, u'''
+            msg = asm_customs.sure(self.parent, '''
             سيتم حذف كتاب "{}"
             هل تريد الاستمرار ؟
             '''.format(nm_book,))
@@ -117,7 +117,7 @@ class Organize(Gtk.Box):
         ls = []
         for a in self.db.all_parts():
             ls.append([a[0], a[1]])
-        hb, parts_g = asm_customs.combo(ls, u'')
+        hb, parts_g = asm_customs.combo(ls, '')
         parts_g.set_active(0)
         self.received_part_name = asm_customs.value_active(parts_g, 1)
         self.received_part_id = asm_customs.value_active(parts_g)
@@ -162,7 +162,7 @@ class Organize(Gtk.Box):
                 copyfile(join(asm_path.BOOK_DIR, old_group, nm_book+u'.asm'), 
                          join(asm_path.BOOK_DIR, self.received_part_name, nm_book+u'.asm'))
                 unlink(join(asm_path.BOOK_DIR, old_group, nm_book+u'.asm'))
-                asm_customs.info(self.parent, u'تم نقل الكتاب "{}" إلى قسم "{}"'.format(nm_book, self.received_part_name))
+                asm_customs.info(self.parent, 'تم نقل الكتاب "{}" إلى قسم "{}"'.format(nm_book, self.received_part_name))
                 self.ok_group()
       
     def refresh_groups(self, *a):

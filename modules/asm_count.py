@@ -15,7 +15,7 @@ class Count(Gtk.Box):
         self.db = listDB()
     
     def fast(self, *a):
-        template0  = u'''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+        template0  = '''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
         <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
         <html>
@@ -35,9 +35,9 @@ class Count(Gtk.Box):
         <td style="background-color: rgb(51, 204, 255);">الأقسام</td>
         </tr>
         '''
-        template1  = u''''''
+        template1  = ''''''
         for a in self.db.all_parts():
-            template1 += u'''
+            template1 += '''
             <tr>
             <td>{}<br>
             </td>
@@ -46,7 +46,7 @@ class Count(Gtk.Box):
             </tr>
             '''.format(len(self.db.books_part(a[0])), a[1])
             
-        template2  = u'''
+        template2  = '''
         </tbody>
         </table>
         <br>
@@ -55,7 +55,7 @@ class Count(Gtk.Box):
         </html>
         '''
         
-        file_html = join(asm_path.HOME_DIR, u'count.html')
+        file_html = join(asm_path.HOME_DIR, 'count.html')
         file_count = open(file_html, 'w')
         new_template = template0+template1+template2
         file_count.write(new_template)
@@ -63,7 +63,7 @@ class Count(Gtk.Box):
         return file_html
         
     def detail(self, *a):
-        template0  = u'''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+        template0  = '''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
         <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
         <html>
@@ -83,12 +83,12 @@ class Count(Gtk.Box):
         <td style="background-color: rgb(51, 204, 255);">الأقسام</td>
         </tr>
         '''
-        template1  = u''
+        template1  = ''
         for a in self.db.all_parts():
-            books = u''
+            books = ''
             for b in self.db.books_part(a[0]):
                 books += b[1]+u'<br>'
-            template1 += u'''
+            template1 += '''
             <tr>
             <td>{}<br>
             </td>
@@ -97,7 +97,7 @@ class Count(Gtk.Box):
             </tr>
             '''.format(books, a[1])
             
-        template2  = u'''
+        template2  = '''
         </tbody>
         </table>
         <br>
@@ -106,7 +106,7 @@ class Count(Gtk.Box):
         </html>
         '''
         
-        file_html = join(asm_path.HOME_DIR, u'count.html')
+        file_html = join(asm_path.HOME_DIR, 'count.html')
         file_count = open(file_html, 'w')
         new_template = template0+template1+template2
         file_count.write(new_template)

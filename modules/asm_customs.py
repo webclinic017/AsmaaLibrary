@@ -11,7 +11,7 @@ import re
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.6.3'
+version = '2.7.0'
 #a--------------------------------------------------
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
@@ -154,8 +154,8 @@ def button_fontnm():
  
 #a------------------------------------------
 def button_fontsz():
-    list_font = [[u'1', u'1'], [u'2', u'2'], [u'3', u'3'], [u'4', u'4'], 
-                [u'5', u'5'], [u'6', u'6'], [u'7', u'7']] 
+    list_font = [[u'1', '1'], [u'2', '2'], [u'3', '3'], [u'4', '4'], 
+                [u'5', '5'], [u'6', '6'], [u'7', '7']] 
     store = Gtk.ListStore(str, str)
     cmt = Gtk.ComboBox.new_with_model(store)
     for a in list_font:
