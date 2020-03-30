@@ -545,9 +545,12 @@ class bookDB(object):
         return self.cur.fetchone()
     
     def page_ayat(self, sora, aya):
-        self.cur.execute("""SELECT id FROM pages WHERE sora=? AND aya<=?""", (sora, aya))
-        page = self.cur.fetchall()
-        try: return page[-1][0]
+        try: 
+            self.cur.execute("""SELECT aya FROM pages WHERE sora=? AND aya<=?""", (sora, aya))
+            y = self.cur.fetchall()
+            self.cur.execute("""SELECT id FROM pages WHERE sora=? AND aya=? LIMIT 1""", (sora, y[-1][0]))
+            page = self.cur.fetchall()
+            return page[0][0]
         except: return 1
     
     def edit_tafsir(self, id_page, sura, aya, na):

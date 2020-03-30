@@ -244,9 +244,6 @@ class Preference(Gtk.Stack):
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         self.view_html = EditHTML()
         self.view_html.open_html(self.file_html)
-        close_btn = Gtk.Button("إغلاق")
-        close_btn.connect('clicked',lambda *a: dlg.destroy())
-        self.view_html.hb_tb.pack_end(close_btn, False, False, 0)
         box.pack_start(self.view_html, True, True, 0)
         dlg.show_all()
     

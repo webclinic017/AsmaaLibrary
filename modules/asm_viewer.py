@@ -521,28 +521,23 @@ class OpenBook(Gtk.VBox):
     def scroll_event(self, sc, ev):
         if asm_config.getn('mouse_browse') == 0: return
         vadj = sc.get_vadjustment()
-        p = vadj.get_page_size()
-        m = vadj.get_upper()-p
         v = vadj.get_value()
-        if m == v:
-            if self.vadj_page_next == 5:
-                self.next_page()
-                self.vadj_page_next = 0
-            else:
-                self.vadj_page_next += 1
-        elif v <= 1.0:
-            if self.vadj_page_prev == 5:
-                if ev.get_scroll_deltas()[2] == -1.0:
-                    self.previous_page()
-                if ev.get_scroll_deltas()[2] == 1.0:
+        if self.vadj_last == v:
+            if self.vadj_list == [v]*5:
+                if ev.direction == Gdk.ScrollDirection.DOWN:
                     self.next_page()
-                self.vadj_page_prev = 0
+                if ev.direction == Gdk.ScrollDirection.UP:
+                    self.previous_page()
+                self.vadj_list.clear()
             else:
-                self.vadj_page_prev += 1
+                self.vadj_list.append(v)
         else:
-            self.vadj_page_next = 0
-            self.vadj_page_prev = 0
-    
+            self.vadj_last = v
+            self.vadj_list.clear()
+   
+#         p = vadj.get_page_size()
+#         ur = vadj.get_upper()
+
     def convert_browse(self, *a):
         ls = [1, 2, 5, 10, 15, 20, 30]
         self.stack.set_transition_duration(ls[asm_config.getn('time_browse')]*100)
@@ -767,8 +762,8 @@ class OpenBook(Gtk.VBox):
             add_widget()
         
     def build(self, *a):
-        self.vadj_page_next = 0
-        self.vadj_page_prev= 0
+        self.vadj_list = []
+        self.vadj_last = 0
         self.hp = Gtk.HPaned()
         self.parent.connect("check-resize", self.convert_browse)
         
@@ -928,7 +923,8 @@ class OpenBook(Gtk.VBox):
         self.comment_btn.set_tooltip_text("أظهر التعليق")
         self.comment_btn.connect('clicked', self.comment_cb)
         btnbox_action.pack_start(self.comment_btn, False, False, 0)
-        vbox.pack_start(hbox, False, False, 0)
+        if self.id_book != -1:
+            vbox.pack_start(hbox, False, False, 0)
         self.btn_autoScroll = Gtk.ToggleButton()
         img = Gtk.Image.new_from_icon_name('media-seek-forward-symbolic-rtl', 2)
         self.btn_autoScroll.add(img)

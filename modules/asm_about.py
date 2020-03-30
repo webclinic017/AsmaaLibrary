@@ -13,17 +13,17 @@ class About(Gtk.AboutDialog):
         self.parent = parent
         Gtk.AboutDialog.__init__(self, parent = self.parent, wrap_license = True)
         self.set_program_name("مكتبة أسماء")
-        self.set_version("2.6.0")
+        self.set_version("2.7.0")
         self.set_icon_name("asmaa")
         self.set_logo_icon_name('asmaa')
         self.set_comments("""بديل للمكتبة الشاملة على لينكس""")
-        self.set_website("http://www.linuxac.org")
-        self.set_website_label('مجتمع لينكس العربي')
+        self.set_website("https://sourceforge.net/projects/asmaalibrary/files/")
+        self.set_website_label('حمل المكتبة من النت')
         self.set_authors(['',
                           '<asmaaarab@gmail.com> أحمد رغدي ',
                            ])
         self.set_license("""
-        مكتبة أسماء2 برمجية حرة ؛
+        مكتبة أسماء 2 برمجية حرة ؛
         بإمكانك إعادة توزيعها مع أو دون تعديلها ،
         تحت شروط الرخصة "وقف" ، توزّع مكتبة أسماء
         على أمل أن تكون مفيدةً لمن يستخدمها دون أدنى ضمان  ؛

@@ -4,7 +4,7 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  #########
 ##############################################################################
 
-from os.path import join
+from os.path import join, exists
 import os, pickle
 from gi.repository import Gtk
 from asm_search import ShowResult
@@ -23,7 +23,8 @@ class SavedResult(Gtk.Dialog):
             sr.hb_stop.hide()
             self.parent.viewerbook.append_page(sr,TabLabel(sr, nm))
             self.parent.viewerbook.set_current_page(-1)
-            sr.text, store = pickle.load(open(join(asm_path.HOME_DIR, 'searchs', nm+".pkl"), "rb"))
+            print(exists(join(asm_path.HOME_DIR, 'searchs', nm+".pkl")))
+            sr.text, sr.cursive, store = pickle.load(open(join(asm_path.HOME_DIR, 'searchs', nm+".pkl"), "rb"))
             sr.results_books = store
             sr.lab_n_result.set_text('عدد النتائج : {}'.format(len(store), ))
             self.destroy()
@@ -35,14 +36,14 @@ class SavedResult(Gtk.Dialog):
         (model, i) = self.tree_sav.get_selection().get_selected()
         if i :
             res_self = asm_customs.sure(self, " هل ترغب في حذف النتيجة المحددة ؟")
-            if res_self:
+            if res_self == -8:
                 nm = model.get_value(i,0)
                 os.remove(join(asm_path.HOME_DIR, 'searchs', nm+'.pkl'))
                 self.store_sav.remove(i)
                 
     def remove_iters(self, *a):
         res_self = asm_customs.sure(self, " هل ترغب في حذف جميع النتائج الموجودة ؟")
-        if res_self:
+        if res_self == -8:
             for a in self.list_n:
                 if a[-4:] == '.pkl':
                     os.remove(join(asm_path.HOME_DIR, 'searchs', a))

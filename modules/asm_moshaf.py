@@ -4,7 +4,7 @@
 #a########  "قُلۡ بِفَضلِ ٱللَّهِ وَبِرَحمَتِهِۦ فَبِذَٰلِكَ فَليَفرَحُواْ هُوَ خَيرُُ مِّمَّا يَجمَعُونَ"  ########
 ##############################################################################
 
-from gi.repository import Gtk, WebKit
+from gi.repository import Gtk, WebKit2
 from asm_contacts import Othman
 import asm_path
 import asm_customs
@@ -136,7 +136,7 @@ class ViewerMoshaf(Gtk.HPaned):
                 for a in self.my_aya[page]:
                     aya_txt = self.db.get_aya(a)
                     html = re.sub(aya_txt, u'<span style="background-color: rgb(255, 245, 177);">{}</span>'.format(aya_txt,), html)
-        self.view_quran.load_html_string(html, u'file://{}/'.format(asm_path.MOSHAF_DIR,))
+        self.view_quran.load_alternate_html(html, u'file://{}/'.format(asm_path.MOSHAF_DIR,), u'file://{}/'.format(asm_path.MOSHAF_DIR,))
         self.page_id = page
         if len(self.opened_old) == 0: self.opened_old.append(page)
         elif page != self.opened_old[-1]: self.opened_old.append(page)
@@ -199,26 +199,35 @@ class ViewerMoshaf(Gtk.HPaned):
         self.parent.notebook.set_current_page(4)
         self.parent.tafsirpage.ok_result()
    
-    def populate_page_popup_cb(self, view, menu):
-        for a in menu.get_children():
-            a.destroy()
-        f1 = Gtk.MenuItem('تفسير الآيات')
-        f1.connect('activate', self.tafsir_ayat) 
-        menu.append(f1)
-        c1 = Gtk.SeparatorMenuItem()
-        menu.append(c1)
-        c1.show()
-        i = Gtk.MenuItem('تكبير النص')
-        i.connect('activate', lambda m,v,*a,**k: v.zoom_in(), view)
-        menu.append(i)
-        i = Gtk.MenuItem('تصغير النص')
-        i.connect('activate', lambda m,v,**k: v.zoom_out(), view)
-        menu.append(i)
-        i = Gtk.MenuItem('الحجم العادي')
-        i.connect('activate', lambda m,v,*a,**k: v.get_zoom_level() == 1.0 or v.set_zoom_level(1.0), view)
-        menu.append(i)
-        menu.show_all()
-        return False
+    def populate_page_popup_cb(self, webview, context_menu, hit_result_event, event):
+        context_menu.remove_all()
+        action1 = Gtk.Action.new( 'تفسير الآيات','تفسير الآيات', None)
+        action1.connect('activate', self.tafsir_ayat)
+        option1 = WebKit2.ContextMenuItem().new(action1)
+        context_menu.append(option1)
+   
+   
+   
+#     def populate_page_popup_cb1(self, view, menu, ev, p):
+# #         for a in menu.get_children():
+# #             a.destroy()
+#         f1 = WebKit2.ContextMenu('تفسير الآيات')
+#         f1.connect('activate', self.tafsir_ayat) 
+#         menu.append(f1)
+#         c1 = Gtk.SeparatorMenuItem()
+#         menu.append(c1)
+#         c1.show()
+#         i = Gtk.MenuItem('')
+#         i.connect('activate', lambda m,v,*a,**k: v.zoom_in(), view)
+#         menu.append(i)
+#         i = Gtk.MenuItem('تصغير النص')
+#         i.connect('activate', lambda m,v,**k: v.zoom_out(), view)
+#         menu.append(i)
+#         i = Gtk.MenuItem('الحجم العادي')
+#         i.connect('activate', lambda m,v,*a,**k: v.get_zoom_level() == 1.0 or v.set_zoom_level(1.0), view)
+#         menu.append(i)
+#         menu.show_all()
+#         return False
     
     def search_on_page(self, text):
         return
@@ -282,12 +291,13 @@ class ViewerMoshaf(Gtk.HPaned):
         vbox.pack_start(scroll, True, True, 0)
         self.pack1(vbox, True, True)
         
-        self.view_quran = WebKit.WebView()
-        self.view_quran.connect("populate-popup", self.populate_page_popup_cb)
+        self.view_quran = WebKit2.WebView()
+        
+        self.view_quran.connect("context-menu", self.populate_page_popup_cb)
         scroll = Gtk.ScrolledWindow()
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.view_quran)
-        self.view_quran.set_full_content_zoom(True)
+        self.view_quran.set_zoom_level(True)
         self.pack2(scroll, True, True)
         index_by.connect('changed', self.load_index)
         self.load_index(index_by)

@@ -5,7 +5,7 @@
 #a############################################################################
 
 
-from gi.repository import Gtk, WebKit
+from gi.repository import Gtk, WebKit2
 import re
 import asm_path
 import asm_customs
@@ -55,7 +55,7 @@ class EditHTML(Gtk.VBox):
         if response == Gtk.ResponseType.OK:
             color = colorsel.get_current_color().to_string()
             color = "#" + "".join([color[1:3], color[5:7], color[9:11]])
-            self.editor.execute_script("document.execCommand('forecolor', null, '{}');".format(color,))
+            self.editor.execute_editing_command("document.execCommand('forecolor', null, '{}');".format(color,))
         dialog.destroy()
 
     def on_removeFormat(self, *a):
@@ -105,7 +105,7 @@ class EditHTML(Gtk.VBox):
     
     def  open_html(self, file_html):
         self.myfile = file_html
-        with open(file_html) as f: self.editor.load_html_string(f.read(), "file:///")
+        with open(file_html) as f: self.editor.load_alternate_html(f.read(), "file:///","file:///")
     
     def clear_page(self):
         self.editor.load_html_string('', "file:///")
@@ -119,84 +119,9 @@ class EditHTML(Gtk.VBox):
     def __init__(self):
         self.myfile = None
         Gtk.VBox.__init__(self)
-        self.editor = WebKit.WebView()
+        self.editor = WebKit2.WebView()
         self.editor.set_editable(True)
         scroll = Gtk.ScrolledWindow()
         scroll.add(self.editor)
-        
-        self.toolbar = Gtk.Toolbar()
-        self.hb_tb = Gtk.Box(spacing=3,orientation=Gtk.Orientation.HORIZONTAL)
-        self.pack_start(scroll, True, True, 0)
-        self.hb_tb.pack_start(self.toolbar, True, True, 0)
-        self.pack_start(self.hb_tb, False, False, 0)
-        save = Gtk.ToolButton(stock_id=Gtk.STOCK_SAVE)
-        save.connect('clicked', self.on_save)
-        self.toolbar.insert(save, 0)
-        export = asm_customs.tool_button(join(asm_path.ICON_DIR, 'html-24.png'), "", self.on_export)
-        self.toolbar.insert(export, 1)
-        source = Gtk.ToggleToolButton(stock_id=Gtk.STOCK_FILE)
-        source.connect('toggled', self.on_source)
-        self.toolbar.insert(source, 2)
-        printi = Gtk.ToolButton(stock_id=Gtk.STOCK_PRINT)
-        printi.connect('clicked', self.on_print)
-        self.toolbar.insert(printi, 3)
-        #self.toolbar.insert(Gtk.SeparatorToolItem(), 3)
-        undo = Gtk.ToolButton(stock_id=Gtk.STOCK_UNDO)
-        undo.connect('clicked', self.on_action, 'Undo')
-        self.toolbar.insert(undo, 4)
-        redo = Gtk.ToolButton(stock_id=Gtk.STOCK_REDO)
-        redo.connect('clicked', self.on_action, 'Redo')
-        self.toolbar.insert(redo, 5)
-        self.toolbar.insert(Gtk.SeparatorToolItem(), 6)
-        fontname_item = Gtk.ToolItem.new()
-        hb, self.fontname = asm_customs.button_fontnm()
-        fontname_item.add(hb)
-        self.fontname.connect('changed', self.on_select_fontnm)
-        self.toolbar.insert(fontname_item, 7)
-        fontsize_item = Gtk.ToolItem.new()
-        hb, self.fontsize = asm_customs.button_fontsz()
-        fontsize_item.add(hb)
-        self.fontsize.connect('changed', self.on_select_fontsz)
-        self.toolbar.insert(fontsize_item, 8)
-        bold = Gtk.ToolButton(stock_id=Gtk.STOCK_BOLD)
-        bold.connect('clicked', self.on_action, 'Bold')
-        self.toolbar.insert(bold, 9)
-        italic = Gtk.ToolButton(stock_id=Gtk.STOCK_ITALIC)
-        italic.connect('clicked', self.on_action, 'Italic')
-        self.toolbar.insert(italic, 10)
-        underline = Gtk.ToolButton(stock_id=Gtk.STOCK_UNDERLINE)
-        underline.connect('clicked', self.on_action, 'Underline')
-        self.toolbar.insert(underline, 11)
-        strikethrough = Gtk.ToolButton(stock_id=Gtk.STOCK_STRIKETHROUGH)
-        strikethrough.connect('clicked', self.on_action, 'Strikethrough')
-        self.toolbar.insert(strikethrough, 12)
-        self.toolbar.insert(Gtk.SeparatorToolItem(), 13)
-        color = Gtk.ToolButton(stock_id=Gtk.STOCK_SELECT_COLOR)
-        color.connect('clicked', self.on_select_color)
-        self.toolbar.insert(color, 14)
-        self.toolbar.insert(Gtk.SeparatorToolItem(), 15)
-        justifyleft = Gtk.ToolButton(stock_id=Gtk.STOCK_JUSTIFY_LEFT)
-        justifyleft.connect('clicked', self.on_action, 'Justifyleft')
-        self.toolbar.insert(justifyleft, 16)
-        justifyright = Gtk.ToolButton(stock_id=Gtk.STOCK_JUSTIFY_RIGHT)
-        justifyright.connect('clicked', self.on_action, 'Justifyright')
-        self.toolbar.insert(justifyright, 17)
-        justifycenter = Gtk.ToolButton(stock_id=Gtk.STOCK_JUSTIFY_CENTER)
-        justifycenter.connect('clicked', self.on_action, 'Justifycenter')
-        self.toolbar.insert(justifycenter, 18)
-        justifyfull = Gtk.ToolButton(stock_id=Gtk.STOCK_JUSTIFY_FILL)
-        justifyfull.connect('clicked', self.on_action, 'Justifyfull')
-        self.toolbar.insert(justifyfull, 19)
-        self.toolbar.insert(Gtk.SeparatorToolItem(), 20)
-        orderedlist = asm_customs.tool_button(join(asm_path.ICON_DIR, 'OrderedList.png'), "", self.on_orderedlist)
-        self.toolbar.insert(orderedlist, 21)
-        unorderedlist = asm_customs.tool_button(join(asm_path.ICON_DIR, 'UnorderedList.png'), "", self.on_unorderedlist)
-        self.toolbar.insert(unorderedlist, 22)
-        self.toolbar.insert(Gtk.SeparatorToolItem(), 23)
-        removeFormat = Gtk.ToolButton(stock_id=Gtk.STOCK_REMOVE)
-        removeFormat.set_tooltip_text('حذف جميع التنسيقات')
-        removeFormat.connect('clicked', self.on_removeFormat)
-        self.toolbar.insert(removeFormat, 24)
-
- 
-    
+        self.add(scroll)
+       

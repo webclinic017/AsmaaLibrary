@@ -89,7 +89,7 @@ class ShowResult(Gtk.VPaned):
         self.view_terms_tag.set_property('background', self.parent.theme.background_anawin)
         self.view_search_tag.set_property('background', self.parent.theme.background_searched)
     
-    def show_bitaka(self, *a):
+    def show_bitaka0(self, *a):
         if self.db.info_book() == None:
             text_info = self.nm_book
         else: text_info = self.db.info_book()
@@ -133,7 +133,7 @@ class ShowResult(Gtk.VPaned):
             for a in self.store_results:
                 self.results_books.append([a[0], a[1], a[2], a[3], a[4], a[5], a[6]])
             output = open(join(asm_path.HOME_DIR, 'searchs', u'آخر بحث.pkl'), 'wb')
-            pickle.dump((text,self.results_books), output)
+            pickle.dump((self.text, self.cursive, self.results_books), output)
             output.close()
     
     def search_in_index(self, id_book, text, dict_perf, dict_field, limit):
@@ -225,7 +225,7 @@ class ShowResult(Gtk.VPaned):
             asm_customs.erro(self.parent, "يوجد بحث محفوظ بنفس الاسم !!")
         else:
             output = open(join(asm_path.HOME_DIR, 'searchs', nm+u'.pkl'), 'wb')
-            pickle.dump((self.text, self.results_books), output)
+            pickle.dump((self.text, self.cursive, self.results_books), output)
             output.close()
         self.sav_result_entry.set_text("")
 
@@ -262,7 +262,9 @@ class ShowResult(Gtk.VPaned):
         search_tokens = []
         nasse0 = self.view_nasse_bfr.get_text(self.view_nasse_bfr.get_start_iter(), 
                                             self.view_nasse_bfr.get_end_iter(),True)
-        for text in self.text.split(' '):
+        if self.cursive: ls_terms = [self.text,]
+        else: ls_terms = self.text.split(' ')
+        for text in ls_terms:
             new_term = u''
             for l in text:
                 new_term += u'({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )
@@ -316,9 +318,70 @@ class ShowResult(Gtk.VPaned):
             for a in sr.store_results:
                 sr.results_books.append([a[0], a[1], a[2], a[3], a[4], a[5], a[6]])
             output = open(join(asm_path.HOME_DIR, 'searchs', u'آخر بحث.pkl'), 'wb')
-            pickle.dump((text,sr.results_books), output)
+            pickle.dump((self.text, self.cursive, self.results_books), output)
             output.close()
+    
+    def show_bitaka(self, *a):
+        box = Gtk.Box(spacing=5,orientation=Gtk.Orientation.VERTICAL)
+        bitaka_book = self.db.info_book()[3]
+        info_book = self.db.info_book()[4]
+        dlg = Gtk.Dialog(parent=self.parent)
+        dlg.set_icon_name("asmaa")
+        dlg.set_default_size(450, 300)
+        area = dlg.get_content_area()
+        area.set_spacing(6)
+        
+        hb_bar = Gtk.HeaderBar()
+        hb_bar.set_show_close_button(True)
+        dlg.set_titlebar(hb_bar)
+        stack = Gtk.Stack()
+        stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        stack.set_transition_duration(1000)
+        stack_switcher = Gtk.StackSwitcher()
+        stack_switcher.set_stack(stack)
+        hb_bar.set_custom_title(stack_switcher)
 
+        self.view_info = asm_customs.ViewClass()
+        self.view_info.set_name('View')
+        self.view_info_bfr = self.view_info.get_buffer()
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        scroll.add(self.view_info)
+        stack.add_titled(scroll, 'n1',' بطاقة')
+        self.view_info_bfr.set_text(bitaka_book)
+        
+        self.view_info1 = asm_customs.ViewClass()
+        self.view_info1.set_name('View')
+        self.view_info_bfr1 = self.view_info1.get_buffer()
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_shadow_type(Gtk.ShadowType.IN)
+        scroll.add(self.view_info1)
+        stack.add_titled(scroll, 'n2', 'نبذة')
+        self.view_info_bfr1.set_text(info_book)
+        #-----------------------------------------
+        ls2 = [self.view_info, self.view_info1]
+        for a in ls2:
+            szfont, fmfont = asm_customs.split_font(self.parent.theme.font_nasse_others)
+            data = '''
+            * {
+            font-family: "'''+fmfont+'''";
+            font-size: '''+szfont+'''px;
+            color: '''+asm_customs.rgb(self.parent.theme.color_nasse_others)+''';
+            background-color: '''+asm_customs.rgb(self.parent.theme.background_nasse_others)+''';
+            }
+            #View text selection, #View:selected  {
+            color: '''+asm_customs.rgb(self.parent.theme.color_selected)+''';
+            background-color: '''+asm_customs.rgb(self.parent.theme.background_selected)+''';
+            }
+            '''
+            css_provider = Gtk.CssProvider()
+            context = a.get_style_context()
+            css_provider.load_from_data(data.encode('utf8'))
+            context.add_provider(css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        box.pack_start(stack, True, True, 0)
+        area.pack_start(box, True, True, 0)
+        dlg.show_all()
+    
     def open_new_tab(self, *a):
         if self.tree_results.get_selection().count_selected_rows() == 1:
             n = self.parent.viewerbook.get_n_pages()
@@ -410,6 +473,12 @@ class ShowResult(Gtk.VPaned):
         self.progress = Gtk.ProgressBar()
         self.hb_stop.pack_start(self.progress, True, True, 0)
         hb.pack_start(self.hb_stop, True, True, 0)
+        bitaka = Gtk.Button()
+        bitaka.set_tooltip_text("بطاقة عن الكتاب")
+        bitaka.connect('clicked', self.show_bitaka)
+        img = Gtk.Image.new_from_icon_name('dialog-information-symbolic', 2)
+        bitaka.set_image(img)
+        hb.pack_end(bitaka, False, False, 0 ) 
         vb.pack_start(hb, False, False, 5)
         
         self.store_results = Gtk.ListStore(int,int,str,str,int,int, int)
