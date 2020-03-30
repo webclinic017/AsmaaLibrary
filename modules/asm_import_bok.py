@@ -40,11 +40,13 @@ class load_list_books_from_shamela(object):
                 if len(motif0) == 1: continue
                 else:
                     if motif0[cols['cat']] == id_part:
-                        self.store_books.append(ss, [True, int(motif0[cols['bkid']]), motif0[cols['bk']], int(motif0[cols['cat']]), 
-                                                     motif0[cols['betaka']], motif0[cols['inf']],motif0[cols['auth']],
-                                                     motif0[cols['tafseernam']], int(motif0[cols['islamshort']]), 
-                                                     int(motif0[cols['archive']])])
-                        self.no_all_book += 1
+                        try:
+                            self.store_books.append(ss, [True, int(motif0[cols['bkid']]), motif0[cols['bk']], int(motif0[cols['cat']]), 
+                                                         motif0[cols['betaka']], motif0[cols['inf']],motif0[cols['auth']],
+                                                         motif0[cols['tafseernam']], int(motif0[cols['islamshort']]), 
+                                                         int(motif0[cols['archive']])])
+                            self.no_all_book += 1
+                        except: pass
     
     def get_cols(self, table, motif):
         cols_dict = {}

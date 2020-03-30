@@ -12,7 +12,7 @@ import re
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.8.0'
+version = '2.8.1'
 #a--------------------------------------------------
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
