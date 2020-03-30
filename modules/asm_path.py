@@ -74,7 +74,7 @@ if not exists(asm_config.getv('path')):
                                          Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
         
         Filter = Gtk.FileFilter()
-        Filter.set_name(u"قاعدة البيانات")
+        Filter.set_name("قاعدة البيانات")
         Filter.add_pattern("Listbooks.db")
         open_dlg.add_filter(Filter)
         res = open_dlg.run()

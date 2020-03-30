@@ -113,6 +113,8 @@ def load():
         config.set(section, 'nmbrs', 0)
     if not config.has_option(section, 'search'):
         config.set(section, 'search', 0)
+    if not config.has_option(section, 'scale_fonts'):
+        config.set(section, 'scale_fonts', 1.0)
     with open(myfile, 'w') as configfile:
         config.write(configfile)
 

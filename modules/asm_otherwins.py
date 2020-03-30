@@ -39,7 +39,7 @@ class OtherWins(Gtk.Notebook):
         self.authorpage = Author(self.parent)
         self.append_page(self.authorpage, lab)
         def switch(widget, page, n):
-            ss = [u"بحث عن كلمة",u"بحث عن راوٍ",u"بحث عن مؤلف"]
+            ss = ["بحث عن كلمة","بحث عن راوٍ","بحث عن مؤلف"]
             text = ss[n]
             self.parent.entry_search.set_placeholder_text(text)
         self.connect("switch-page", switch)

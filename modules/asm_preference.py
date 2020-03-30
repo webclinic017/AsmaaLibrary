@@ -106,6 +106,11 @@ class Preference(Gtk.Stack):
                 self.prop_btn.set_active(False)
                 self.modifie_btn.set_active(False)
     
+    def scale_fonts_c(self, *a):
+        sf = self.h_scale.get_value()
+        asm_config.setv('scale_fonts', sf)
+        self.parent.refresh()
+    
     def ch_font(self, btn):
         nconf = btn.get_name()
         font = btn.get_font()
@@ -123,13 +128,13 @@ class Preference(Gtk.Stack):
         asm_config.setv(nm, v)
     
     def change_path_db(self, *a):
-        open_dlg = Gtk.FileChooserDialog(u'تغيير مسار قاعدة البيانات',
+        open_dlg = Gtk.FileChooserDialog('تغيير مسار قاعدة البيانات',
                                          self.parent, Gtk.FileChooserAction.OPEN,
                                         (Gtk.STOCK_OK, Gtk.ResponseType.OK,
                                          Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
         
         Filter = Gtk.FileFilter()
-        Filter.set_name(u"قاعدة البيانات")
+        Filter.set_name("قاعدة البيانات")
         Filter.add_pattern("Listbooks.db")
         open_dlg.add_filter(Filter)
         
@@ -140,7 +145,7 @@ class Preference(Gtk.Stack):
         open_dlg.destroy()
     
     def new_db(self,*a): 
-        save_dlg = Gtk.FileChooserDialog(u'مسار قاعدة البيانات الجديدة', self.parent,
+        save_dlg = Gtk.FileChooserDialog('مسار قاعدة البيانات الجديدة', self.parent,
                                     Gtk.FileChooserAction.SELECT_FOLDER,
                                     (Gtk.STOCK_OK, Gtk.ResponseType.OK,
                                     Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
@@ -265,9 +270,9 @@ class Preference(Gtk.Stack):
     def set_btns_color(self, *a):
         for a in self.vbox_color.get_children():
             self.vbox_color.remove(a)
-        list_colors = [[u'قائمة الأقسام','_lists_parts'], [u'قائمة الكتب','_lists_books'], [u'القوائم الجانبية','_lists_titles'], 
-                   [u'نصوص الكتاب','_nasse_books'], [u'النص القرآني', '_quran'], [u'نصوص أخرى','_nasse_others'], [u'العناوين','_anawin'],
-                   [u'التحديد','_selected'], [u'المرور','_hover'], [u'البحث','_searched']]
+        list_colors = [['قائمة الأقسام','_lists_parts'], ['قائمة الكتب','_lists_books'], ['القوائم الجانبية','_lists_titles'], 
+                   ['نصوص الكتاب','_nasse_books'], ['النص القرآني', '_quran'], ['نصوص أخرى','_nasse_others'], ['العناوين','_anawin'],
+                   ['التحديد','_selected'], ['المرور','_hover'], ['البحث','_searched']]
         for a in list_colors:
             hbox = Gtk.Box(spacing=10,orientation=Gtk.Orientation.HORIZONTAL)
             btn0 = Gtk.ColorButton.new_with_rgba(asm_customs.rgba(asm_config.getv('color{}'.format(a[1]))))
@@ -419,6 +424,29 @@ class Preference(Gtk.Stack):
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroll.add(vb_font)
         vb.pack_start(scroll, True, True, 0)
+        sf = asm_config.getf('scale_fonts')
+        ad1 = Gtk.Adjustment(sf, 1, 2, 5, 0.0, 0)
+        self.h_scale = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, adjustment=ad1)
+        self.h_scale.set_draw_value(True)
+        self.h_scale.set_has_origin(True)
+        self.h_scale.set_digits(1)
+        self.h_scale.set_valign(Gtk.Align.START)
+        self.h_scale.connect("value-changed", self.scale_fonts_c)
+        self.h_scale.set_hexpand(True)
+        self.h_scale.add_mark(1.0,0,None)
+        self.h_scale.add_mark(1.1,0,None)
+        self.h_scale.add_mark(1.2,0,None)
+        self.h_scale.add_mark(1.3,0,None)
+        self.h_scale.add_mark(1.4,0,None)
+        self.h_scale.add_mark(1.5,0,None)
+        self.h_scale.add_mark(1.6,0,None)
+        self.h_scale.add_mark(1.7,0,None)
+        self.h_scale.add_mark(1.8,0,None)
+        self.h_scale.add_mark(1.9,0,None)
+        self.h_scale.add_mark(2.0,0,None)
+        vb.pack_start(Gtk.Separator(), False, False, 3)
+        vb.pack_start(self.h_scale, False, False, 0)
+        
         self.add_named(vb, 'n2')
         #----------------------------
         vb = Gtk.Box(spacing=3,orientation=Gtk.Orientation.VERTICAL)
@@ -502,7 +530,7 @@ class Preference(Gtk.Stack):
         else: self.active_mouse_browse.set_active(  False)
         self.active_mouse_browse.connect("toggled", self.active_mouse_browse_cb)
         
-        ls = [u'بدون', 'اختفاء وظهور', 'زحلقة أفقية', 'زحلقة عمودية']
+        ls = ['بدون', 'اختفاء وظهور', 'زحلقة أفقية', 'زحلقة عمودية']
         style_browse = Gtk.ComboBoxText()
         for a in ls:
             style_browse.append_text(a)
@@ -513,7 +541,7 @@ class Preference(Gtk.Stack):
         hb.pack_end(style_browse, False, False, 0)
         vb.pack_start(hb, False, False, 0)
         
-        ls = [u'0.1', '0.2', '0.5', '1', '1.5', '2', '3']
+        ls = ['0.1', '0.2', '0.5', '1', '1.5', '2', '3']
         time_browse = Gtk.ComboBoxText()
         for a in ls:
             time_browse.append_text(a)
@@ -524,7 +552,7 @@ class Preference(Gtk.Stack):
         hb.pack_end(time_browse, False, False, 0)
         vb.pack_start(hb, False, False, 0)
         
-        ls = [u'1', '2', '3', '4', '5', '10']
+        ls = ['1', '2', '3', '4', '5', '10']
         auto_browse = Gtk.ComboBoxText()
         for a in ls:
             auto_browse.append_text(a)
@@ -570,8 +598,11 @@ class Preference(Gtk.Stack):
         
         db_void = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/AsmaaLibrary.tar.gz/download",
                                                 'تنزيل قاعدة بيانات للتجربة')
-        
         vb.pack_start(db_void, False, False, 0)
+        
+        db_all = Gtk.LinkButton.new_with_label("http://sourceforge.net/projects/asmaalibrary/files/AsmaaLibrary.tar.xz/download",
+                                                'تنزيل مكتبة كاملة 4000 كتاب')
+        vb.pack_start(db_all, False, False, 0)
         self.add_named(vb, 'n6')
 
         self.show_all()

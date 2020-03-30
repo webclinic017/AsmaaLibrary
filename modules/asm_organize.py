@@ -83,7 +83,7 @@ class Organize(Gtk.Box):
             if msg == Gtk.ResponseType.YES:
                 check = self.db.remove_book(id_book)
                 if check == None:
-                    unlink(join(asm_path.BOOK_DIR, nm_group, nm_book+u'.asm'))
+                    unlink(join(asm_path.BOOK_DIR, nm_group, nm_book+'.asm'))
                     self.ok_group()
     
     def ok_book(self, *a):
@@ -159,9 +159,9 @@ class Organize(Gtk.Box):
                 id_book = model.get_value(i, 0)
                 nm_book = model.get_value(i, 1)
                 self.db.change_group(id_book, self.received_part_id)
-                copyfile(join(asm_path.BOOK_DIR, old_group, nm_book+u'.asm'), 
-                         join(asm_path.BOOK_DIR, self.received_part_name, nm_book+u'.asm'))
-                unlink(join(asm_path.BOOK_DIR, old_group, nm_book+u'.asm'))
+                copyfile(join(asm_path.BOOK_DIR, old_group, nm_book+'.asm'), 
+                         join(asm_path.BOOK_DIR, self.received_part_name, nm_book+'.asm'))
+                unlink(join(asm_path.BOOK_DIR, old_group, nm_book+'.asm'))
                 asm_customs.info(self.parent, 'تم نقل الكتاب "{}" إلى قسم "{}"'.format(nm_book, self.received_part_name))
                 self.ok_group()
       
@@ -219,10 +219,10 @@ class Organize(Gtk.Box):
             new_bk = self.entry_book.get_text()
             if new_bk == '' or new_bk == nm_book: return
             check = self.db.rename_book(new_bk, nm_book)
-            self.db.rename_book_in_main(join(asm_path.BOOK_DIR, nm_group, nm_book+u'.asm'), new_bk)
+            self.db.rename_book_in_main(join(asm_path.BOOK_DIR, nm_group, nm_book+'.asm'), new_bk)
             if check == None:
-                rename(join(asm_path.BOOK_DIR, nm_group, nm_book+u'.asm'), 
-                       join(asm_path.BOOK_DIR, nm_group, new_bk+u'.asm'))
+                rename(join(asm_path.BOOK_DIR, nm_group, nm_book+'.asm'), 
+                       join(asm_path.BOOK_DIR, nm_group, new_bk+'.asm'))
     
     def edit_tafsir_cb(self, *a):
         book = self.db.file_book(self.id_book)
@@ -250,7 +250,7 @@ class Organize(Gtk.Box):
             if new_bk == '' :
                 asm_customs.erro(self.parent, 'أدخل اسم الكتاب أولا')
                 return
-            db = join(asm_path.BOOK_DIR, nm_group, new_bk+u'.asm')
+            db = join(asm_path.BOOK_DIR, nm_group, new_bk+'.asm')
             if exists(db):
                 asm_customs.erro(self.parent, 'يوجد كتاب بنفس الاسم في هذا القسم')
                 return

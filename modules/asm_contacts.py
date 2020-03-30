@@ -75,7 +75,7 @@ class listDB(object):
             nm_group = self.group_book(id_book)
             if nm_group == '': 
                 self.remove_book(id_book)
-                store.append([nm_book+u" :  اسم فقط لا ينتمي لقسم (تم حذفه)"])
+                store.append([nm_book+" :  اسم فقط لا ينتمي لقسم (تم حذفه)"])
                 continue
             list1.append(nm_book)
             book = self.file_book(id_book)
@@ -83,7 +83,7 @@ class listDB(object):
                 self.remove_book(id_book)
                 try: unlink(book)
                 except: pass
-                store.append([nm_book+u" :  يوجد الاسم فقط (تم حذفه)"])
+                store.append([nm_book+" :  يوجد الاسم فقط (تم حذفه)"])
             j = (float(a)/float(n_books+1))/2.0
             progress.set_fraction(j)
             a += 1
@@ -92,7 +92,7 @@ class listDB(object):
         for g in groups:
             if not exists(join(asm_path.BOOK_DIR, g[1])):
                 mkdir(join(asm_path.BOOK_DIR, g[1]))
-                store.append([g[1]+u" : قسم فارغ موجود في قاعدة البيانات (تم إضافته إلى الدليل)"])
+                store.append([g[1]+" : قسم فارغ موجود في قاعدة البيانات (تم إضافته إلى الدليل)"])
         #a الكتب والأقسام الموجودة في دليل المكتبة--------------------
         path = asm_path.BOOK_DIR
         list_g = listdir(path)
@@ -102,7 +102,7 @@ class listDB(object):
             group = self.cur.fetchone()
             if group == None or len(group) == 0:
                 self.add_part(a)
-                store.append([a+u" : قسم موجود في الدليل فقط (تم إضافته إلى قاعدة البيانات)"])
+                store.append([a+" : قسم موجود في الدليل فقط (تم إضافته إلى قاعدة البيانات)"])
             ls_b = listdir(join(path, a))
             for a1 in ls_b:
                 if b%500 == 499: 
@@ -116,14 +116,14 @@ class listDB(object):
                         try:
                             is_tafsir = self.info_book(join(path, a, a1))[8]
                             self.add_book(a2, id_group, is_tafsir)
-                            store.append([a1+u" : كتاب موجود في الدليل فقط تم إضافته إلى قسم "+a])
+                            store.append([a1+" : كتاب موجود في الدليل فقط تم إضافته إلى قسم "+a])
                         except:
                             unlink(join(path, a, a1))
-                            store.append([a1+u" : كتاب تالف (تم حذفه)"])
+                            store.append([a1+" : كتاب تالف (تم حذفه)"])
                 else:
                     try:
                         unlink(join(path, a, a1))
-                        store.append([a1+u" : كتاب فارغ (تم حذفه)"])
+                        store.append([a1+" : كتاب فارغ (تم حذفه)"])
                     except: pass
                 b += 1
                 j1 = ((float(b)/float(n_books))/2.0) + j
@@ -138,7 +138,7 @@ class listDB(object):
                 group = self.cur.fetchone()
                 if group == None or len(group) == 0:
                     self.add_part(a)
-                    store.append([a+u" : قسم موجود في الدليل فقط (تم إضافته إلى قاعدة البيانات)"])
+                    store.append([a+" : قسم موجود في الدليل فقط (تم إضافته إلى قاعدة البيانات)"])
                 ls_b = listdir(join(path, a))
                 for a1 in ls_b:
                     if b%500 == 499: 
@@ -152,12 +152,12 @@ class listDB(object):
                             try:
                                 is_tafsir = self.info_book(join(path, a, a1))[8]
                                 self.add_book(a2, id_group, is_tafsir, -1)
-                                store.append([a1+u" : كتاب موجود في الدليل فقط تم إضافته إلى قسم "+a])
+                                store.append([a1+" : كتاب موجود في الدليل فقط تم إضافته إلى قسم "+a])
                             except: pass   
                     b += 1
         if len(store) == 0:
-                store.append([u"جميع البيانات سليمة"])
-        store.append([u"انتهى."])
+                store.append(["جميع البيانات سليمة"])
+        store.append(["انتهى."])
         progress.set_fraction(0.0)
       
     # a قاعدة بيانات جديدة---------------------------------------
@@ -225,7 +225,7 @@ class listDB(object):
     def to_favorite(self, id_book):
         self.cur.execute('UPDATE books SET fav=1 WHERE id_book=?', (id_book, ))
         check = self.con.commit()
-        if len(self.cur.execute('SELECT id_book FROM books WHERE id_book=?', (id_book, )).fetchall()) == 0: return 'u'
+        if len(self.cur.execute('SELECT id_book FROM books WHERE id_book=?', (id_book, )).fetchall()) == 0: return ''
         return check
     
     # a إخراج كتاب من المفضلة------------------------------
@@ -416,22 +416,22 @@ class listDB(object):
     def file_book(self, id_book):
         book_dir = self.book_dir(id_book)
         return join(book_dir, self.group_book(id_book),
-                     self.tit_book(id_book)[1]+u'.asm')
+                     self.tit_book(id_book)[1]+'.asm')
 
 # class قاعدة بيانات كتاب محدد----------------------------------
 
 class bookDB(object):
     
-    altered = [(u'EX', ''), (u'{', '﴿'), (u'}', '﴾'), (u'0', '٠'), (u'1', '١'), 
-                (u'2', '٢'), (u'3', '٣'), (u'4', '٤'), (u'5', '٥‌'), (u'6', '٦'), 
-                (u'7', '٧'), (u'8', '٨'), (u'9', '٩'), (u'+', '')]
+    altered = [('EX', ''), ('{', '﴿'), ('}', '﴾'), ('0', '٠'), ('1', '١'), 
+                ('2', '٢'), ('3', '٣'), ('4', '٤'), ('5', '٥‌'), ('6', '٦'), 
+                ('7', '٧'), ('8', '٨'), ('9', '٩'), ('+', '')]
     
-    altered0 = [(u'EX', ''), (u'{', '﴿'), (u'}', '﴾'), ( '٠',u'0'), ( '١',u'1'), 
-                (u'٢', '2'), (u'٣' ,u'3'), (u'٤' ,u'4'), (u'٥‌' ,u'5'), (u'٦' ,u'6'), 
-                (u'٧' ,u'7'), (u'٨' ,u'8'), (u'٩' ,u'9'), (u'+', '')]
+    altered0 = [('EX', ''), ('{', '﴿'), ('}', '﴾'), ( '٠','0'), ( '١','1'), 
+                ('٢', '2'), ('٣' ,'3'), ('٤' ,'4'), ('٥‌' ,'5'), ('٦' ,'6'), 
+                ('٧' ,'7'), ('٨' ,'8'), ('٩' ,'9'), ('+', '')]
     
-    shorts0 = [(u'A', 'صلى الله عليه وسلم'), (u'B', 'رضي الله عن'), (u'C', 'رحمه الله'), 
-             (u'D', 'عز وجل'), (u'E', 'عليه الصلاة و السلام'), (u'Y', ':')]
+    shorts0 = [('A', 'صلى الله عليه وسلم'), ('B', 'رضي الله عن'), ('C', 'رحمه الله'), 
+             ('D', 'عز وجل'), ('E', 'عليه الصلاة و السلام'), ('Y', ':')]
     
     def __init__(self, book, id_book):
         self.book = book

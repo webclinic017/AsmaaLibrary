@@ -40,30 +40,30 @@ class load_list_books_from_shamela(object):
                 if len(motif0) == 1: continue
                 else:
                     if motif0[cols['cat']] == id_part:
-                        self.store_books.append(ss, [True, int(motif0[cols[u'bkid']]), motif0[cols[u'bk']], int(motif0[cols[u'cat']]), 
-                                                     motif0[cols[u'betaka']], motif0[cols[u'inf']],motif0[cols[u'auth']],
-                                                     motif0[cols[u'tafseernam']], int(motif0[cols[u'islamshort']]), 
-                                                     int(motif0[cols[u'archive']])])
-                    self.no_all_book += 1
+                        self.store_books.append(ss, [True, int(motif0[cols['bkid']]), motif0[cols['bk']], int(motif0[cols['cat']]), 
+                                                     motif0[cols['betaka']], motif0[cols['inf']],motif0[cols['auth']],
+                                                     motif0[cols['tafseernam']], int(motif0[cols['islamshort']]), 
+                                                     int(motif0[cols['archive']])])
+                        self.no_all_book += 1
     
     def get_cols(self, table, motif):
         cols_dict = {}
         if table == '0bok':
-            for a in [u'bkid', 'bk', 'cat', 'betaka', 'inf',u'auth',u'tafseernam', 'islamshort', 'archive']:
+            for a in ['bkid', 'bk', 'cat', 'betaka', 'inf','auth','tafseernam', 'islamshort', 'archive']:
                 cols_dict[a] = motif.index(a)
         elif table == '0cat':
-            for a in [u'id', 'name']:
+            for a in ['id', 'name']:
                 cols_dict[a] = motif.index(a)
         elif table == 'com':
-            for a in [u'com', 'bk', 'id']:
+            for a in ['com', 'bk', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 'shorts':
-            for a in [u'bk', 'ramz', 'nass']:
+            for a in ['bk', 'ramz', 'nass']:
                 cols_dict[a] = motif.index(a)
         return cols_dict
     
     def load_list(self):
-        for a in [u'0cat',u'com', 'shorts']:
+        for a in ['0cat','com', 'shorts']:
             if a  == '0cat': file0 = self.ifile_main
             else: file0 = self.ifile_spacial
             contents_main = Popen(['mdb-export', '-d', 'new_col', '-R', '\nnew_row', file0, a],   
@@ -121,10 +121,10 @@ class DB_from_MDB(object):
     def get_cols(self, table, motif, id_book=0):
         cols_dict = {}
         if table == 't'+str(id_book) or table == 'title':
-            for a in [u'tit', 'lvl', 'sub', 'id']:
+            for a in ['tit', 'lvl', 'sub', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 'b'+str(id_book) or table == 'book':
-            for a in [u'id', 'nass', 'part', 'page', 'hno', 'sora', 'aya', 'na']:
+            for a in ['id', 'nass', 'part', 'page', 'hno', 'sora', 'aya', 'na']:
                 try: cols_dict[a] = motif.index(a)
                 except: pass
         return cols_dict
@@ -160,12 +160,12 @@ class DB_from_MDB(object):
         # info_list = 0='BkId', 1='Bk', 2='Betaka', 3='Inf', 4='Auth', 5='TafseerNam', 6='IslamShort'
         self.get_tables()
         id_book = self.info_list[0]
-        nm_book = (self.info_list[1]).replace(u"/", u"-")
+        nm_book = (self.info_list[1]).replace("/", "-")
         ids_titles = self.get_ids_titles(id_book)
         page_dict = {}
         if len(self.info_list[5]) > 2: is_tafsir = 1
         else: is_tafsir = 0
-        db = join(asm_path.BOOK_DIR, self.nm_group, nm_book+u'.asm')
+        db = join(asm_path.BOOK_DIR, self.nm_group, nm_book+'.asm')
         if exists(db): os.unlink(db)
         con = sqlite3.connect(db, isolation_level=None)
         cur = con.cursor() 
@@ -237,19 +237,19 @@ class DB_from_BOK(object):
     def get_cols(self, table, motif, id_book=0):
         cols_dict = {}
         if table == 'Main':
-            for a in [u'bkid', 'bk', 'betaka', 'inf',u'auth',u'tafseernam', 'islamshort', 'ad']:
+            for a in ['bkid', 'bk', 'betaka', 'inf','auth','tafseernam', 'islamshort', 'ad']:
                 cols_dict[a] = motif.index(a)
         elif table == 'Shorts':
-            for a in [u'bk', 'ramz', 'nass']:
+            for a in ['bk', 'ramz', 'nass']:
                 cols_dict[a] = motif.index(a)
         elif table == 'com':
-            for a in [u'com', 'bk', 'id']:
+            for a in ['com', 'bk', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 't'+str(id_book):
-            for a in [u'tit', 'lvl', 'sub', 'id']:
+            for a in ['tit', 'lvl', 'sub', 'id']:
                 cols_dict[a] = motif.index(a)
         elif table == 'b'+str(id_book):
-            for a in [u'id', 'nass', 'part', 'page', 'hno', 'sora', 'aya', 'na']:
+            for a in ['id', 'nass', 'part', 'page', 'hno', 'sora', 'aya', 'na']:
                 try: cols_dict[a] = motif.index(a)
                 except: pass
         return cols_dict
@@ -297,7 +297,7 @@ class DB_from_BOK(object):
                 if len(motif_main) == 1: continue
                 else:
                     id_book = motif_main[cols_main['bkid']]
-                    nm_book = motif_main[cols_main['bk']].replace(u"/", u"-")
+                    nm_book = motif_main[cols_main['bk']].replace("/", "-")
                     ids_titles = self.get_ids_titles(id_book)
                     page_dict = {}
                     if len(motif_main[cols_main['tafseernam']]) > 2: is_tafsir = 1

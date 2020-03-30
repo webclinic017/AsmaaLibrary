@@ -178,7 +178,7 @@ class EditBook(Gtk.VBox):
         self.opened_old = []
         self.id_book = id_book
         self.book = book
-        self.new_book = book+u'.new'
+        self.new_book = book+'.new'
         self.nm_book = basename(book)[:-4]
         self.db = bookDB(book, id_book)
         self.all_pages = self.db.all_page()

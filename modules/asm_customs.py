@@ -6,12 +6,13 @@
 
 from gi.repository import Gtk, Gdk, Pango
 import asm_araby
+import asm_config
 import re
 
 Gtk.Widget.set_default_direction(Gtk.TextDirection.RTL)
 
 #a------------------------------------------
-version = '2.7.0'
+version = '2.8.0'
 #a--------------------------------------------------
 schema = {
         'main': "bk TEXT, shortname TEXT, cat INTEGER, betaka TEXT, inf TEXT, authno INTEGER DEFAULT 0, \
@@ -85,8 +86,9 @@ def rgb(value):
 def split_font(font):
     ls = font.split(' ')
     szfont = ls.pop(-1)
+    szf = int(szfont)*asm_config.getf('scale_fonts')
     fmfont = ' '.join(ls)
-    return szfont, fmfont
+    return str(szf), fmfont
 
 #a------------------------------------------
 def tool_button(icon_file, tooltip, function, data=None):
@@ -111,7 +113,7 @@ def combo(ls, name):
     renderer_text = Gtk.CellRendererText()
     renderer_text.set_property("ellipsize-set", True)
     renderer_text.set_property("ellipsize", Pango.EllipsizeMode.END)
-    if name == u"التفسير":
+    if name == "التفسير":
         renderer_text.set_property("max-width-chars",24)
         renderer_text.set_property("weight", 24)
     else:
@@ -121,7 +123,7 @@ def combo(ls, name):
     cmt.add_attribute(renderer_text, "text", 1)
     lab = Gtk.Label(name)
     lab.set_alignment(0,0.5)
-    if name == u"التفسير":
+    if name == "التفسير":
         return cmt
     else:
         hb.pack_start(lab, False, False, 0)
@@ -131,9 +133,9 @@ def combo(ls, name):
 
 #a------------------------------------------
 def button_fontnm():
-    list_font = [[u"Amiri", u"أميري"], [u"Simplified Naskh", u"نسخ مبسط"], [u'AlHor', u"الحور"], [u"KacstBook", u"KacstBook"],
-             [u"KacstLetter", u"KacstLetter"], [u'KacstNaskh', u"KacstNaskh"], [u'KacstFarsi', u"KacstFarsi"], 
-             [u"KacstOne", u"KacstOne"], [u"KacstQurn", u"KacstQurn"], [u'KacstTitle', u"KacstTitle"]]
+    list_font = [["Amiri", "أميري"], ["Simplified Naskh", "نسخ مبسط"], ['AlHor', "الحور"], ["KacstBook", "KacstBook"],
+             ["KacstLetter", "KacstLetter"], ['KacstNaskh', "KacstNaskh"], ['KacstFarsi', "KacstFarsi"], 
+             ["KacstOne", "KacstOne"], ["KacstQurn", "KacstQurn"], ['KacstTitle', "KacstTitle"]]
     store = Gtk.ListStore(str, str)
     cmt = Gtk.ComboBox.new_with_model(store)
     for a in list_font:
@@ -154,8 +156,8 @@ def button_fontnm():
  
 #a------------------------------------------
 def button_fontsz():
-    list_font = [[u'1', '1'], [u'2', '2'], [u'3', '3'], [u'4', '4'], 
-                [u'5', '5'], [u'6', '6'], [u'7', '7']] 
+    list_font = [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], 
+                ['5', '5'], ['6', '6'], ['7', '7']] 
     store = Gtk.ListStore(str, str)
     cmt = Gtk.ComboBox.new_with_model(store)
     for a in list_font:

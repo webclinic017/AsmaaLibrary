@@ -51,7 +51,7 @@ import re, sqlite3
 import asm_path
 import asm_araby
 
-duality_term = [u'يد', 'دم', 'فم', 'أب', 'أخ', 'حم', 'هن']
+duality_term = ['يد', 'دم', 'فم', 'أب', 'أخ', 'حم', 'هن']
 
 #a حذف السوابق المحتملة-------------------------------------------------------
 
@@ -67,19 +67,19 @@ def _del_prefix(text):
         return without_prefix
     term = 'all'
     without_prefix.append([text, term])
-    if text[0] in [u'أ', 'ء']:
+    if text[0] in ['أ', 'ء']:
         if len(text[1:]) >= 3:
             term = 'all'
             without_prefix.append([text[1:], term])
             text = text[1:]
         else: return without_prefix
-    if text[0] in [u'ف', 'و']:
+    if text[0] in ['ف', 'و']:
         if len(text[1:]) >= 3:
             term = 'all'
             without_prefix.append([text[1:], term])
             text = text[1:]
         else: return without_prefix
-    if text[:2] in [u'سأ', 'سن', 'ست', 'سي']:
+    if text[:2] in ['سأ', 'سن', 'ست', 'سي']:
         if len(text[1:]) >= 3:
             term = 'fi3l'
             without_prefix.append([text[1:], term])
@@ -89,7 +89,7 @@ def _del_prefix(text):
             term = 'ismno'
             without_prefix.append([text[2:], term])
         return without_prefix
-    if text[0] in [u'ب', 'ك', 'و']:
+    if text[0] in ['ب', 'ك', 'و']:
         if len(text[1:]) >= 3:
             term = 'ism'
             without_prefix.append([text[1:], term])
@@ -107,7 +107,7 @@ def _del_prefix(text):
                 text = text[0]+text[1:]
             without_prefix.append([text, term])
         return without_prefix
-    if text in [ 'تالله' ,u'تاللّه' , 'تالرحمن']: 
+    if text in [ 'تالله' ,'تاللّه' , 'تالرحمن']: 
         text = text[1:]
         term = 'ismno'
         without_prefix.append([text, term])
@@ -128,15 +128,15 @@ def _del_suffix(ls):
             if len(text[:-2]) >= 3:
                 without_suffix.append(text[:-2])
         return without_suffix
-    for a in [u'ه', 'ها', 'هما', 'هم', 'هنّ', 'هن', 'ك', 'كما', 'كم', 'كنّ', 'كن']:
+    for a in ['ه', 'ها', 'هما', 'هم', 'هنّ', 'هن', 'ك', 'كما', 'كم', 'كنّ', 'كن']:
         if text[-1*len(a):] == a:
             if len(text[:-1*len(a)]) >= 3:
                 without_suffix.append(text[:-1*len(a)])
                 text = text[:-1*len(a)]
                 if term == 'ism': return without_suffix
             else: return without_suffix
-    for a in [u'ني', 'نا', 'هو', 'ها', 'هما', 'همو', 
-              'هنّ',u'هن', 'ك', 'كما', 'كمو', 'كنّ', 'كن']:
+    for a in ['ني', 'نا', 'هو', 'ها', 'هما', 'همو', 
+              'هنّ','هن', 'ك', 'كما', 'كمو', 'كنّ', 'كن']:
         if text[-1*len(a):] == a:
             if len(text[:-1*len(a)]) >= 3:
                 without_suffix.append(text[:-1*len(a)])
@@ -151,7 +151,7 @@ def _del_suffix(ls):
         if len(text[:-2]) >= 3:
             without_suffix.append(text[:-2])
         return without_suffix
-    for a in [u'ن', 'نّ', 'تما', 'تم', 'تمو', 'تنّ', 'تن', 'ا', 'ما']:
+    for a in ['ن', 'نّ', 'تما', 'تم', 'تمو', 'تنّ', 'تن', 'ا', 'ما']:
         if text[-1*len(a):] == a:
             if len(text[:-1*len(a)]) >= 3:
                 if term != 'ism':
@@ -165,55 +165,55 @@ def _del_suffix(ls):
 #a حذف الأحرف الزوائد المحتملة------------------------------------------------
 
 def _del_augment(text):
-    text = re.sub(u'آ', 'أا', text)
+    text = re.sub('آ', 'أا', text)
     without_augment = [text]
     if len(text) < 3: return without_augment
-    if text[:3] in [u'تست', 'نست', 'يست', 'أست', 'مست', 'است']:
+    if text[:3] in ['تست', 'نست', 'يست', 'أست', 'مست', 'است']:
         if len(text) >= 5:
             without_augment.append(text[3:])
-    elif text[:3] in [u'متت', 'اتت']:
+    elif text[:3] in ['متت', 'اتت']:
         if len(text) >= 5:
-            without_augment.append(u'و'+text[3:])
-    elif text[0] in [u'م', 'ا', 'أ', 'ي', 'ن', 'ت'] and text[2] == 'ت':
+            without_augment.append('و'+text[3:])
+    elif text[0] in ['م', 'ا', 'أ', 'ي', 'ن', 'ت'] and text[2] == 'ت':
         if len(text) >= 5:
             without_augment.append(text[1]+text[3:])
-    elif text[:2] in [u'تن', 'نن', 'ين', 'أن']:
+    elif text[:2] in ['تن', 'نن', 'ين', 'أن']:
         if len(text) >= 4:
             without_augment.append(text[2:])
-    elif text[:2] in [u'من', 'ان', 'مت', 'أت', 'يت', 'نت'] and len(text) >= 5:
+    elif text[:2] in ['من', 'ان', 'مت', 'أت', 'يت', 'نت'] and len(text) >= 5:
         without_augment.append(text[2:])
-    if text[0] in [u'ت', 'ن', 'ي', 'أ'] and len(text) >= 3:
+    if text[0] in ['ت', 'ن', 'ي', 'أ'] and len(text) >= 3:
         without_augment.append(text[1:])
-    elif text[0] in [u'ا', 'م', 'إ'] and len(text) >= 4:
+    elif text[0] in ['ا', 'م', 'إ'] and len(text) >= 4:
         without_augment.append(text[1:])
     on_last = []
     for text in without_augment:
-        if text[-2:] in [u'وا',u'ون', 'ين', 'ان'] and len(text) > 4:
+        if text[-2:] in ['وا','ون', 'ين', 'ان'] and len(text) > 4:
             on_last.append(text[:-2])
-            if text[0] in [u'ت', 'ي']:
-                on_last.append(u'و'+text[1:-2])
-        if text[-3:] in [u'تان', 'تين'] and len(text) == 6:
+            if text[0] in ['ت', 'ي']:
+                on_last.append('و'+text[1:-2])
+        if text[-3:] in ['تان', 'تين'] and len(text) == 6:
             on_last.append(text[:-3])
-        elif text[-2:] in [u'وا',u'ون', 'ين'] and len(text) == 4:
-            on_last.append(text[:-2]+u'ا')
+        elif text[-2:] in ['وا','ون', 'ين'] and len(text) == 4:
+            on_last.append(text[:-2]+'ا')
         elif text[-2:] == 'ات' and len(text) == 4:
-            on_last.append(u'و'+text[:-2])
-        elif text[-4:] in [u'اوات', 'اءات'] and len(text) >= 7:
+            on_last.append('و'+text[:-2])
+        elif text[-4:] in ['اوات', 'اءات'] and len(text) >= 7:
             on_last.append(text[:-4])
-        elif text[-3:] in [u'انة'] and len(text) >= 6:
+        elif text[-3:] in ['انة'] and len(text) >= 6:
             on_last.append(text[:-3])
-        elif text[-2:] in [u'نة',u'ات',u'اء'] and len(text) >= 5:
+        elif text[-2:] in ['نة','ات','اء'] and len(text) >= 5:
             on_last.append(text[:-2])
-        elif text[-1:] in [u'ت'] and len(text) == 3:
-            on_last.append(text[:-1]+u'ا')
-            on_last.append(text[0]+u'ا'+text[1])
-        elif text[-1:] in [u'ن'] and len(text) == 3:
-            text = text[0]+u'ا'+text[1]
+        elif text[-1:] in ['ت'] and len(text) == 3:
+            on_last.append(text[:-1]+'ا')
+            on_last.append(text[0]+'ا'+text[1])
+        elif text[-1:] in ['ن'] and len(text) == 3:
+            text = text[0]+'ا'+text[1]
             on_last.append(text)
         elif text[-1:] == 'ة' and len(text) == 3:
-            on_last.append(u'و'+text[:-1])
-        if text[-1:] in [u'ا', 'ن', 'ت', 'ة', 
-                           'ى', 'ه',u'و', 'ء'] and len(text) >= 4:
+            on_last.append('و'+text[:-1])
+        if text[-1:] in ['ا', 'ن', 'ت', 'ة', 
+                           'ى', 'ه','و', 'ء'] and len(text) >= 4:
             on_last.append(text[:-1])
     without_augment.extend(on_last)
     on_padding = []
@@ -223,20 +223,20 @@ def _del_augment(text):
             for a in range(len(text)):
                 if text[a] == 'ا' :
                     on_padding.append(text[:a]+text[a+1:])
-                elif text[a] in [u'و', 'ي'] and a != 0:
+                elif text[a] in ['و', 'ي'] and a != 0:
                     on_padding2.append(text[:a]+text[a+1:])
     for text in on_padding:
         for a in range(len(text)):
             if len(text) > 3:
-                if text[a] in [u'و', 'ي'] and a != 0:
+                if text[a] in ['و', 'ي'] and a != 0:
                     on_padding2.append(text[:a]+text[a+1:])
     for text in on_padding:
         if len(text) > 3:
             if text[1] == 'ن' :
                 on_padding2.append(text[0]+text[2:])
     for text in without_augment:
-        if text in [u'تري', 'ترا', 'ترو', 'ترى', 'يرى', 'أرى']:
-            on_padding.append(u'رأي')
+        if text in ['تري', 'ترا', 'ترو', 'ترى', 'يرى', 'أرى']:
+            on_padding.append('رأي')
     on_padding.extend(on_padding2)
     without_augment.extend(on_padding)      
     return without_augment
@@ -248,7 +248,7 @@ def get_stem(text):
     if len(text) < 3: return
     stems = []
     if asm_araby.stripTashkeel(text) == 'الله': 
-        stems.append(u'الله')
+        stems.append('الله')
         return stems
     text = asm_araby.stripHarakat(text)
     without_prefix = _del_prefix(text)
@@ -276,8 +276,8 @@ def get_root(text):
     stems = get_stem(text)
     all_term = get_stem(text)
     for a in stems:
-        if a[-1] == text[-1] != u"ي":
-            text0 = a+u"ي"
+        if a[-1] == text[-1] != "ي":
+            text0 = a+"ي"
             without_augment1 = _del_augment(text0)
             for b in without_augment1:
                 if len(b) <= 5 and b not in roots:
@@ -309,7 +309,7 @@ def get_root(text):
 
 #f = 0
 #if f == 0:
-#    for a in get_stem(u'التربية'):
+#    for a in get_stem('التربية'):
 #        print (a)
 #else:
 #    for a in get_root('التربية'):

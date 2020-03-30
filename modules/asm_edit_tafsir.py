@@ -40,14 +40,14 @@ class EditTafsir(Gtk.Dialog):
             try: na = int(na)
             except: na = 1
             nasse_quran = ' '.join(self.othman.get_ayat(sora,aya,aya+na))
-            self.view_nasse_bfr.insert(self.view_nasse_bfr.get_start_iter(), u" \n")
+            self.view_nasse_bfr.insert(self.view_nasse_bfr.get_start_iter(), " \n")
             self.view_nasse_bfr.insert_with_tags(self.view_nasse_bfr.get_start_iter(), 
                                                  nasse_quran, self.view_quran_tag)
     
     def change_id_pg(self, *a):
         page_id = self.id_pg.get_value()
         all_in_page = self.db.get_text_body(page_id)
-        self.lab_id_pg.set_text(u'جزء {} ، صفحة {}'.format(all_in_page[3], all_in_page[4]))
+        self.lab_id_pg.set_text('جزء {} ، صفحة {}'.format(all_in_page[3], all_in_page[4]))
         try:
             if all_in_page[6] != 0:
                 self.suras.set_active(int(all_in_page[6])-1)
@@ -79,7 +79,7 @@ class EditTafsir(Gtk.Dialog):
         self.set_icon_name("asmaa")
         self.resize(750, 450)
         self.set_modal(True)
-        self.set_title(u'تعديل تفسير : {}'.format(self.db.book_name,))
+        self.set_title('تعديل تفسير : {}'.format(self.db.book_name,))
         self.connect('destroy', self.quit_dlg)
         box = self.vbox
         box.set_border_width(5)

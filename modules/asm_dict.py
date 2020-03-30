@@ -50,7 +50,7 @@ class Explanatory(Gtk.HBox):
         elif len(text) < 3: 
             asm_customs.erro(self.parent, 'أدخل كلمة بها أكثر من حرفين للبحث عنها')
             return
-        all_root, all_term = asm_stemming.get_root(u''+text)
+        all_root, all_term = asm_stemming.get_root(''+text)
         self.tree_dict.collapse_all()
         self.store_dict.clear()
         self.view_dict_bfr.set_text('')
@@ -99,8 +99,8 @@ class Explanatory(Gtk.HBox):
         self.all_term = []
         Gtk.HBox.__init__(self, False, 3)
         self.set_border_width(3)
-        letters = [u"ألف",u"باء",u'تاء',u'ثاء',u'جيم',u'حاء',u'خاء',u'دال',u'ذال',u'راء',u'زاي',u'سين',u'شين',u'صاد' ,
-            'ضاد',u'طاء',u'ظاء',u'عين',u'غين',u'فاء',u'قاف',u'كاف',u'لام',u'ميم',u'نون',u'هاء',u'واو',u'ياء']
+        letters = ["ألف","باء",'تاء','ثاء','جيم','حاء','خاء','دال','ذال','راء','زاي','سين','شين','صاد' ,
+            'ضاد','طاء','ظاء','عين','غين','فاء','قاف','كاف','لام','ميم','نون','هاء','واو','ياء']
         vbox = Gtk.VBox(False, 3)
         btn_letters = Gtk.ComboBoxText()
         btn_letters.set_wrap_width(5)
@@ -119,7 +119,7 @@ class Explanatory(Gtk.HBox):
         scroll.set_size_request(150,  -1)
         scroll.set_shadow_type(Gtk.ShadowType.IN)
         scroll.add(self.tree_dict)
-        self.tree_dict.connect("cursor-changed", lambda *a: self.search_on_page(u""))
+        self.tree_dict.connect("cursor-changed", lambda *a: self.search_on_page(""))
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         vbox.pack_start(btn_letters, False, False, 0)
         vbox.pack_start(scroll, True, True, 0)

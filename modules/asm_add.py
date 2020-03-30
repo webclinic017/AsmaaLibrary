@@ -139,7 +139,7 @@ class AddBooks(Gtk.Dialog):
     
     def get_text_from_file(self, myfile, name_file):
         # HTML----------------------------
-        if re.search(re.compile(u'\.[Hh][Tt][Mm][Ll]?$'), name_file) != None:
+        if re.search(re.compile('\.[Hh][Tt][Mm][Ll]?$'), name_file) != None:
             try:
                 file = open(myfile)
                 text = file.read()
@@ -152,7 +152,7 @@ class AddBooks(Gtk.Dialog):
                 return text
             except: self.no_add += '\n'+name_file
         # DOCX----------------------------
-        elif re.search(re.compile(u'\.[Dd][Oo][Cc][Xx]$'), name_file) != None:
+        elif re.search(re.compile('\.[Dd][Oo][Cc][Xx]$'), name_file) != None:
             try:
                 myFile = zipfile.ZipFile(myfile)
                 share = xml.etree.ElementTree.fromstring(myFile.read('word/document.xml'))
@@ -160,11 +160,11 @@ class AddBooks(Gtk.Dialog):
                 for elt in share.iter():
                     if elt.text != None:
                         text_nodes.append(elt.text.strip())
-                text = u"\n".join(text_nodes)
-                return re.sub(u'\n\s+\n', '\n', text)
+                text = "\n".join(text_nodes)
+                return re.sub('\n\s+\n', '\n', text)
             except: self.no_add += '\n'+name_file
         # ODT----------------------------
-        elif re.search(re.compile(u'\.[Oo][Dd][Tt]$'), name_file) != None:
+        elif re.search(re.compile('\.[Oo][Dd][Tt]$'), name_file) != None:
             try:
                 myFile = zipfile.ZipFile(myfile)
                 share = xml.etree.ElementTree.fromstring(myFile.read('content.xml'))
@@ -172,21 +172,21 @@ class AddBooks(Gtk.Dialog):
                 for elt in share.iter():
                     if elt.text != None:
                         text_nodes.append(elt.text.strip())
-                text = u"\n".join(text_nodes)
-                return re.sub(u'\n\s+\n', '\n', text)
+                text = "\n".join(text_nodes)
+                return re.sub('\n\s+\n', '\n', text)
             except: self.no_add += '\n'+name_file
         # TXT----------------------------
-        elif re.search(re.compile(u'\.[Tt][Xx][Tt]$'), name_file) != None:
+        elif re.search(re.compile('\.[Tt][Xx][Tt]$'), name_file) != None:
             try: 
                 file = open(myfile)
                 text =file.read()
-                return re.sub(u'\n\s+\n', '\n', text)
+                return re.sub('\n\s+\n', '\n', text)
             except: self.no_add += '\n'+name_file
         # DOC & RTF----------------------
-        elif re.search(re.compile(u'\.[Dd][Oo][Cc]$'), name_file) != None or \
-        re.search(re.compile(u'\.[Rr][Tt][Ff]$'), name_file) != None:
+        elif re.search(re.compile('\.[Dd][Oo][Cc]$'), name_file) != None or \
+        re.search(re.compile('\.[Rr][Tt][Ff]$'), name_file) != None:
             try: 
-                (fi, fo, fe) = os.popen(u'catdoc -w "{}"'.format(myfile, ))
+                (fi, fo, fe) = os.popen('catdoc -w "{}"'.format(myfile, ))
                 fi.close()
                 retval = fo.read()
                 erroroutput = fe.read()
@@ -194,16 +194,16 @@ class AddBooks(Gtk.Dialog):
                 fe.close()
                 if not erroroutput:
                     text = retval
-                    return re.sub(u'\n\s+\n', '\n', text)
+                    return re.sub('\n\s+\n', '\n', text)
                 else:
                     raise OSError("Executing the command caused an error: %s" % erroroutput)
-            except OSError: self.no_add += '\n'+name_file+u'  -يرجى التحقق من تثبيت حزمة "catdoc"'
+            except OSError: self.no_add += '\n'+name_file+'  -يرجى التحقق من تثبيت حزمة "catdoc"'
             except: self.no_add += '\n'+name_file
         #OTHER----------------------------
         else:
             try: 
                 text = open(myfile).read()
-                return re.sub(u'\n\s+\n', '\n', text)
+                return re.sub('\n\s+\n', '\n', text)
             except: pass
     
     def split_text_to_pages(self, text):
@@ -217,8 +217,8 @@ class AddBooks(Gtk.Dialog):
                 n_term_page = len(list_term)/(n_page)
                 baki = len(list_term)%(n_page)
                 for a in range(n_page):
-                    pages.append(u' '.join(list_term[a*n_term_page:(a+1)*n_term_page]))
-                if baki > 0: pages.append(u' '.join(list_term[(n_page+1)*n_term_page:]))
+                    pages.append(' '.join(list_term[a*n_term_page:(a+1)*n_term_page]))
+                if baki > 0: pages.append(' '.join(list_term[(n_page+1)*n_term_page:]))
             else:
                 pages = [text]
         elif self.fasil.get_active():
@@ -257,7 +257,7 @@ class AddBooks(Gtk.Dialog):
             self.progress.set_fraction(float(f)/float(n_docs))
             while (Gtk.events_pending()): Gtk.main_iteration()
             if self.is_book_radio.get_active():
-                new_book = re.sub(u'\....?.?$', '', self.store_add_doc[0][1])
+                new_book = re.sub('\....?.?$', '', self.store_add_doc[0][1])
                 text_book = self.get_text_from_file(self.store_add_doc[0][0], 
                                                     self.store_add_doc[0][1])
                 if text_book != None and len(text_book) != 0:
@@ -315,9 +315,9 @@ class AddBooks(Gtk.Dialog):
                 id_group = model.get_value(i0, 1)
                 dr = str(id_book)[-1]
                 if archive == 0:
-                    book  = join(self.path_shamila, 'Books', dr, str(id_book)+'.mdb')
+                    book  = join(self.path_books, dr, str(id_book)+'.mdb')
                 else:
-                    book  = join(self.path_shamila, 'Books', 'Archive', str(archive)+'.mdb')
+                    book  = join(self.path_books, 'Archive', str(archive)+'.mdb')
                 try:
                     while (Gtk.events_pending()): Gtk.main_iteration()
                     self.no_book += 1
@@ -377,34 +377,44 @@ class AddBooks(Gtk.Dialog):
         if self.no_add != '': asm_customs.erro(self, 'الكتب التي لم يتم إضافتها {}'.format(self.no_add,)) 
     
     def select_path(self, *a): 
-        save_dlg = Gtk.FileChooserDialog(u'تحديد مجلد', self.parent,
+        save_dlg = Gtk.FileChooserDialog('تحديد مجلد', self.parent,
                                     Gtk.FileChooserAction.SELECT_FOLDER,
                                     (Gtk.STOCK_OK, Gtk.ResponseType.OK,
                                     Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
         res = save_dlg.run()
         if res == Gtk.ResponseType.OK:
             new_dir = save_dlg.get_filename()
-            self.entry_shamila.set_text(new_dir)
+            self.entry_books_dir.set_text(new_dir)
+        save_dlg.destroy()
+        
+    def select_file(self, btn, entry): 
+        save_dlg = Gtk.FileChooserDialog('تحديد ملف', self.parent,
+                                    Gtk.FileChooserAction.OPEN,
+                                    (Gtk.STOCK_OK, Gtk.ResponseType.OK,
+                                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL))
+        res = save_dlg.run()
+        if res == Gtk.ResponseType.OK:
+            new_file = save_dlg.get_filename()
+            entry.set_text(new_file)
         save_dlg.destroy()
     
     def show_books(self, *a):
         self.comments = {}
         self.shorts = {}
-        self.path_shamila = self.entry_shamila.get_text()
-        if self.path_shamila == '': 
-            asm_customs.erro(self, "لم تحدد موقع المكتبة الشاملة")
+        self.path_books = self.entry_books_dir.get_text()
+        if self.path_books == '': 
+            asm_customs.erro(self, "لم تحدد موقع الكتب")
             return
-        else:
-            if not exists(join(self.path_shamila, 'Files')) or not exists(join(self.path_shamila, 'Books')):
-                asm_customs.erro(self, "موقع الشاملة المحدد غير صحيح")
-                return
-            elif not exists(join(self.path_shamila, 'Files', 'main.mdb')) or \
-            not exists(join(self.path_shamila, 'Files', 'special.mdb')):
-                asm_customs.erro(self, "بعض الملفات الضرورية غير موجودة في هذا الدليل")
-                return
+        self.path_main_mdb = self.entry_main_mdb.get_text()
+        if self.path_main_mdb == '': 
+            asm_customs.erro(self, "لم تحدد موقع main.mdb")
+            return
+        self.path_special_mdb = self.entry_special_mdb.get_text()
+        if self.path_special_mdb == '': 
+            asm_customs.erro(self, "لم تحدد موقع special.mdb")
+            return
         self.btn_convert.set_sensitive(False)
-        load_list_books = load_list_books_from_shamela(join(self.path_shamila, 'Files', 'main.mdb'),
-                                     join(self.path_shamila, 'Files', 'special.mdb'), 
+        load_list_books = load_list_books_from_shamela(self.path_main_mdb, self.path_special_mdb, 
                                      self.store_books, self.comments, self.shorts)
         self.no_all_book = load_list_books.no_all_book
         self.all_books.set_active(True)
@@ -622,11 +632,29 @@ class AddBooks(Gtk.Dialog):
         box.set_border_width(5)
         
         hbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
-        self.entry_shamila = Gtk.Entry()
+        self.entry_books_dir = Gtk.Entry()
         b_shamila = Gtk.Button('...')
         b_shamila.connect('clicked', self.select_path)  
-        hbox.pack_start(Gtk.Label('مجلد الشاملة'), False, False, 0)
-        hbox.pack_start(self.entry_shamila, True, True, 0)
+        hbox.pack_start(Gtk.Label('مجلد الكتب'), False, False, 0)
+        hbox.pack_start(self.entry_books_dir, True, True, 0)
+        hbox.pack_start(b_shamila, False, False, 0)
+        box.pack_start(hbox, False, False, 0)
+        
+        hbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
+        self.entry_main_mdb = Gtk.Entry()
+        b_shamila = Gtk.Button('...')
+        b_shamila.connect('clicked', self.select_file, self.entry_main_mdb)  
+        hbox.pack_start(Gtk.Label('ملف main.mdb'), False, False, 0)
+        hbox.pack_start(self.entry_main_mdb, True, True, 0)
+        hbox.pack_start(b_shamila, False, False, 0)
+        box.pack_start(hbox, False, False, 0)
+        
+        hbox = Gtk.Box(spacing=7,orientation=Gtk.Orientation.HORIZONTAL)
+        self.entry_special_mdb = Gtk.Entry()
+        b_shamila = Gtk.Button('...')
+        b_shamila.connect('clicked', self.select_file, self.entry_special_mdb)  
+        hbox.pack_start(Gtk.Label('ملف special.mdb'), False, False, 0)
+        hbox.pack_start(self.entry_special_mdb, True, True, 0)
         hbox.pack_start(b_shamila, False, False, 0)
         box.pack_start(hbox, False, False, 0)
         

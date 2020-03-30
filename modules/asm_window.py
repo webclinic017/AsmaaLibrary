@@ -306,7 +306,7 @@ class AsmaaApp(Gtk.Window):
     
     def search_on_page(self, *a):
         text = self.entry_search.get_text() 
-        if len(text) == 1 or text == u"ال": return
+        if len(text) == 1 or text == "ال": return
         n = self.notebook.get_current_page()
         ch = self.notebook.get_nth_page(n)
         ch.search_on_page(text)
@@ -398,7 +398,7 @@ class AsmaaApp(Gtk.Window):
             self.entry_search.set_placeholder_text('بحث في النّصّ')
         elif n == 3:
             self.btn_action_other.show_all()
-            ss = [u"بحث عن كلمة",u"بحث عن راوٍ",u"بحث عن مؤلف"]
+            ss = ["بحث عن كلمة","بحث عن راوٍ","بحث عن مؤلف"]
             text = ss[self.winspage.get_current_page()]
             self.entry_search.set_placeholder_text(text)
         elif n == 2:

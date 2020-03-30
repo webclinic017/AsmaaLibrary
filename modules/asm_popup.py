@@ -66,7 +66,7 @@ def explain_term(widget, buff, parent):
         text = buff.get_text(sel[0], sel[1],True)
         text = asm_customs.first_term(text)
         if len(text) >= 3:
-            all_root, all_term = asm_stemming.get_root(u''+text)
+            all_root, all_term = asm_stemming.get_root(''+text)
             if len(all_root) == 0:
                 asm_customs.erro(parent, 'لا يوجد نتيجة'); return
             parent.winspage.dictpage.tree_dict.collapse_all()
@@ -81,7 +81,7 @@ def explain_term(widget, buff, parent):
             parent.winspage.dictpage.sel_dict.select_path(p)
             parent.notebook.set_current_page(3)
             parent.winspage.set_current_page(0)
-            parent.winspage.dictpage.search_on_page(u"")
+            parent.winspage.dictpage.search_on_page("")
             
 def tafsir_ayat(widget, buff, parent):
     if buff.get_has_selection():
@@ -116,7 +116,7 @@ def tarjama_rawi(widget, buff, parent):
                 asm_customs.erro(parent, 'لا يوجد نتيجة'); return
             else: 
                 for id_rawi in all_rewat:
-                    name = id_rawi[1].split(u'،')[0]
+                    name = id_rawi[1].split('،')[0]
                     parent.winspage.tarjamapage.store_tarjama.append(None, [id_rawi[0], name])
             parent.winspage.tarjamapage.tree_tarjama.collapse_all()
             parent.winspage.tarjamapage.view_tarjama_bfr.set_text('')

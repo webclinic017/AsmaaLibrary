@@ -23,7 +23,6 @@ class SavedResult(Gtk.Dialog):
             sr.hb_stop.hide()
             self.parent.viewerbook.append_page(sr,TabLabel(sr, nm))
             self.parent.viewerbook.set_current_page(-1)
-            print(exists(join(asm_path.HOME_DIR, 'searchs', nm+".pkl")))
             sr.text, sr.cursive, store = pickle.load(open(join(asm_path.HOME_DIR, 'searchs', nm+".pkl"), "rb"))
             sr.results_books = store
             sr.lab_n_result.set_text('عدد النتائج : {}'.format(len(store), ))

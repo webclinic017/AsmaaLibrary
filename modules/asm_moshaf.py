@@ -61,7 +61,7 @@ class ViewerMoshaf(Gtk.HPaned):
         self.build()
     
     def show_bitaka(self, *a):
-        return [u'',u'',u'',u'''
+        return ['','','','''
 كلام رب العالمين على الحقيقة بألفاظه ومعانيه 
 محفوظ في الصدور ، مقروء بالألسنة مكتوب في المصاحف
 تكلم به الله تعالى فسمعه جبريل منه 
@@ -117,9 +117,9 @@ class ViewerMoshaf(Gtk.HPaned):
             else:
                 sura = ls_text[a][1]
                 if page != 1 and page != 187: 
-                    new_list.append(u'<div id = "basmala">بِــــسۡمِ ٱللهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِيمِ</div>')
-                tit = title_sura.replace(u'الترتيب', 'الترتيب{}'.format(ls_text[a][0]),).\
-                replace(u'السورة', 'سورة '+ls_text[a][1]).replace(u'الآيات', 'الآيات{}'.format(ls_text[a][3]))
+                    new_list.append('<div id = "basmala">بِــــسۡمِ ٱللهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِيمِ</div>')
+                tit = title_sura.replace('الترتيب', 'الترتيب{}'.format(ls_text[a][0]),).\
+                replace('السورة', 'سورة '+ls_text[a][1]).replace('الآيات', 'الآيات{}'.format(ls_text[a][3]))
                 new_list.append(tit)
         new_list.reverse()
         if [] in new_list: new_list.remove([])
@@ -268,9 +268,9 @@ class ViewerMoshaf(Gtk.HPaned):
         # a الفهرس-----------------------------------
         vbox = Gtk.VBox(False, 3)
         index_by = Gtk.ComboBoxText()
-        index_by.append_text(u'السور')
-        index_by.append_text(u'الأجزاء')
-        index_by.append_text(u'الصفحات')
+        index_by.append_text('السور')
+        index_by.append_text('الأجزاء')
+        index_by.append_text('الصفحات')
         index_by.set_active(0)
         vbox.pack_start(index_by, False, False, 0)
         self.tree_index = Gtk.TreeView()

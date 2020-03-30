@@ -60,7 +60,7 @@ class Tafsir(Gtk.HBox):
         self.page_now = self.all_in_page[4]
         self.view_tafsir_bfr.set_text(self.all_in_page[2])
         text = self.parent.entry_search.get_text()
-        if len(text) >= 2 and text != u"ال": 
+        if len(text) >= 2 and text != "ال": 
             self.search_now(text)
         try: sora, aya, na = self.all_in_page[6], self.all_in_page[7], self.all_in_page[8]
         except: sora = 0
@@ -68,7 +68,7 @@ class Tafsir(Gtk.HBox):
             try: na = int(na)
             except: na = 1
             tafsir_quran = ' '.join(self.othman.get_ayat(sora,aya,aya+na))
-            self.view_tafsir_bfr.insert(self.view_tafsir_bfr.get_start_iter(), u" \nـــــــــــــــــــ\n")
+            self.view_tafsir_bfr.insert(self.view_tafsir_bfr.get_start_iter(), " \nـــــــــــــــــــ\n")
             self.view_tafsir_bfr.insert_with_tags(self.view_tafsir_bfr.get_start_iter(), 
                                                   tafsir_quran, self.view_quran_tag)
         # add to list browse
@@ -175,7 +175,7 @@ class Tafsir(Gtk.HBox):
             text = text.strip()
             ls_term = asm_araby.fuzzy(text).split(' ')
         for text in ls_term:
-            if len(text) == 1 or text == u"ال": continue
+            if len(text) == 1 or text == "ال": continue
             new_term = ''
             for l in text:
                 new_term += '({}(\u0651)?([\u064b\u064c\u064d\u064e\u064f\u0650\u0652])?)'.format(l, )

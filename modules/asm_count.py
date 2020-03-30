@@ -87,7 +87,7 @@ class Count(Gtk.Box):
         for a in self.db.all_parts():
             books = ''
             for b in self.db.books_part(a[0]):
-                books += b[1]+u'<br>'
+                books += b[1]+'<br>'
             template1 += '''
             <tr>
             <td>{}<br>
